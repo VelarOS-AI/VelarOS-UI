@@ -384,10 +384,13 @@ export function UserActionCard({
     cardVisualIcon,
     blocking: viewModel.card.blocking,
   })
-  // 表单卡：不要图标/标题/描述那套卡壳，只保留表单内容 + 右下角一个「提交」按钮。
+  // 表单卡：不要图标/描述那套卡壳，只保留问题标题、表单内容，右下角「跳过」（卡片带拒绝动作时）与「提交」。
   const isFormCard = !!viewModel.card.form && !shouldRenderPlanChoiceCard
   const formSubmitEntry = isFormCard
     ? viewModel.actionEntries.find((entry) => entry.action.kind === 'submit_form')
+    : undefined
+  const formRejectEntry = isFormCard
+    ? viewModel.actionEntries.find((entry) => entry.action.kind === 'reject')
     : undefined
   // 计时到点的自动折叠也是界面自己的变化：读者已上滑解除跟随时不收，免得他正看的卡片突然缩成一行。
   const holdExpandedForReader = useConversationAutoCollapseHold(viewModel.autoCollapsed)
@@ -434,6 +437,9 @@ export function UserActionCard({
         )}
       >
         <div className={styles.formCardPanel}>
+          {isNonBlankString(viewModel.card.title) && (
+            <div className={styles.formCardTitle}>{viewModel.card.title}</div>
+          )}
           <UserActionFormFields
             cardId={viewModel.card.id}
             fields={viewModel.formFields}
@@ -442,15 +448,26 @@ export function UserActionCard({
             disabled={viewModel.isFormDisabled}
             onChange={viewModel.handleFormFieldChange}
           />
-          {!!formSubmitEntry && (
+          {(!!formSubmitEntry || !!formRejectEntry) && (
             <div className={styles.formSubmitRow}>
-              <CardTextButton
-                tone="approve"
-                disabled={viewModel.isActionButtonDisabled(formSubmitEntry)}
-                onClick={() => viewModel.submitAction(formSubmitEntry)}
-              >
-                {t('userActionForm.submit')}
-              </CardTextButton>
+              {!!formRejectEntry && (
+                <CardTextButton
+                  tone="reject"
+                  disabled={viewModel.isActionButtonDisabled(formRejectEntry)}
+                  onClick={() => viewModel.submitAction(formRejectEntry)}
+                >
+                  {t('common.skip')}
+                </CardTextButton>
+              )}
+              {!!formSubmitEntry && (
+                <CardTextButton
+                  tone="approve"
+                  disabled={viewModel.isActionButtonDisabled(formSubmitEntry)}
+                  onClick={() => viewModel.submitAction(formSubmitEntry)}
+                >
+                  {t('userActionForm.submit')}
+                </CardTextButton>
+              )}
             </div>
           )}
         </div>

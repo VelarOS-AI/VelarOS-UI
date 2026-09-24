@@ -443,9 +443,17 @@
   margin-top: 0;
 }
 
-/* 表单卡的提交按钮：内容下方、右下角。 */
+/* 表单卡的问题标题：表单上方一行。 */
+.formCardTitle {
+  margin-bottom: 10px;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* 表单卡的跳过与提交按钮：内容下方、右下角。 */
 .formSubmitRow {
-  @apply flex justify-end;
+  @apply flex justify-end gap-2;
   margin-top: 12px;
 }
 
