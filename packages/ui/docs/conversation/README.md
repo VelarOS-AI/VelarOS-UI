@@ -150,6 +150,17 @@ export function ToolMessage({ block }: { block: ToolCall }) {
 }
 ```
 
+## 执行步骤怎么显示
+
+- `script-execution` 块(一次 ScriptAct 的 execute 声明)渲染成 `ScriptExecutionCard`:一行里是状态、
+  宿主取好的那句话(为空时按首个调用的「模块 · 操作」兜底)和用到的模块;悬停标题行看执行的源码,
+  点开看每次能力调用的参数、返回与错误。脚本卡各自成行,不进「调用了 N 次工具」的活动折叠。
+- 会话 transcript 里的 `tool-call` 块不再按工具分类换图标或换专属卡,一律是同一副外框的
+  `ToolCallStepCard`(工具名、状态、耗时,点开看参数与结果);连续的工具调用仍收在「调用了 N 次工具」里,
+  标题只数次数。要给自家工具画专属卡的宿主,单独嵌 `ToolCallBlock` 并传自己的 `ToolRendererRegistry`。
+- 回答末尾的复制与时间、文件改动汇总、动作行只在这条消息所属的执行停下后出现:执行中途的助手消息
+  既不流式也没有运行标记,由 `ChatTranscript` 按「上一次执行停下之后、到正在流式或等待作答的那条为止」认出来。
+
 ## 能力位下沉,不散写枚举
 
 会话壳**不接收**原始的 `WorkspaceSpaceKind` 枚举。宿主在边界处从 space 描述符投影出

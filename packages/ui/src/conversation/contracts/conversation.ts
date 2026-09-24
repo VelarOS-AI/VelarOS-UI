@@ -356,10 +356,6 @@ interface UserActionCardActionBase {
 }
 
 export type UserActionCardAction =
-  | (UserActionCardActionBase & {
-      kind: 'enable_prompt_features'
-      promptFeatures: string[]
-    })
   | (UserActionCardActionBase & { kind: 'acknowledge' })
   | (UserActionCardActionBase & {
       kind: 'reject'
@@ -503,10 +499,46 @@ export interface FlaggedTaskSuggestionBlock {
   }
 }
 
+/** 脚本执行里的一次能力调用，按发出顺序排在 `ScriptExecutionBlock.calls` 里。 */
+export interface ScriptExecutionCall {
+  /** 模块 id，如 'velaros:shell'。 */
+  module: string
+  /** 操作名，如 'run'。 */
+  operation: string
+  status: 'pending' | 'succeeded' | 'failed' | 'cancelled'
+  /** 外部效果：none / committed / partial / unknown。 */
+  effect: 'none' | 'committed' | 'partial' | 'unknown'
+  /** 有界参数原文（JSON 文本）。 */
+  input: string
+  /** 有界返回值或错误原文（JSON 文本）。 */
+  output: string
+  inputTruncated: boolean
+  outputTruncated: boolean
+}
+
+/** 一次 ScriptAct 脚本执行：模型一轮里的一个 execute 声明。宿主已取好 title。 */
+export interface ScriptExecutionBlock {
+  type: 'script-execution'
+  /** 稳定身份，同一张卡的更新按它原位替换。 */
+  id: string
+  /** 一句话说明这一步做什么；可能为空串，此时界面按模块与操作兜底。 */
+  title: string
+  status: 'writing' | 'running' | 'succeeded' | 'failed' | 'cancelled'
+  /** 脚本源码（有界）；writing 阶段可能为空。 */
+  source: string
+  sourceTruncated: boolean
+  /** 这一步用到的模块 id，去重、按首次出现排序。 */
+  modules: string[]
+  calls: ScriptExecutionCall[]
+  /** 脚本本身失败（导入、检查或运行错误）的原因。 */
+  error?: string
+}
+
 export type ContentBlock =
   | TextBlock
   | ThinkingBlock
   | ToolCallBlock
+  | ScriptExecutionBlock
   | HtmlArtifactBlock
   | AssistantGeneratedFileBlock
   | AssistantSourceBlock

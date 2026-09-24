@@ -4,7 +4,7 @@ import { StyleUtils } from '@velaros-ai/ui'
 
 import styles from './MessageBubble.module.css'
 
-import type { ToolCallBlock as ToolCallBlockType } from '#contracts'
+import type { ScriptExecutionBlock, ToolCallBlock as ToolCallBlockType } from '#contracts'
 import { isBlank, isPresent, isString } from '#internal/runtime'
 
 const cx = StyleUtils.bindCx(styles)
@@ -36,7 +36,7 @@ function getToolActivityMotionPhase(block: ToolCallBlockType): string {
 
 /**
  * 只描述会改变卡片视觉语义的阶段，不把每条 progress 文本都变成一次动画。
- * 同工具组新增成员会改变 revision，但沿用稳定 activityKey，因此表现为“更新”而不是整卡重新入场。
+ * 传一组时逐个拼接：组里任一成员换了阶段或多了成员，都表现为一次“更新”而不是整卡重新入场。
  */
 export function getToolActivityMotionRevision(blocks: readonly ToolCallBlockType[]): string {
   return blocks.map((block) => `${block.toolCallId}:${getToolActivityMotionPhase(block)}`).join('|')
@@ -56,23 +56,30 @@ export function resolveToolActivityMotionKind({
   return previousRevision === revision ? 'none' : 'update'
 }
 
+/** 脚本执行卡的视觉阶段就是它的状态：编写、运行、落定各一次，追加调用不算更新。 */
+export function getScriptExecutionMotionRevision(
+  block: Pick<ScriptExecutionBlock, 'id' | 'status'>
+): string {
+  return `${block.id}:${block.status}`
+}
+
 function ToolActivityMotionInner({
   activityKey,
-  blocks,
+  revision,
   children,
   isStreaming,
   messageId,
   sessionId,
 }: {
   activityKey: string
-  blocks: readonly ToolCallBlockType[]
+  /** 卡片的视觉阶段：变了才播一次更新脉冲（见 `getToolActivityMotionRevision`）。 */
+  revision: string
   children: ReactNode
   isStreaming: boolean
   messageId: string
   sessionId: string
 }): ReactElement {
   const registryKey = `${sessionId}:${messageId}:${activityKey}`
-  const revision = getToolActivityMotionRevision(blocks)
   const previousRevision = ToolActivityMotionRevisionByKey.get(registryKey)
   const motionKind = resolveToolActivityMotionKind({
     isStreaming,

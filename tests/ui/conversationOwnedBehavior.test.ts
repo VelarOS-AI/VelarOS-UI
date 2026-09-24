@@ -4,18 +4,12 @@ import { describe, test } from 'node:test'
 
 import { shouldRemoveLastChatInputFile } from '../../packages/ui/src/conversation/composer/chatInputUtils'
 import { resolveChatSurfaceComposerDensity } from '../../packages/ui/src/conversation/composer/ChatSurfaceComposer'
-import { filterComposerMenuPluginOptions } from '../../packages/ui/src/conversation/composer/hooks/buildChatInputComposerAddMenuProps'
 import {
   NoNextStepSuggestionHighlightIndex,
   resolveNextStepSuggestionHighlightIndex,
   resolveNextStepSuggestionKeyboardAction,
 } from '../../packages/ui/src/conversation/composer/hooks/nextStepSuggestionCompletion.pure'
-import {
-  applyPromptFeatureGroupSelection,
-  buildAvailablePluginOptions,
-} from '../../packages/ui/src/conversation/composer/hooks/useComposerPromptFeatures.pure'
 import { canClaimChatDraftInsertion } from '../../packages/ui/src/conversation/composer/utils/chatDraftInsertion.utils'
-import { claimChatPromptFeatureActivation } from '../../packages/ui/src/conversation/composer/utils/chatPromptFeatureActivation.utils'
 import { activateMarkdownTailMarker } from '../../packages/ui/src/conversation/markdown/markdownTailMarker.utils'
 import { getToolDetailSummary } from '../../packages/ui/src/conversation/tool-render/toolCallSummary'
 import { shouldUseDefaultTranscriptToolRenderer } from '../../packages/ui/src/conversation/tool-render/toolRenderToolNames'
@@ -408,69 +402,11 @@ void describe('Platform-owned conversation composer behavior', () => {
     assert.match(source, /closeTimerRef\.current = null/u)
   })
 
-  void test('keeps Widget and HTML Live Preview independently selectable', () => {
-    const options = buildAvailablePluginOptions()
-    const widget = options.find((option) => option.id === 'widget')
-    const htmlArtifact = options.find((option) => option.id === 'html-artifact')
-    assert.ok(widget)
-    assert.ok(htmlArtifact)
-    assert.notEqual(htmlArtifact.icon, widget.icon)
-
-    assert.deepEqual(
-      applyPromptFeatureGroupSelection({
-        promptFeatures: ['html-artifact'],
-        option: widget,
-        enabled: true,
-      }),
-      ['html-artifact', 'widget']
-    )
-    assert.deepEqual(
-      applyPromptFeatureGroupSelection({
-        promptFeatures: ['widget'],
-        option: htmlArtifact,
-        enabled: true,
-      }),
-      ['html-artifact', 'widget']
-    )
-  })
-
-  void test('omits auto-triggered visual presentation choices from menu plugins', () => {
-    const menuPluginOptions = filterComposerMenuPluginOptions(buildAvailablePluginOptions())
-
-    assert.equal(
-      menuPluginOptions.some(
-        (option) => option.id === 'widget' || option.id === 'html-artifact'
-      ),
-      false
-    )
-    assert.equal(
-      menuPluginOptions.some((option) => option.id === 'office'),
-      true
-    )
-  })
-
   void test('lets only the visible editable composer claim a global draft', () => {
     assert.equal(canClaimChatDraftInsertion(createDraftTarget({})), true)
     assert.equal(canClaimChatDraftInsertion(createDraftTarget({ connected: false })), false)
     assert.equal(canClaimChatDraftInsertion(createDraftTarget({ disabled: true })), false)
     assert.equal(canClaimChatDraftInsertion(createDraftTarget({ rectCount: 0 })), false)
-  })
-
-  void test('claims only valid prompt-feature activation events once', () => {
-    const event = new CustomEvent('velaros:activate-chat-prompt-feature', {
-      detail: { feature: 'html-artifact', handled: false },
-    })
-
-    assert.equal(claimChatPromptFeatureActivation(event), 'html-artifact')
-    assert.equal(claimChatPromptFeatureActivation(event), null)
-    assert.equal(
-      claimChatPromptFeatureActivation(
-        new CustomEvent('velaros:activate-chat-prompt-feature', {
-          detail: { feature: 'not-a-feature', handled: false },
-        })
-      ),
-      null
-    )
   })
 
   void test('wraps next-step suggestion navigation from either edge', () => {

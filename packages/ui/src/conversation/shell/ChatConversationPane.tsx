@@ -367,7 +367,6 @@ export function ChatConversationPane({
     latestAssistantMessageId,
     hasTurnInputAfterLatestAssistant,
     runCostEstimateByMessageId,
-    planUpdateIndexByToolCallId,
     assistantQuestionMap,
     goalCompletionSummaryByMessageId,
     visibleMessages,
@@ -689,7 +688,6 @@ export function ChatConversationPane({
                 getInlineNotice={getTranscriptInlineNotice}
                 inlineNoticeRuntimeSource={inlineNoticeRuntimeSource}
                 showToolDetails
-                planUpdateIndexByToolCallId={planUpdateIndexByToolCallId}
                 activeProjectRoot={activeProjectRoot}
                 projectRoots={projectRoots}
                 canShowFileChangeSummary={supportsProjectFiles}
@@ -718,7 +716,6 @@ export function ChatConversationPane({
                   inlineNotice={inlineNotice}
                   inlineNoticeRuntimeSource={inlineNoticeRuntimeSource}
                   showToolDetails
-                  planUpdateIndexByToolCallId={planUpdateIndexByToolCallId}
                   activeProjectRoot={activeProjectRoot}
                   projectRoots={projectRoots}
                   canShowFileChangeSummary={supportsProjectFiles}

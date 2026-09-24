@@ -36,11 +36,14 @@ interface MessageBubbleProps {
   sessionId: string
   questionMessage?: LooseOptional<ChatMessage>
   isStreaming?: boolean
+  /** 这条消息所属的执行还没停（同一次执行后面还在流式，或停在等待作答上）：收尾件先不出现。 */
+  runInProgress?: boolean
   runMarker?: LooseOptional<ConversationMessageRunMarker>
   implicitlyCompletedRun?: boolean
   inlineNotice?: LooseOptional<ChatInlineNoticeMeta>
   inlineNoticeRuntimeSource?: LooseOptional<ChatInlineNoticeRuntimeSource>
   showToolDetails?: boolean
+  /** @deprecated 工具调用不再有计划专属卡，计划序号不参与渲染；保留只为已发布宿主。 */
   planUpdateIndexByToolCallId?: ReadonlyMap<string, number>
   activeProjectRoot?: LooseOptional<string>
   projectRoots?: ProjectRootEntry[]
@@ -78,7 +81,6 @@ interface MessageBubbleProps {
 
 const UserActionCardPresenceByMessage = new WeakMap<ChatMessage, boolean>()
 const WorkerThreadAnchorToolPresenceByMessage = new WeakMap<ChatMessage, boolean>()
-const PlanToolPresenceByMessage = new WeakMap<ChatMessage, boolean>()
 
 function hasUserActionCardBlock(message: ChatMessage): boolean {
   const cached = UserActionCardPresenceByMessage.get(message)
@@ -110,21 +112,6 @@ function hasWorkerThreadAnchorToolBlock(message: ChatMessage): boolean {
   return false
 }
 
-function hasPlanToolBlock(message: ChatMessage): boolean {
-  const cached = PlanToolPresenceByMessage.get(message)
-  if (isPresent(cached)) return cached
-
-  for (const block of message.blocks) {
-    if (block.type === 'tool-call' && block.toolName === 'plan:update') {
-      PlanToolPresenceByMessage.set(message, true)
-      return true
-    }
-  }
-
-  PlanToolPresenceByMessage.set(message, false)
-  return false
-}
-
 function areUserActionCardRenderPropsEqual(
   prev: Readonly<MessageBubbleProps>,
   next: Readonly<MessageBubbleProps>
@@ -135,26 +122,6 @@ function areUserActionCardRenderPropsEqual(
     prev.activeUserActionCardIds === next.activeUserActionCardIds &&
     prev.onResolveUserActionCard === next.onResolveUserActionCard
   )
-}
-
-function arePlanToolRenderPropsEqual(
-  prev: Readonly<MessageBubbleProps>,
-  next: Readonly<MessageBubbleProps>
-): boolean {
-  if (!hasPlanToolBlock(prev.message) && !hasPlanToolBlock(next.message)) return true
-
-
-  for (const block of prev.message.blocks) {
-    if (block.type !== 'tool-call') continue
-
-    if (
-      prev.planUpdateIndexByToolCallId?.get(block.toolCallId) !==
-      next.planUpdateIndexByToolCallId?.get(block.toolCallId)
-    )
-      return false
-  }
-
-  return true
 }
 
 function areToolSlotRenderPropsEqual(
@@ -199,12 +166,12 @@ function renderMessageBubbleContent(props: MessageBubbleProps): ReactElement {
       sessionId={props.sessionId}
       questionMessage={props.questionMessage}
       isStreaming={props.isStreaming}
+      runInProgress={props.runInProgress}
       runMarker={props.runMarker}
       implicitlyCompletedRun={props.implicitlyCompletedRun}
       inlineNotice={props.inlineNotice}
       inlineNoticeRuntimeSource={props.inlineNoticeRuntimeSource}
       showToolDetails={props.showToolDetails}
-      planUpdateIndexByToolCallId={props.planUpdateIndexByToolCallId}
       activeProjectRoot={props.activeProjectRoot}
       projectRoots={props.projectRoots}
       canShowFileChangeSummary={props.canShowFileChangeSummary}
@@ -234,10 +201,10 @@ function areMessageBubblePropsEqual(
     prev.sessionId === next.sessionId &&
     prev.questionMessage === next.questionMessage &&
     prev.isStreaming === next.isStreaming &&
+    !!prev.runInProgress === !!next.runInProgress &&
     prev.implicitlyCompletedRun === next.implicitlyCompletedRun &&
     prev.inlineNoticeRuntimeSource === next.inlineNoticeRuntimeSource &&
     prev.showToolDetails === next.showToolDetails &&
-    arePlanToolRenderPropsEqual(prev, next) &&
     prev.activeProjectRoot === next.activeProjectRoot &&
     prev.projectRoots === next.projectRoots &&
     prev.canShowFileChangeSummary === next.canShowFileChangeSummary &&

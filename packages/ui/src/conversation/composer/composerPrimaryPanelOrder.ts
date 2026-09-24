@@ -11,9 +11,7 @@ export const COMPOSER_PRIMARY_PANEL_SLOT_ORDER = [
   'attachments',
   'capabilities',
   'plan',
-  'workbench-editor',
   'goal',
-  'plugins',
   'skills',
 ] as const
 
@@ -26,7 +24,6 @@ export const COMPOSER_FUNCTION_BAR_CHIP_ORDER = [
   'capabilities',
   'browser-elements',
   'turn-context',
-  'plugins',
   'skills',
   'mentions',
 ] as const
@@ -54,10 +51,6 @@ export const COMPOSER_FUNCTION_BAR_CHIP_CONFIG = {
     placement: 'legacy',
   },
   'turn-context': {
-    chipStyle: 'legacy',
-    placement: 'legacy',
-  },
-  plugins: {
     chipStyle: 'legacy',
     placement: 'legacy',
   },

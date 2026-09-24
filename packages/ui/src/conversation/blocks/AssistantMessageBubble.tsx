@@ -81,12 +81,12 @@ export function AssistantMessageBubble({
   sessionId,
   questionMessage = null,
   isStreaming = false,
+  runInProgress = false,
   runMarker = null,
   implicitlyCompletedRun = false,
   inlineNotice = null,
   inlineNoticeRuntimeSource = null,
   showToolDetails = true,
-  planUpdateIndexByToolCallId,
   activeProjectRoot = null,
   projectRoots = EmptyProjectRoots,
   canShowFileChangeSummary = true,
@@ -108,12 +108,13 @@ export function AssistantMessageBubble({
   sessionId: string
   questionMessage?: LooseOptional<ChatMessage>
   isStreaming?: boolean
+  /** 这条消息所属的执行还没停：收尾件（复制与时间等）先不出现。 */
+  runInProgress?: boolean
   runMarker?: LooseOptional<ConversationMessageRunMarker>
   implicitlyCompletedRun?: boolean
   inlineNotice?: LooseOptional<ChatInlineNoticeMeta>
   inlineNoticeRuntimeSource?: LooseOptional<ChatInlineNoticeRuntimeSource>
   showToolDetails?: boolean
-  planUpdateIndexByToolCallId?: ReadonlyMap<string, number>
   activeProjectRoot?: LooseOptional<string>
   projectRoots?: ProjectRootEntry[]
   canShowFileChangeSummary?: boolean
@@ -179,16 +180,16 @@ export function AssistantMessageBubble({
     const isPlanAwareToolActivityExcluded = createPlanAwareToolActivityExclusionPredicate(
       getLatestPlanToolCallId(message.blocks)
     )
-    const nextRenderableSegments = buildToolRenderSegments(visibleBlocks, undefined, {
-      isToolActivitySummaryExcludedToolCall: isPlanAwareToolActivityExcluded,
-    })
+    const nextRenderableSegments = buildToolRenderSegments(visibleBlocks)
 
     return {
       messageRenderSegments: buildMessageRenderSegments(nextRenderableSegments, {
         isToolActivitySummaryExcludedToolCall: isPlanAwareToolActivityExcluded,
       }),
       visibleBlocks,
-      hasVisibleToolBlocks: visibleBlocks.some((block) => block.type === 'tool-call'),
+      hasVisibleToolBlocks: visibleBlocks.some(
+        (block) => block.type === 'tool-call' || block.type === 'script-execution'
+      ),
       hasRenderableContent: nextRenderableSegments.some(hasVisibleSegmentContent),
       lastTextSegmentKey: getLastTextSegmentKey(nextRenderableSegments),
       streamingTextSegmentKey: getStreamingTextSegmentKey(nextRenderableSegments),
@@ -253,6 +254,7 @@ export function AssistantMessageBubble({
     !!inlineNotice && (!hasRenderableContent || inlineNotice.tone === 'running')
   const showGeneratedArtifacts = shouldShowAssistantGeneratedArtifacts({
     isStreaming,
+    runInProgress,
     runMarker,
   })
   const generatedActivityTrailingElement = showGeneratedArtifacts
@@ -294,7 +296,6 @@ export function AssistantMessageBubble({
             streamingTextSegmentKey={streamingTextSegmentKey}
             sessionId={sessionId}
             runMarker={runMarker}
-            planUpdateIndexByToolCallId={planUpdateIndexByToolCallId}
             getBlockIndex={getBlockIndex}
             formatPathForDisplay={formatMessagePathForDisplay}
             onOpenBrowserLink={onOpenBrowserLink}

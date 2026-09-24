@@ -381,7 +381,9 @@ void test('运行中将引导与前后 assistant 片段保持在同一个平铺�
 
   assert.match(markup, /data-chat-run-activity="true"/)
   assert.match(markup, /data-chat-message="guidance"/)
-  assert.doesNotMatch(markup, /aria-expanded=/)
+  // 运行中不出任何活动折叠；工具调用本身照常以步骤卡平铺出来。
+  assert.doesNotMatch(markup, /data-slot="tool-activity-disclosure"/)
+  assert.match(markup, /data-slot="tool-call-step"/)
   assert.doesNotMatch(markup, />已处理</)
 })
 

@@ -1,4 +1,4 @@
-import { memo, type ReactElement, type ReactNode, useMemo } from 'react'
+import { memo, type ReactElement, type ReactNode } from 'react'
 import {
   AtIcon,
   CursorClickIcon,
@@ -17,7 +17,6 @@ import { useComposerToolbarChipCollapse } from './hooks/useComposerToolbarChipCo
 import { groupTurnContextChips } from './utils/turnContextChipGroups.utils'
 import type {
   ChatInputMentionableOption,
-  ChatInputPromptFeatureGroupOption,
   ChatInputSkillDetailHandler,
   ChatInputSkillOption,
 } from './chatInputTypes'
@@ -35,15 +34,10 @@ import {
 
 import styles from './ChatInput.module.css'
 
-import type {
-  BrowserElementSelection,
-  ChatPromptFeatureId,
-  TurnContextDelta,
-} from '#contracts'
+import type { BrowserElementSelection, TurnContextDelta } from '#contracts'
 import { isEmpty,isTrue, optionalWhenLazy } from '#internal/runtime'
 
 const cx = StyleUtils.bindCx(styles)
-const EmptyLockedPromptFeatures: ChatPromptFeatureId[] = []
 
 function resolveComposerFunctionBarChipClassName(
   slot: ComposerFunctionBarChipSlotId,
@@ -110,13 +104,10 @@ export interface ComposerActiveChipsBarProps {
   workbenchCurrentFilePath?: string
   onDismissWorkbenchCurrentFile?: () => void
   onDismissTurnContextDelta?: (id: string) => void
-  activePluginOptions: ChatInputPromptFeatureGroupOption[]
   activeSkillOptions: ChatInputSkillOption[]
   activeMentionOptions?: ChatInputMentionableOption[]
   onRemoveMentionSelection?: (id: string) => void
   onOpenSkillDetail?: ChatInputSkillDetailHandler
-  lockedPromptFeatures?: ChatPromptFeatureId[]
-  updatePromptFeatureGroup: (option: ChatInputPromptFeatureGroupOption, enabled: boolean) => void
   updateSelectedSkill: (skillId: string, selected: boolean) => void
 }
 
@@ -137,22 +128,15 @@ function ComposerActiveChipsBarInner({
   workbenchCurrentFilePath,
   onDismissWorkbenchCurrentFile,
   onDismissTurnContextDelta,
-  activePluginOptions,
   activeSkillOptions,
   activeMentionOptions,
   onRemoveMentionSelection,
   onOpenSkillDetail,
-  lockedPromptFeatures = EmptyLockedPromptFeatures,
-  updatePromptFeatureGroup,
   updateSelectedSkill,
 }: ComposerActiveChipsBarProps): Nullable<ReactElement> {
   const isPersistent = placement === 'persistent'
   // 常驻档才需要单行收起：add-menu 上方那条活动芯片区是可以换行的多行区，不参与本机制。
   const { attachBar, collapsed: chipsCollapsed } = useComposerToolbarChipCollapse()
-  const lockedPromptFeatureSet = useMemo(
-    () => new Set<ChatPromptFeatureId>(lockedPromptFeatures),
-    [lockedPromptFeatures]
-  )
 
   function slotChips(slot: ComposerFunctionBarChipSlotId): ReactNode[] {
     if (COMPOSER_FUNCTION_BAR_CHIP_CONFIG[slot].placement !== placement) return []
@@ -264,33 +248,6 @@ function ComposerActiveChipsBarInner({
               removeAriaLabel={`${t('chat.contextIgnoreOnce')}: ${group.label}`}
             />
           )),
-        ]
-      case 'plugins':
-        return [
-          ...activePluginOptions.map((option) => {
-            const Icon = option.icon
-            const isLocked = option.featureIds.some((feature) =>
-              lockedPromptFeatureSet.has(feature)
-            )
-
-            return (
-              <ComposerActiveChip
-                key={`${slot}-${option.id}`}
-                className={resolveComposerFunctionBarChipClassName(slot)}
-                chipDataPluginId={option.id}
-                title={t(option.labelKey)}
-                label={t(option.labelKey)}
-                icon={<Icon size={12} weight="fill" />}
-                disabled={disabled}
-                onRemove={optionalWhenLazy(
-                  !isLocked,
-                  () => () => updatePromptFeatureGroup(option, false)
-                )}
-                removeAriaLabel={optionalWhenLazy(!isLocked, () => t(option.labelKey))}
-                showRemoveButton={!isLocked}
-              />
-            )
-          }),
         ]
       case 'skills':
         return activeSkillOptions.map((skill) => (

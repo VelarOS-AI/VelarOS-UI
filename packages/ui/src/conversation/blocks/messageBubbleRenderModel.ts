@@ -82,14 +82,24 @@ export interface ProcessedActivitySummaryPartition {
 
 export interface AssistantGeneratedArtifactsVisibilityOptions {
   isStreaming: boolean
+  /** 这条消息所属的执行还没停（同一次执行后面还在流式，或停在等待作答上）。 */
+  runInProgress?: boolean
   runMarker?: LooseOptional<Pick<ConversationMessageRunMarker, 'status'>>
 }
 
+/**
+ * 回答的收尾件（复制与时间、文件改动汇总、动作行、生成物）只在这条消息所属的执行停下之后出现。
+ *
+ * 只看本条是否流式、有没有标记不够：运行标记只写在一次执行的最后一条助手消息上，执行中途的助手消息
+ * 既不在流式、也没有标记，照旧判据会在运行还没结束时就露出收尾件。所以本条流式、或同一次执行还在往后跑
+ * 都不出现；带标记的只在正常完成时出现；既没标记、执行也不在进行（历史、不写标记的宿主）时照常出现。
+ */
 export function shouldShowAssistantGeneratedArtifacts({
   isStreaming,
+  runInProgress = false,
   runMarker,
 }: AssistantGeneratedArtifactsVisibilityOptions): boolean {
-  if (isStreaming) return false
+  if (isStreaming || runInProgress) return false
   if (!runMarker) return true
 
   return runMarker.status === 'completed'
@@ -246,7 +256,8 @@ export function getVisibleMessageBlocks(
     if (block.type === 'project-auto-approval') return
     if (isFalse(options.showThinkingProcess) && block.type === 'thinking') return
     if (hasPendingBlockingUserActionCard && block.type === 'text') return
-    if (block.type !== 'tool-call') {
+    // 工具调用与脚本执行都是执行过程的细节，跟随同一个开关。
+    if (block.type !== 'tool-call' && block.type !== 'script-execution') {
       visibleBlocks.push(block)
       return
     }
@@ -258,17 +269,9 @@ export function getVisibleMessageBlocks(
 }
 
 export function hasVisibleSegmentContent(segment: ToolRenderSegment): boolean {
-  switch (segment.kind) {
-    case 'tool-group':
-      return !isEmpty(segment.blocks)
-    case 'merged-tool':
-      return !isEmpty(segment.group.blocks)
-    case 'block':
-      break
-  }
-
   switch (segment.block.type) {
     case 'tool-call':
+    case 'script-execution':
     case 'system-tool-install-suggestion':
     case 'capability-auto-approval':
     case 'html-artifact':
@@ -288,16 +291,20 @@ export function shouldRenderSegmentOutsideProcessedActivityDisclosure(
   segment: MessageRenderSegment
 ): boolean {
   if (segment.kind !== 'segment') return false
-  if (segment.segment.kind !== 'block') return false
 
   const { block } = segment.segment
-  // 未创建的提案卡要留在「已处理」折叠外（用户还得填它）；已结算的收进折叠里。
-  if (block.type === 'scheduled-task-proposal') return !block.resolution
-
-  // HTML artifact 是用户要看的成品预览,始终展开在「已处理」折叠外,不能被工具活动收起。
-  if (block.type === 'html-artifact') return true
-
-  return block.type === 'tool-call' && isToolActivitySummaryExcludedToolCall(block)
+  switch (block.type) {
+    // 未创建的提案卡要留在「已处理」折叠外（用户还得填它）；已结算的收进折叠里。
+    case 'scheduled-task-proposal':
+      return !block.resolution
+    // HTML artifact 是用户要看的成品预览,始终展开在「已处理」折叠外,不能被工具活动收起。
+    case 'html-artifact':
+      return true
+    case 'tool-call':
+      return isToolActivitySummaryExcludedToolCall(block)
+    default:
+      return false
+  }
 }
 
 /**
@@ -360,46 +367,25 @@ function findLastVisibleToolRenderSegment(
 export function getStreamingTextSegmentKey(segments: ToolRenderSegment[]): string | undefined {
   const tailSegment = findLastVisibleToolRenderSegment(segments)
 
-  return optionalWhenLazy(
-    tailSegment?.kind === 'block' && tailSegment.block.type === 'text',
-    () => tailSegment!.key
-  )
+  return optionalWhenLazy(tailSegment?.block.type === 'text', () => tailSegment!.key)
 }
 
 export function getLastTextSegmentKey(segments: readonly ToolRenderSegment[]): string | undefined {
   for (let index = segments.length - 1; index >= 0; index -= 1) {
     const segment = segments[index]
-    if (segment?.kind === 'block' && segment.block.type === 'text' && !isBlank(segment.block.text))
-      return segment.key
+    if (segment?.block.type === 'text' && !isBlank(segment.block.text)) return segment.key
   }
 
   return undefined
 }
 
-function getToolBlocksFromRenderSegment(
+/** 能进「调用了 N 次工具」活动组的段：没被摘出来单独展示的工具调用。脚本执行卡从不进组。 */
+function getGroupedToolBlock(
   segment: ToolRenderSegment,
-  isExcludedToolCall: ToolActivitySummaryExclusionPredicate = isToolActivitySummaryExcludedToolCall
-): ToolCallBlockType[] {
-  const collectVisibleToolBlocks = (blocks: readonly ToolCallBlockType[]): ToolCallBlockType[] => {
-    const visibleBlocks: ToolCallBlockType[] = []
-
-    for (const block of blocks) {
-      if (!isExcludedToolCall(block)) visibleBlocks.push(block)
-    }
-
-    return visibleBlocks
-  }
-
-  switch (segment.kind) {
-    case 'tool-group':
-      return collectVisibleToolBlocks(segment.blocks)
-    case 'merged-tool':
-      return collectVisibleToolBlocks(segment.group.blocks)
-    case 'block':
-      return segment.block.type === 'tool-call' && !isExcludedToolCall(segment.block)
-        ? [segment.block]
-        : []
-  }
+  isExcludedToolCall: ToolActivitySummaryExclusionPredicate
+): Nullable<ToolCallBlockType> {
+  const { block } = segment
+  return block.type === 'tool-call' && !isExcludedToolCall(block) ? block : null
 }
 
 export function buildMessageRenderSegments(
@@ -426,11 +412,11 @@ export function buildMessageRenderSegments(
   }
 
   segments.forEach((segment) => {
-    const toolBlocks = getToolBlocksFromRenderSegment(segment, isExcludedToolCall)
+    const toolBlock = getGroupedToolBlock(segment, isExcludedToolCall)
 
-    if (!isEmpty(toolBlocks)) {
+    if (toolBlock) {
       pendingSegments.push(segment)
-      pendingBlocks.push(...toolBlocks)
+      pendingBlocks.push(toolBlock)
       return
     }
 
@@ -449,7 +435,6 @@ export function buildMessageRenderSegments(
 function messageSegmentHasStartedText(segment: MessageRenderSegment): boolean {
   return (
     segment.kind === 'segment' &&
-    segment.segment.kind === 'block' &&
     segment.segment.block.type === 'text' &&
     !isBlank(segment.segment.block.text)
   )
@@ -458,7 +443,6 @@ function messageSegmentHasStartedText(segment: MessageRenderSegment): boolean {
 function messageSegmentIsThinking(segment: MessageRenderSegment): boolean {
   return (
     segment.kind === 'segment' &&
-    segment.segment.kind === 'block' &&
     segment.segment.block.type === 'thinking' &&
     !isBlank(segment.segment.block.text)
   )

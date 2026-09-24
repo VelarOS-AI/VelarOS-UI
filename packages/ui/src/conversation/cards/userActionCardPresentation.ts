@@ -96,8 +96,6 @@ export function resolveUserActionCardVisualIcon(
   if (!action) return explicit ?? 'info'
 
   switch (action.kind) {
-    case 'enable_prompt_features':
-      return 'plugin'
     case 'submit_form':
       return 'tool'
     case 'reject':
@@ -133,8 +131,6 @@ export function buildActionCompletionKey(
 
 export function getDefaultActionIcon(action: UserActionCardAction): UserActionCardActionIcon {
   switch (action.kind) {
-    case 'enable_prompt_features':
-      return 'plugin'
     case 'reject':
       return 'reject'
     case 'submit_input':
@@ -148,12 +144,7 @@ export function getDefaultActionIcon(action: UserActionCardAction): UserActionCa
 }
 
 export function shouldRenderTextAction(action: UserActionCardAction): boolean {
-  return (
-    action.kind === 'acknowledge' ||
-    action.kind === 'enable_prompt_features' ||
-    action.kind === 'reject' ||
-    action.kind === 'submit_form'
-  )
+  return action.kind === 'acknowledge' || action.kind === 'reject' || action.kind === 'submit_form'
 }
 
 export function getTextActionLabel(action: UserActionCardAction, t: CardTranslate): string {
@@ -161,7 +152,6 @@ export function getTextActionLabel(action: UserActionCardAction, t: CardTranslat
 
   switch (action.kind) {
     case 'acknowledge':
-    case 'enable_prompt_features':
       return t('common.approve')
     case 'reject':
       return t('common.reject')

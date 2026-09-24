@@ -4,11 +4,9 @@ import { useMemoizedFn } from 'ahooks'
 import type { ComposerSubmenuId } from '../chatInputTypes'
 import { OnboardingCloseComposerMenusEventName } from '../composerHostEvents'
 
-type ComposerMenuTourLock = 'primary' | 'plugins'
-
-function getComposerMenuTourLock(): Nullable<ComposerMenuTourLock> {
-  const lock = document.documentElement.dataset.tourComposerMenuLock
-  return lock === 'primary' || lock === 'plugins' ? lock : null
+/** 新手引导把「+」菜单钉开时，菜单不随点击外部或 Escape 关掉。 */
+function isComposerMenuTourLocked(): boolean {
+  return document.documentElement.dataset.tourComposerMenuLock === 'primary'
 }
 
 export interface UseComposerAddMenuStateResult {
@@ -24,16 +22,11 @@ export function useComposerAddMenuState(): UseComposerAddMenuStateResult {
   const [composerSubmenuId, setComposerSubmenuId] = useState<Nullable<ComposerSubmenuId>>(null)
 
   const closeComposerSubmenus = useMemoizedFn((): void => {
-    const tourLock = getComposerMenuTourLock()
-    if (tourLock === 'plugins') {
-      setComposerSubmenuId(tourLock)
-      return
-    }
     setComposerSubmenuId(null)
   })
 
   const setComposerMenuOpenState = useMemoizedFn((open: boolean): void => {
-    if (!open && getComposerMenuTourLock()) return
+    if (!open && isComposerMenuTourLocked()) return
     if (!open) {
       closeComposerSubmenus()
     }
@@ -41,17 +34,8 @@ export function useComposerAddMenuState(): UseComposerAddMenuStateResult {
   })
 
   const handleComposerActiveSubmenuChange = useMemoizedFn((submenuId: Nullable<string>): void => {
-    const tourLock = getComposerMenuTourLock()
-    if (tourLock === 'plugins') {
-      setComposerSubmenuId(tourLock)
-      return
-    }
     const nextSubmenuId: Nullable<ComposerSubmenuId> =
-      submenuId === 'quick-prompts' ||
-      submenuId === 'plugins' ||
-      submenuId === 'skills'
-        ? submenuId
-        : null
+      submenuId === 'quick-prompts' || submenuId === 'skills' ? submenuId : null
 
     setComposerSubmenuId(nextSubmenuId)
   })

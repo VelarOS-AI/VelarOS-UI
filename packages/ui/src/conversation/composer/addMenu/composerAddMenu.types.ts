@@ -2,13 +2,10 @@ import type { ConversationMessageKey as MessageKey } from '../../i18n'
 import type { ChatInputGoalModeCopy } from '../ChatInput'
 import type {
   ChatInputManualTestPromptOption,
-  ChatInputPromptFeatureGroupOption,
   ChatInputSkillOption,
   ComposerSubmenuId,
 } from '../chatInputTypes'
 import type { ChatComposerCapabilityControl } from '../ComposerCapabilityControls'
-
-import type { ChatPromptFeatureId } from '#contracts'
 
 export interface ComposerAddMenuChromeProps {
   disabled: boolean
@@ -32,13 +29,9 @@ export interface ComposerAddMenuAttachmentsProps {
 export interface ComposerAddMenuFeaturesProps {
   showSkillsSubmenu: boolean
   showQuickPromptsSubmenu: boolean
-  showPluginsSubmenu: boolean
   canTogglePlanFeature: boolean
   planModeActive: boolean
   updatePlanMode: (enabled: boolean) => void
-  canToggleWorkbenchEditorControl?: boolean
-  workbenchEditorControlActive?: boolean
-  updateWorkbenchEditorControl?: (enabled: boolean) => void
   canToggleGoalMode: boolean
   goalModeActive: boolean
   /** 目标模式开关的文案覆盖（外部执行体自报）；不传时用包内的「目标模式」。 */
@@ -46,9 +39,6 @@ export interface ComposerAddMenuFeaturesProps {
   updateGoalMode: (enabled: boolean) => void
   availableSkills: ChatInputSkillOption[]
   quickPrompts: ChatInputManualTestPromptOption[]
-  pluginOptions: ChatInputPromptFeatureGroupOption[]
-  selectedPromptFeatures: ReadonlySet<ChatPromptFeatureId>
-  updatePromptFeatureGroup: (option: ChatInputPromptFeatureGroupOption, enabled: boolean) => void
   selectedSkillIdSet: ReadonlySet<string>
   updateSelectedSkill: (skillId: string, enabled: boolean) => void
   handleSelectQuickPrompt: (option: ChatInputManualTestPromptOption) => void

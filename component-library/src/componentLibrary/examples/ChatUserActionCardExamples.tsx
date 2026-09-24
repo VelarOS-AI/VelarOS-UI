@@ -38,24 +38,6 @@ const acknowledgeCard = toBlock({
   actions: [{ kind: 'acknowledge', label: '知道了', icon: 'confirm' }],
 })
 
-const enableFeaturesCard = toBlock({
-  id: 'ua-enable',
-  title: '启用方案模式?',
-  description: '开启后 AI 会先给方案、经你批准再执行破坏性操作。',
-  tone: 'warning',
-  icon: 'plugin',
-  blocking: true,
-  actions: [
-    {
-      kind: 'enable_prompt_features',
-      label: '开启方案模式',
-      icon: 'plan',
-      promptFeatures: ['proposal'],
-      completedLabel: '已开启',
-    },
-  ],
-})
-
 const choiceFormCard = toBlock({
   id: 'ua-choice',
   title: '选择部署目标',
@@ -135,13 +117,12 @@ const wizardCard = toBlock({
   },
 })
 
-/** UserActionCard:批准 / 确认 / 启用能力 三种 action 形态。 */
+/** UserActionCard:批准 / 确认 两种 action 形态。 */
 export function UserActionCardActionExample(): ReactElement {
   return (
     <Stack gap="sm">
       <UserActionCardComponent block={approvalCard} sessionId={SESSION_ID} onActionComplete={() => undefined} />
       <UserActionCardComponent block={acknowledgeCard} sessionId={SESSION_ID} onActionComplete={() => undefined} />
-      <UserActionCardComponent block={enableFeaturesCard} sessionId={SESSION_ID} onActionComplete={() => undefined} />
     </Stack>
   )
 }

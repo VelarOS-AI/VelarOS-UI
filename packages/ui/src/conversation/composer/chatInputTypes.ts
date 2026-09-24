@@ -1,11 +1,7 @@
-import type { IconWeight } from "@phosphor-icons/react";
-import type React from "react";
-
 import type { ChatVirtualPasteReference } from "./utils/chatVirtualPasteReferences";
 
-import type { ChatPromptFeatureId, RunProfileSelectionId } from "#contracts";
+import type { RunProfileSelectionId } from "#contracts";
 import type { ReasoningLevel } from "#contracts";
-import type { PromptFeatureLabelKey } from "#internal/promptFeatures";
 
 export interface ChatInputSendDraft {
   /** 当前任务指导为默认；用户显式选择后才排到当前任务之后。 */
@@ -48,33 +44,7 @@ export interface ChatInputSelectionRange {
 
 // ─── Composer submenu ────────────────────────────────────────────────────────
 
-export type ComposerSubmenuId = "quick-prompts" | "plugins" | "skills";
-
-// ─── Prompt feature label keys ───────────────────────────────────────────────
-
-export type ChatInputPromptFeatureLabelKey = PromptFeatureLabelKey;
-
-// ─── 图标组件类型 ─────────────────────────────────────────────────────────────
-// 通用组件类型不包含转发引用组件，因此这里定义成普通可调用接口，
-// 让常规组件和转发引用图标都能按结构赋值。
-export interface ChatInputIconComponent {
-  (props: { size?: number | string; weight?: IconWeight }): React.ReactNode;
-}
-
-// ─── Prompt feature option shapes ────────────────────────────────────────────
-
-export interface ChatInputPromptFeatureOption {
-  id: ChatPromptFeatureId;
-  labelKey: ChatInputPromptFeatureLabelKey;
-  icon: ChatInputIconComponent;
-}
-
-export interface ChatInputPromptFeatureGroupOption {
-  id: string;
-  featureIds: ChatPromptFeatureId[];
-  labelKey: ChatInputPromptFeatureLabelKey;
-  icon: ChatInputIconComponent;
-}
+export type ComposerSubmenuId = "quick-prompts" | "skills";
 
 export interface ChatInputQueuedDraft {
   id: string;

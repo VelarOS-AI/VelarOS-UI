@@ -10,9 +10,69 @@
 
 - 发布包不再随附 `LICENSE`、`NOTICE`、`THIRD_PARTY_NOTICES.md` 与 Tailwind CSS 第三方许可文本：许可证只有
   仓库根目录一份 `LICENSE`。
+- 卡片动作 `enable_prompt_features`：`UserActionCardAction` 去掉这一支，`UserActionCardResult.actionKind` /
+  `ConversationCardResolution.actionKind` 随之收窄。插件体系已下线，没有可开启的能力。
+- 输入框「+」菜单的「插件」子菜单、活动芯片里的插件芯片与写死的插件能力目录（Office 及其细分、Computer Use、
+  HTML 实时预览、Widget）：`ChatInputFeaturesControl` 去掉 `promptFeatures`、`lockedPromptFeatures`、
+  `onPromptFeaturesChange`、`unavailablePromptFeatures`、`resourceAvailabilityResolved` 与
+  `workbenchEditorControlAvailable`（「AI 操控编辑器」开关一直隐藏，状态也存在 `promptFeatures` 里，一并删掉）；
+  `ComposerAddMenuFeaturesProps` 去掉 `showPluginsSubmenu`、`pluginOptions`、`selectedPromptFeatures`、
+  `updatePromptFeatureGroup` 与三项编辑器开关字段，`ChatInputComposerAddMenuBridgeInput.features` 去掉
+  `canTogglePlugins`，`ComposerSubmenuId` 去掉 `'plugins'`；删除 `useComposerPromptFeatures`、
+  `useChatInputPromptFeatureActivationBridge` 与类型 `ChatInputPromptFeatureOption`、
+  `ChatInputPromptFeatureGroupOption`、`ChatInputPromptFeatureLabelKey`、`ChatInputIconComponent`；
+  文案目录删掉 `chat.composerPlugin*`、`chat.composerPlugins`、`chat.composerHtmlArtifacts`、
+  `chat.composerWorkbenchEditorControl(Hint)` 共 15 条。
+- 按工具名归并的工具行：`MergedToolCallRow`、`ToolCallGroup`、`mergeToolCallGroups`、
+  `pickRepresentativeToolBlock`、`TOOL_GROUP_COLLAPSE_MIN`、`ToolRenderGroupingOptions`，以及只为预载工具卡分包的
+  `preloadToolActivityRenderer`。
+
+### Added
+
+- `ScriptExecutionBlock` / `ScriptExecutionCall`（`@velaros-ai/ui/conversation/contracts`）并入 `ContentBlock`：
+  一次 ScriptAct 的 execute 声明，带宿主取好的一句话标题、有界源码、用到的模块与每次能力调用。
+- `ScriptExecutionCard`：一行里是状态、标题（为空时按首个调用的「模块 · 操作」兜底，再没有就是「执行脚本」）与
+  模块标签（去掉 `velaros:` 这类前缀，多于三个收成「+N」）；悬停或键盘聚焦标题行弹出源码气泡（HoverCard，能追进去
+  滚动与选中复制，Escape 关闭）；点开按顺序列出每次调用的状态、外部效果、参数与返回（长的先折起来），失败时标题下
+  一行露出原因。`formatScriptModuleLabel` / `resolveScriptExecutionTitle` 供宿主复用同一套标签与标题兜底。
+- `ToolCallStepCard`：旧 `tool-call` 块的通用步骤卡，与脚本卡同一副外框（工具名、状态、耗时，点开看参数、进度、
+  结果与错误）。
+- `MessageBubble.runInProgress`：这条消息所属的执行还没停时收尾件先不出现；`ChatTranscript` 自己算出来传入。
+- `getToolActivityCountLabel`：活动折叠的「调用了 N 次工具」标题。
+- `HoverCard`（`@velaros-ai/ui/primitives/overlays/HoverCard`）：可悬停详情气泡。停留片刻弹出，指针移进气泡时保持打开，
+  文字可选且选中后不会在复制前消失；键盘聚焦触发元素同样弹出，从不抢焦点；Escape / 外部点击关闭，随触发元素滚动；
+  `widthStrategy="anchor"` 时与触发元素等宽并随其宽度变化同步。气泡不描边，靠表面色与四周投影区分。
+- 工具行悬停详情：`CompactToolRow.hoverContent` 与 `ToolResultSummaryItem.hoverContent`（提供后行可聚焦，行与计数上的
+  原生 title 不再挂出，气泡与行等宽）；`getToolOperations` 推导一次调用实际执行的操作与对象，`ToolCallHoverDetails`
+  渲染详情。内置工具行与归并行（×N）都已接上，归并行按调用顺序逐次列出。未接详情的工具行，溢出全文气泡同样与行等宽、不描边。
+- `describeToolCallHover` / `doesToolCallHoverAddToRow` / `resolveToolCallHoverContent`：先把悬停详情推导成纯数据，
+  再判断它比行多不多出信息，多不出就不给行挂气泡。
+- `getToolMergedDetailItems`：归并行（×N）逐次调用在行内点名的对象，与该工具单独成行时的摘要一致。
+- `PopoverContent` 把触发元素中心在浮层内的坐标写成 `--velar-popover-anchor-center-x/y`，供浮层画指向触发元素的箭头。
+- `ChatMessage.systemNoticeKind`（`rewind` | `goal-continuation`）：系统通知行按类别选图标，目标自动续跑的留痕显示靶心。
+- `scrollBehavior` 新增夹底守卫与自动收起扣留的纯策略（`resolveScrollClampGuard`、
+  `resolveAutoCollapseHold`、`ScrollClampGuardCssVariable`）。
+- `ChatInputFeaturesControl.voiceInput`：传 false 时输入框不显示麦克风按钮，供没有可用语音转写的宿主使用；
+  默认 true，现有用法不变。
+
+### Changed
+
+- 会话里的 `tool-call` 块不再按工具分类渲染（分类图标、命令 / 文件改动 / 搜索结果等专属卡、同名归并的「×N」行、
+  悬停里按工具登记的操作摘要），一律是 `ToolCallStepCard`，按发生顺序各占一行；连续的调用仍收在活动折叠里，
+  折叠标题只数次数，不再拼「已编辑 / 已探索 / 运行命令」。需要专属卡的宿主单独嵌 `ToolCallBlock` 并传自己的
+  `ToolRendererRegistry`。
+- `buildToolRenderSegments(blocks)` 一块一段，去掉 `collapseMin` 与选项参数；`ToolRenderSegment` 只剩
+  `{ kind: 'block', block, key }` 一种形状，脚本执行块的 key 是 `script:${id}`。
+
+### Deprecated
+
+- `MessageBubbleProps.planUpdateIndexByToolCallId` / `ChatTranscriptProps.planUpdateIndexByToolCallId`：计划专属卡
+  不再出现在会话里，计划序号不参与渲染，传了也被忽略。
 
 ### Fixed
 
+- 运行还没结束时，执行中途的助手消息不再提前露出复制与时间、文件改动汇总和动作行：这些消息既不流式也没有运行标记，
+  原判据把它们当作已结束。现在同一轮里上一次执行停下之后、到正在流式或等待作答的那条为止都算没停。
 - 计划卡（顶部固定坞与对话里）的标题显示本地化的「计划 / Plan」，不再显示 plan:update 工具名。
 - 会话重开后记下的滚动位置比现有内容还深时（例如一次展开的长运行留下的位置，重开后历史已折叠），读者往上翻
   会被每一段流式内容拽回底部，发新消息也清不掉：待恢复的位置现在在读者滚动、上滑或发出新消息时作废。
@@ -32,24 +92,6 @@
   `goal:update complete · 修复保存失败`、`browser:act target.click · button 登录`），悬停详情给出比行更完整的内容
   （计划与目标的每一步、目标全文、子 Agent 的提示词、页面地址等）；外部引擎映射来的 `file_path` / `pattern` 参数
   也能读出对象。归并的计划更新行逐次显示「进度 · 当前步骤」。
-
-### Added
-
-- `HoverCard`（`@velaros-ai/ui/primitives/overlays/HoverCard`）：可悬停详情气泡。停留片刻弹出，指针移进气泡时保持打开，
-  文字可选且选中后不会在复制前消失；键盘聚焦触发元素同样弹出，从不抢焦点；Escape / 外部点击关闭，随触发元素滚动；
-  `widthStrategy="anchor"` 时与触发元素等宽并随其宽度变化同步。气泡不描边，靠表面色与四周投影区分。
-- 工具行悬停详情：`CompactToolRow.hoverContent` 与 `ToolResultSummaryItem.hoverContent`（提供后行可聚焦，行与计数上的
-  原生 title 不再挂出，气泡与行等宽）；`getToolOperations` 推导一次调用实际执行的操作与对象，`ToolCallHoverDetails`
-  渲染详情。内置工具行与归并行（×N）都已接上，归并行按调用顺序逐次列出。未接详情的工具行，溢出全文气泡同样与行等宽、不描边。
-- `describeToolCallHover` / `doesToolCallHoverAddToRow` / `resolveToolCallHoverContent`：先把悬停详情推导成纯数据，
-  再判断它比行多不多出信息，多不出就不给行挂气泡。
-- `getToolMergedDetailItems`：归并行（×N）逐次调用在行内点名的对象，与该工具单独成行时的摘要一致。
-- `PopoverContent` 把触发元素中心在浮层内的坐标写成 `--velar-popover-anchor-center-x/y`，供浮层画指向触发元素的箭头。
-- `ChatMessage.systemNoticeKind`（`rewind` | `goal-continuation`）：系统通知行按类别选图标，目标自动续跑的留痕显示靶心。
-- `scrollBehavior` 新增夹底守卫与自动收起扣留的纯策略（`resolveScrollClampGuard`、
-  `resolveAutoCollapseHold`、`ScrollClampGuardCssVariable`）。
-- `ChatInputFeaturesControl.voiceInput`：传 false 时输入框不显示麦克风按钮，供没有可用语音转写的宿主使用；
-  默认 true，现有用法不变。
 
 ## [0.2.35] — 2026-09-08
 

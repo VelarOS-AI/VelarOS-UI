@@ -20,7 +20,6 @@ export interface ChatTranscriptDerivedIndexes {
   hasTurnInputAfterLatestAssistant: boolean
   latestCompletedAssistantMessage: Nullable<ChatMessage>
   latestCompletedAssistantMessageId: Nullable<string>
-  planUpdateIndexByToolCallId: Map<string, number>
   assistantQuestionMap: Map<string, ChatMessage>
   activeAwaitingInputMessageId: Nullable<string>
 }
@@ -54,7 +53,6 @@ export function buildChatTranscriptDerivedIndexes({
   shouldRenderAwaitingInputCard,
   awaitingInputQuestion,
 }: ChatTranscriptDerivedIndexesInput): ChatTranscriptDerivedIndexes {
-  const planUpdateIndexByToolCallId = new Map<string, number>()
   const assistantQuestionMap = new Map<string, ChatMessage>()
   const expectedQuestion = awaitingInputQuestion?.trim() || null
 
@@ -63,16 +61,8 @@ export function buildChatTranscriptDerivedIndexes({
   let activeAwaitingInputMessageId: Nullable<string> = null
   let latestUserMessage: Nullable<ChatMessage> = null
   let hasTurnInputAfterLatestAssistant = false
-  let planUpdateIndex = 0
 
   for (const message of messages) {
-    for (const block of message.blocks) {
-      if (block.type !== 'tool-call' || block.toolName !== 'plan:update') continue
-
-      planUpdateIndexByToolCallId.set(block.toolCallId, planUpdateIndex)
-      planUpdateIndex += 1
-    }
-
     if (isConversationTurnInputMessage(message)) {
       latestUserMessage = message
       hasTurnInputAfterLatestAssistant = true
@@ -109,7 +99,6 @@ export function buildChatTranscriptDerivedIndexes({
     hasTurnInputAfterLatestAssistant,
     latestCompletedAssistantMessage,
     latestCompletedAssistantMessageId: toNullable(latestCompletedAssistantMessage?.id),
-    planUpdateIndexByToolCallId,
     assistantQuestionMap,
     activeAwaitingInputMessageId,
   }

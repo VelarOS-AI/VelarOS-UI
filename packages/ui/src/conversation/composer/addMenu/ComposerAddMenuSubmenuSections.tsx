@@ -1,7 +1,6 @@
-import { type PointerEvent, type ReactElement, useEffect, useState } from 'react'
-import { CaretRightIcon, ChatsCircleIcon, CheckIcon, FileCodeIcon } from '@phosphor-icons/react'
+import { ChatsCircleIcon, CheckIcon, FileCodeIcon } from '@phosphor-icons/react'
+import type { ReactElement } from 'react'
 
-import { cn } from '@velaros-ai/ui/lib/cn'
 import { Text } from '@velaros-ai/ui/primitives/display/Text'
 import {
   BusinessCascadingMenuItem,
@@ -10,19 +9,11 @@ import {
 } from '@velaros-ai/ui/product/menus/BusinessCascadingMenu'
 
 import type { ConversationMessageKey as MessageKey } from '../../i18n'
-import type { ChatInputPromptFeatureGroupOption, ComposerSubmenuId } from '../chatInputTypes'
+import type { ComposerSubmenuId } from '../chatInputTypes'
 
 import type { ComposerAddMenuFeaturesProps } from './composerAddMenu.types'
 
 import styles from '../ChatInput.module.css'
-
-import { isEmpty } from '#internal/runtime'
-
-function isOfficeDetailPluginOption(option: ChatInputPromptFeatureGroupOption): boolean {
-  return (
-    option.id !== 'office' && option.featureIds.some((featureId) => featureId.startsWith('office-'))
-  )
-}
 
 export interface ComposerAddMenuSubmenuSectionsProps {
   menu: BusinessCascadingMenuRenderProps
@@ -40,44 +31,13 @@ export function ComposerAddMenuSubmenuSections({
   features: {
     showSkillsSubmenu,
     showQuickPromptsSubmenu,
-    showPluginsSubmenu,
     availableSkills,
     quickPrompts,
-    pluginOptions,
-    selectedPromptFeatures,
-    updatePromptFeatureGroup,
     selectedSkillIdSet,
     updateSelectedSkill,
     handleSelectQuickPrompt,
   },
 }: ComposerAddMenuSubmenuSectionsProps): ReactElement {
-  const [activePluginDetailId, setActivePluginDetailId] = useState<Nullable<string>>(null)
-  const topLevelPluginOptions = pluginOptions.filter(
-    (option) => option.id === 'office' || !isOfficeDetailPluginOption(option)
-  )
-  const officeDetailOptions = pluginOptions.filter(isOfficeDetailPluginOption)
-  const showOfficeDetailMenu = activePluginDetailId === 'office' && !isEmpty(officeDetailOptions)
-
-  useEffect(() => {
-    if (activeSubmenuId !== 'plugins') setActivePluginDetailId(null)
-  }, [activeSubmenuId])
-
-  function isPluginOptionSelected(option: ChatInputPromptFeatureGroupOption): boolean {
-    return option.featureIds.every((featureId) => selectedPromptFeatures.has(featureId))
-  }
-
-  function handlePluginPanelPointerMove(event: PointerEvent<HTMLDivElement>): void {
-    const target = event.target
-    if (!(target instanceof Element)) return
-    if (target.closest('[data-plugin-detail-menu="true"]')) return
-
-    const pluginItem = target.closest('[data-plugin-item="true"]') as Nullable<HTMLElement>
-    if (!pluginItem && activePluginDetailId === 'office') return
-
-    const pluginId = pluginItem?.dataset.pluginId
-    setActivePluginDetailId(pluginId === 'office' ? 'office' : null)
-  }
-
   return (
     <>
       {showQuickPromptsSubmenu && activeSubmenuId === 'quick-prompts' && (
@@ -100,94 +60,6 @@ export function ComposerAddMenuSubmenuSections({
               <Text className={menu.classes.itemLabel}>{option.title}</Text>
             </BusinessCascadingMenuItem>
           ))}
-        </BusinessCascadingSubmenuSection>
-      )}
-
-      {showPluginsSubmenu && activeSubmenuId === 'plugins' && (
-        <BusinessCascadingSubmenuSection
-          menu={menu}
-          className={cn(styles.composerPluginMenu, menu.classes.allowOverflowPanel)}
-          data-plugin-layout="three-column"
-          onPointerMove={handlePluginPanelPointerMove}
-          submenuWidth="var(--chat-input-menu-plugin-width)"
-          header={t('chat.composerPluginCount', { count: topLevelPluginOptions.length })}
-        >
-          {topLevelPluginOptions.map((option) => {
-            const selected = isPluginOptionSelected(option)
-            const Icon = option.icon
-
-            return (
-              <button
-                type="button"
-                key={option.id}
-                className={styles.composerPluginItem}
-                data-plugin-id={option.id}
-                data-plugin-item="true"
-                data-tour-id={option.id === 'office' ? 'chat-plugin-office' : undefined}
-                data-selected={selected}
-                aria-pressed={selected}
-                title={t(option.labelKey)}
-                onClick={() => updatePromptFeatureGroup(option, !selected)}
-                disabled={disabled}
-              >
-                <span className={styles.composerPluginIcon}>
-                  <Icon size={13} weight="fill" />
-                </span>
-                <span>{t(option.labelKey)}</span>
-                {selected && (
-                  <CheckIcon size={11} weight="bold" className={styles.composerPluginCheck} />
-                )}
-                {option.id === 'office' && !isEmpty(officeDetailOptions) && (
-                  <CaretRightIcon size={11} className={styles.composerPluginDisclosure} />
-                )}
-              </button>
-            )
-          })}
-          {showOfficeDetailMenu && (
-            <BusinessCascadingSubmenuSection
-              menu={menu}
-              className={cn(styles.composerOfficeDetailMenu, menu.classes.nestedSubmenuPanel)}
-              data-plugin-detail-menu="true"
-              hideHeader
-              onPointerEnter={() => setActivePluginDetailId('office')}
-              placementLevel={2}
-              submenuWidth="var(--chat-input-menu-office-detail-width)"
-            >
-              {officeDetailOptions.map((option) => {
-                const selected = isPluginOptionSelected(option)
-                const Icon = option.icon
-
-                return (
-                  <BusinessCascadingMenuItem
-                    menu={menu}
-                    key={option.id}
-                    className={styles.composerOfficeDetailItem}
-                    data-plugin-id={option.id}
-                    data-plugin-detail-item="true"
-                    selected={selected}
-                    selectedIndicator={
-                      <CheckIcon
-                        size={11}
-                        weight="bold"
-                        className={styles.composerOfficeDetailCheck}
-                      />
-                    }
-                    aria-pressed={selected}
-                    title={t(option.labelKey)}
-                    onClick={() => updatePromptFeatureGroup(option, !selected)}
-                    disabled={disabled}
-                  >
-                    <span className={styles.composerOfficeDetailIcon}>
-                      <Icon size={13} weight="fill" />
-                    </span>
-                    <Text className={cn(menu.classes.itemLabel, styles.composerOfficeDetailLabel)}>
-                      {t(option.labelKey)}
-                    </Text>
-                  </BusinessCascadingMenuItem>
-                )
-              })}
-            </BusinessCascadingSubmenuSection>
-          )}
         </BusinessCascadingSubmenuSection>
       )}
 

@@ -126,7 +126,6 @@ export interface UseChatConversationTranscriptModelReturn {
   latestCompletedAssistantMessageId: Nullable<string>
   /** 每次执行的约价，键是承载运行标记的助手消息 id（见 {@link buildRunCostEstimates}）。 */
   runCostEstimateByMessageId: ReadonlyMap<string, RunCostEstimate>
-  planUpdateIndexByToolCallId: Map<string, number>
   assistantQuestionMap: Map<string, ChatMessage>
   goalCompletionSummaryByMessageId: Map<string, GoalCompletionActivitySummary>
   activeAwaitingInputMessageId: Nullable<string>
@@ -156,7 +155,6 @@ export function useChatConversationTranscriptModel({
     latestAssistantMessage,
     hasTurnInputAfterLatestAssistant,
     latestCompletedAssistantMessageId,
-    planUpdateIndexByToolCallId,
     assistantQuestionMap,
     activeAwaitingInputMessageId,
   } = useMemo(
@@ -238,7 +236,6 @@ export function useChatConversationTranscriptModel({
     hasTurnInputAfterLatestAssistant,
     latestCompletedAssistantMessageId,
     runCostEstimateByMessageId,
-    planUpdateIndexByToolCallId,
     assistantQuestionMap,
     goalCompletionSummaryByMessageId,
     activeAwaitingInputMessageId,

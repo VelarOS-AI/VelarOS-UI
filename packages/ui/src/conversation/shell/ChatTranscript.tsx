@@ -7,6 +7,7 @@ import type { RunCostEstimate } from '../blocks/messageCostEstimate'
 import type { FileChangeSummaryListEntry } from '../cards/FileChangeSummaryList'
 import type {
   ConversationMessageRunMarker,
+  ConversationRunMarkerStatus,
   ConversationTurnContextView,
 } from '../projection'
 import type { ConversationRewindPlan } from '../projection'
@@ -57,6 +58,16 @@ interface ChatTranscriptNavigationState {
   hasNextSection: boolean
 }
 
+/** 等待确认或输入只是暂停：作答后同一次执行接着跑。 */
+function isRunPausedMarkerStatus(status: LooseOptional<ConversationRunMarkerStatus>): boolean {
+  return status === 'awaiting-confirmation' || status === 'awaiting-input'
+}
+
+/** 完成、失败、中止：执行停在这条消息上。 */
+function isRunEndMarkerStatus(status: LooseOptional<ConversationRunMarkerStatus>): boolean {
+  return !!status && !isRunPausedMarkerStatus(status)
+}
+
 /** 同一轮归组后的子消息始终压平；折叠边界只由承载整轮的 assistant 生成一次。 */
 export function shouldForceGroupedActivityFlat(hasGroupedRunActivity: boolean): boolean {
   return hasGroupedRunActivity
@@ -101,6 +112,7 @@ export interface ChatTranscriptProps {
   getInlineNotice?: (message: ChatMessage) => Nullable<ChatInlineNoticeMeta>
   inlineNoticeRuntimeSource?: LooseOptional<ChatInlineNoticeRuntimeSource>
   showToolDetails?: boolean
+  /** @deprecated 工具调用不再有计划专属卡，计划序号不参与渲染；保留只为已发布宿主。 */
   planUpdateIndexByToolCallId?: ReadonlyMap<string, number>
   activeProjectRoot?: LooseOptional<string>
   projectRoots?: ProjectRootEntry[]
@@ -150,7 +162,6 @@ function ChatTranscriptInner({
   getInlineNotice,
   inlineNoticeRuntimeSource = null,
   showToolDetails = true,
-  planUpdateIndexByToolCallId,
   activeProjectRoot,
   projectRoots,
   canShowFileChangeSummary = true,
@@ -185,6 +196,9 @@ function ChatTranscriptInner({
         isCompletedAssistant: (message) =>
           !getIsStreaming?.(message) && getRunMarker?.(message)?.status === 'completed',
         hasRunMarker: (message) => !!getRunMarker?.(message),
+        isStreamingMessage: (message) => !!getIsStreaming?.(message),
+        isRunEnd: (message) => isRunEndMarkerStatus(getRunMarker?.(message)?.status),
+        isRunPaused: (message) => isRunPausedMarkerStatus(getRunMarker?.(message)?.status),
       }),
     [getIsStreaming, getRunMarker, messages]
   )
@@ -292,6 +306,7 @@ function ChatTranscriptInner({
           sessionId={sessionId}
           questionMessage={toNullable(getQuestionMessage?.(message))}
           isStreaming={forceActivityFlat || groupedRunIsStreaming}
+          runInProgress={!forceActivityFlat && !!options.presentation?.runInProgress}
           runMarker={forceActivityFlat ? null : groupedRunMarker}
           implicitlyCompletedRun={
             !forceActivityFlat && !!options.presentation?.implicitlyCompletedRun
@@ -299,7 +314,6 @@ function ChatTranscriptInner({
           inlineNotice={inlineNotice}
           inlineNoticeRuntimeSource={inlineNotice ? inlineNoticeRuntimeSource : null}
           showToolDetails={showToolDetails}
-          planUpdateIndexByToolCallId={planUpdateIndexByToolCallId}
           activeProjectRoot={activeProjectRoot}
           projectRoots={projectRoots}
           canShowFileChangeSummary={forceActivityFlat ? false : canShowFileChangeSummary}

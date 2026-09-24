@@ -9,6 +9,8 @@ import {
   useState,
 } from "react";
 
+import { ScriptExecutionCard } from "../cards/ScriptExecutionCard";
+import { ToolCallStepCard } from "../cards/ToolCallStepCard";
 import { prepareStreamdownMarkdownText } from "../markdown/streamdownMarkdownSource.utils";
 import type { UserActionResolution } from "../projection";
 import { useTimerScope } from "../react-hooks/useTimerScope";
@@ -17,15 +19,17 @@ import {
   useConversationRenderSlots,
 } from "../render-slots";
 import { ReplaceableRenderSlot } from "../render-slots/ReplaceableRenderSlot";
-import { LazyToolCallBlock } from "../tool-render/LazyToolCallBlock";
-import { shouldRenderToolBlockCompact } from "../tool-render/messageBubbleToolModel";
 
 import { shouldUseLiveTextRenderer } from "./liveTextRendererMode";
 import {
   areRunMarkersEqual,
   type ConversationMessageRunMarker,
 } from "./messageBubbleRenderModel";
-import { ToolActivityMotion } from "./ToolActivityMotion";
+import {
+  getScriptExecutionMotionRevision,
+  getToolActivityMotionRevision,
+  ToolActivityMotion,
+} from "./ToolActivityMotion";
 
 import styles from "./MessageBubble.module.css";
 
@@ -64,7 +68,6 @@ type MessageContentBlockRenderContext = {
   sessionId: string;
   messageId: string;
   runMarker: LooseOptional<ConversationMessageRunMarker>;
-  planUpdateIndex?: number;
   blockIndex?: number;
   formatPathForDisplay?: (path: string) => string;
   onOpenBrowserLink?: (url: string) => void | Promise<void>;
@@ -99,7 +102,6 @@ interface MessageContentBlockProps {
   sessionId: string;
   messageId: string;
   runMarker?: LooseOptional<ConversationMessageRunMarker>;
-  planUpdateIndex?: number;
   blockIndex?: number;
   formatPathForDisplay?: (path: string) => string;
   onOpenBrowserLink?: (url: string) => void | Promise<void>;
@@ -116,27 +118,40 @@ interface MessageContentBlockProps {
 }
 
 const STRUCTURED_BLOCK_RENDERERS = {
-  "tool-call": (block, ctx) => (
-    <ToolActivityMotion
-      activityKey={`tool:${(block as Extract<ContentBlock, { type: "tool-call" }>).toolCallId}`}
-      blocks={[block as Extract<ContentBlock, { type: "tool-call" }>]}
-      isStreaming={ctx.animateLiveToolActivity}
-      messageId={ctx.messageId}
-      sessionId={ctx.sessionId}
-    >
-      <Suspense fallback={null}>
-        <LazyToolCallBlock
-          block={block as Extract<ContentBlock, { type: "tool-call" }>}
-          compact={shouldRenderToolBlockCompact(
-            (block as Extract<ContentBlock, { type: "tool-call" }>).toolName,
-          )}
-          sessionId={ctx.sessionId}
-          planUpdateIndex={ctx.planUpdateIndex}
-          formatPathForDisplay={ctx.formatPathForDisplay}
-        />
-      </Suspense>
-    </ToolActivityMotion>
-  ),
+  // 旧会话里的工具调用不再按工具分类换专属卡，一律是通用的步骤卡。
+  "tool-call": (block, ctx) => {
+    const toolCallBlock = block as Extract<ContentBlock, { type: "tool-call" }>;
+
+    return (
+      <ToolActivityMotion
+        activityKey={`tool:${toolCallBlock.toolCallId}`}
+        revision={getToolActivityMotionRevision([toolCallBlock])}
+        isStreaming={ctx.animateLiveToolActivity}
+        messageId={ctx.messageId}
+        sessionId={ctx.sessionId}
+      >
+        <ToolCallStepCard block={toolCallBlock} />
+      </ToolActivityMotion>
+    );
+  },
+  "script-execution": (block, ctx) => {
+    const scriptBlock = block as Extract<
+      ContentBlock,
+      { type: "script-execution" }
+    >;
+
+    return (
+      <ToolActivityMotion
+        activityKey={`script:${scriptBlock.id}`}
+        revision={getScriptExecutionMotionRevision(scriptBlock)}
+        isStreaming={ctx.animateLiveToolActivity}
+        messageId={ctx.messageId}
+        sessionId={ctx.sessionId}
+      >
+        <ScriptExecutionCard block={scriptBlock} />
+      </ToolActivityMotion>
+    );
+  },
   thinking: (block, ctx) => (
     <Suspense fallback={null}>
       <LazyThinkingBlock
@@ -362,7 +377,6 @@ function MessageContentBlockInner({
   sessionId,
   messageId,
   runMarker = null,
-  planUpdateIndex,
   blockIndex,
   formatPathForDisplay,
   onOpenBrowserLink,
@@ -404,7 +418,6 @@ function MessageContentBlockInner({
       sessionId,
       messageId,
       runMarker,
-      planUpdateIndex,
       blockIndex,
       formatPathForDisplay,
       onOpenBrowserLink,
@@ -487,14 +500,13 @@ function areThinkingBlockPropsEqual(
   );
 }
 
-function areToolCallBlockPropsEqual(
+/** 步骤卡（工具调用与脚本执行）只读 block 本身，动效只看会话与消息身份。 */
+function areStepBlockPropsEqual(
   prev: Readonly<MessageContentBlockProps>,
   next: Readonly<MessageContentBlockProps>,
 ): boolean {
   return (
-    prev.sessionId === next.sessionId &&
-    prev.planUpdateIndex === next.planUpdateIndex &&
-    prev.formatPathForDisplay === next.formatPathForDisplay
+    prev.sessionId === next.sessionId && prev.messageId === next.messageId
   );
 }
 
@@ -521,7 +533,8 @@ function areMessageContentBlockPropsEqual(
     case "thinking":
       return areThinkingBlockPropsEqual(prev, next);
     case "tool-call":
-      return areToolCallBlockPropsEqual(prev, next);
+    case "script-execution":
+      return areStepBlockPropsEqual(prev, next);
     case "html-artifact":
       return true;
     case "user-action-card":

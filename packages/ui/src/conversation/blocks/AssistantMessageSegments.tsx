@@ -25,12 +25,7 @@ import {
   shouldUseProcessedActivitySummaryBoundary,
 } from './messageBubbleRenderModel'
 import { MessageContentBlock } from './MessageContentBlock'
-import {
-  MergedToolCallRow,
-  preloadToolActivityRenderer,
-  ToolActivityDisclosure,
-  ToolCallGroup,
-} from './MessageToolActivity'
+import { ToolActivityDisclosure } from './MessageToolActivity'
 import { StreamFadeViewContext, useStreamFadeViewState } from './streamTextFade'
 
 import styles from './MessageBubble.module.css'
@@ -41,7 +36,7 @@ import type {
   ToolCallBlock as ToolCallBlockType,
   UserActionCardResult,
 } from '#contracts'
-import { isBlank, isEmpty, isPresent, optionalWhenLazy } from '#internal/runtime'
+import { isBlank, isEmpty, isPresent } from '#internal/runtime'
 
 interface MessageSegmentSuffixState {
   hasStartedTextAfter: boolean
@@ -76,7 +71,6 @@ export function shouldRequestProcessedActivityAutoCollapse(
 function messageSegmentStartsText(segment: MessageRenderSegment): boolean {
   return (
     segment.kind === 'segment' &&
-    segment.segment.kind === 'block' &&
     segment.segment.block.type === 'text' &&
     !isBlank(segment.segment.block.text)
   )
@@ -85,7 +79,6 @@ function messageSegmentStartsText(segment: MessageRenderSegment): boolean {
 function messageSegmentStartsThinking(segment: MessageRenderSegment): boolean {
   return (
     segment.kind === 'segment' &&
-    segment.segment.kind === 'block' &&
     segment.segment.block.type === 'thinking' &&
     !isBlank(segment.segment.block.text)
   )
@@ -163,25 +156,6 @@ export function shouldRenderProcessedActivityDisclosure({
   )
 }
 
-function collectToolCallBlocksFromToolRenderSegment(
-  segment: ToolRenderSegment,
-  blocks: ToolCallBlockType[]
-): void {
-  switch (segment.kind) {
-    case 'tool-group':
-      blocks.push(...segment.blocks)
-      return
-    case 'merged-tool':
-      blocks.push(...segment.group.blocks)
-      return
-    case 'block':
-      if (segment.block.type === 'tool-call') {
-        blocks.push(segment.block)
-      }
-      return
-  }
-}
-
 function collectToolCallBlocksFromMessageRenderSegment(
   segment: MessageRenderSegment,
   blocks: ToolCallBlockType[]
@@ -191,15 +165,13 @@ function collectToolCallBlocksFromMessageRenderSegment(
     return
   }
 
-  collectToolCallBlocksFromToolRenderSegment(segment.segment, blocks)
+  if (segment.segment.block.type === 'tool-call') blocks.push(segment.segment.block)
 }
 
 /** 消息里已有的正文与思考字数（淡入判断「刚诞生的回答」用，只在挂载时算一次）。 */
 function measureStreamedTextLength(segments: readonly MessageRenderSegment[]): number {
   let length = 0
-  const add = (segment: ToolRenderSegment): void => {
-    if (segment.kind !== 'block') return
-    const { block } = segment
+  const add = ({ block }: ToolRenderSegment): void => {
     if (block.type === 'text' || block.type === 'thinking') length += block.text.length
   }
   for (const segment of segments) {
@@ -218,7 +190,6 @@ function AssistantMessageSegmentsInner({
   streamingTextSegmentKey,
   sessionId,
   runMarker = null,
-  planUpdateIndexByToolCallId,
   getBlockIndex,
   formatPathForDisplay,
   onOpenBrowserLink,
@@ -242,7 +213,6 @@ function AssistantMessageSegmentsInner({
   sessionId: string
   runMarker?: LooseOptional<ConversationMessageRunMarker>
   questionMessage?: LooseOptional<ChatMessage>
-  planUpdateIndexByToolCallId?: ReadonlyMap<string, number>
   getBlockIndex?: (block: ContentBlock) => number | undefined
   formatPathForDisplay?: (path: string) => string
   onOpenBrowserLink?: (url: string) => void | Promise<void>
@@ -318,12 +288,6 @@ function AssistantMessageSegmentsInner({
     setToolMotionArmedMessageId(isStreaming ? messageId : null)
   }, [isStreaming, messageId])
 
-  useEffect(() => {
-    if (!isStreaming) return
-
-    void preloadToolActivityRenderer()
-  }, [isStreaming])
-
   // 串行传播由状态层保证：ChatStreamPacer 把思考/正文/工具归并成单 FIFO 按到达顺序逐帧吐进
   // session，思考中途的工具调用会截断思考块、后续思考在工具卡下方新开一块（见
   // chatStreamTextState 的相邻合并判定）。组件直接渲染状态文本，不再有落后于状态的影子揭示，
@@ -395,71 +359,29 @@ function AssistantMessageSegmentsInner({
     })
   }
 
-  const renderToolRenderSegment = (
-    segment: ToolRenderSegment,
-    options: { autoCollapseThinking?: boolean } = {}
-  ): Nullable<ReactElement> => {
-    switch (segment.kind) {
-      case 'tool-group':
-        return (
-          <ToolCallGroup
-            key={segment.key}
-            blocks={segment.blocks}
-            animateLiveToolActivity={animateLiveToolActivity}
-            messageId={messageId}
-            sessionId={sessionId}
-            planUpdateIndexByToolCallId={planUpdateIndexByToolCallId}
-            formatPathForDisplay={formatPathForDisplay}
-          />
-        )
-      case 'merged-tool':
-        return (
-          <MergedToolCallRow
-            key={segment.key}
-            group={segment.group}
-            animateLiveToolActivity={animateLiveToolActivity}
-            messageId={messageId}
-            sessionId={sessionId}
-            planUpdateIndexByToolCallId={planUpdateIndexByToolCallId}
-            formatPathForDisplay={formatPathForDisplay}
-          />
-        )
-      case 'block':
-        break
-    }
-
-    const planUpdateIndex = optionalWhenLazy(segment.block.type === 'tool-call', () =>
-      planUpdateIndexByToolCallId?.get(
-        (segment.block as Extract<ContentBlock, { type: 'tool-call' }>).toolCallId
-      )
-    )
-
-    return (
-      <MessageContentBlock
-        key={segment.key}
-        block={segment.block}
-        blockAnimationKey={segment.key}
-        animateLiveToolActivity={animateLiveToolActivity}
-        isStreaming={isStreaming}
-        autoCollapseThinking={options.autoCollapseThinking}
-        thinkingDefaultExpanded={holdExpandedForReader}
-        animateStreamingText={shouldRevealStreamingText && segment.key === streamingTextSegmentKey}
-        sessionId={sessionId}
-        messageId={messageId}
-        runMarker={
-          !isStreaming && runMarker && segment.key === lastTextSegmentKey ? runMarker : null
-        }
-        planUpdateIndex={planUpdateIndex}
-        blockIndex={getBlockIndex?.(segment.block)}
-        formatPathForDisplay={formatPathForDisplay}
-        onOpenBrowserLink={onOpenBrowserLink}
-        onOpenProjectPath={onOpenProjectPath}
-        activeUserActionCardIds={activeUserActionCardIds}
-        onResolveUserActionCard={onResolveUserActionCard}
-        onTranslateThinkingBlock={onTranslateThinkingBlock}
-      />
-    )
-  }
+  const renderToolRenderSegment = (segment: ToolRenderSegment): ReactElement => (
+    <MessageContentBlock
+      key={segment.key}
+      block={segment.block}
+      blockAnimationKey={segment.key}
+      animateLiveToolActivity={animateLiveToolActivity}
+      isStreaming={isStreaming}
+      thinkingDefaultExpanded={holdExpandedForReader}
+      animateStreamingText={shouldRevealStreamingText && segment.key === streamingTextSegmentKey}
+      sessionId={sessionId}
+      messageId={messageId}
+      runMarker={
+        !isStreaming && runMarker && segment.key === lastTextSegmentKey ? runMarker : null
+      }
+      blockIndex={getBlockIndex?.(segment.block)}
+      formatPathForDisplay={formatPathForDisplay}
+      onOpenBrowserLink={onOpenBrowserLink}
+      onOpenProjectPath={onOpenProjectPath}
+      activeUserActionCardIds={activeUserActionCardIds}
+      onResolveUserActionCard={onResolveUserActionCard}
+      onTranslateThinkingBlock={onTranslateThinkingBlock}
+    />
+  )
 
   const shouldRenderInlineActivitySegment = (
     segment: MessageRenderSegment,

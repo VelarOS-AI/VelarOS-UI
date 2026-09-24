@@ -1,77 +1,15 @@
 import React from 'react'
 import {
-  ChartBarIcon,
-  CursorClickIcon,
-  FileCodeIcon,
-  FileDocIcon,
-  FileHtmlIcon,
-  FilePdfIcon,
-  FilePptIcon,
   FileTextIcon,
-  FileXlsIcon,
   FlaskIcon,
   FolderOpenIcon,
   FolderPlusIcon,
-  ListChecksIcon,
-  PuzzlePieceIcon,
   ShieldCheckIcon,
 } from '@phosphor-icons/react'
 
-import type {
-  BrowserSpeechRecognitionConstructor,
-  ChatInputIconComponent,
-  ChatInputPromptFeatureGroupOption,
-  ChatInputPromptFeatureOption,
-  ComposerSubmenuId,
-} from './chatInputTypes'
+import type { BrowserSpeechRecognitionConstructor } from './chatInputTypes'
 
-import type { ChatPromptFeatureId } from '#contracts'
-import {
-  isOfficePromptFeature,
-  OfficePromptFeatures,
-  PluginPromptFeatures,
-  PromptFeatureGroupManifests,
-  type PromptFeatureIconId,
-  PromptFeatureManifests,
-  PromptFeatureOrder,
-} from '#internal/promptFeatures'
 import { toNullable } from '#internal/runtime'
-
-// ─── OfficeSuiteIcon ──────────────────────────────────────────────────────────
-
-export function OfficeSuiteIcon({
-  size = 16,
-  weight,
-}: {
-  size?: number | string
-  weight?: string
-}): React.ReactElement {
-  const strokeWidth = weight === 'bold' || weight === 'fill' ? 20 : 16
-
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 256 256"
-      fill="none"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        d="M86 45 177 28l39 25v150l-39 25-91-17-46-32V77Z"
-        stroke="currentColor"
-        strokeWidth={strokeWidth}
-        strokeLinejoin="round"
-      />
-      <path
-        d="M86 45v166m0-166 86 32v102l-86 32m86-134 44-24m-44 126 44 24"
-        stroke="currentColor"
-        strokeWidth={strokeWidth}
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
 
 // ─── Voice constants ──────────────────────────────────────────────────────────
 
@@ -111,42 +49,6 @@ export function getManualTestPromptIcon(promptId: string): React.ReactNode {
       return <FlaskIcon size={14} />
   }
 }
-
-// ─── Prompt feature configuration ────────────────────────────────────────────
-
-const PromptFeatureIconMap: Record<PromptFeatureIconId, ChatInputIconComponent> = {
-  office: OfficeSuiteIcon,
-  computer: CursorClickIcon,
-  html: FileHtmlIcon,
-  widget: ChartBarIcon,
-  word: FileDocIcon,
-  spreadsheet: FileXlsIcon,
-  presentation: FilePptIcon,
-  pdf: FilePdfIcon,
-  latex: FileCodeIcon,
-}
-
-export const ChatPromptFeatureOptions: ChatInputPromptFeatureOption[] = PromptFeatureManifests
-  .filter((feature) => PluginPromptFeatures.includes(feature.id) && !feature.parentId)
-  .map((feature) => ({
-    id: feature.id,
-    labelKey: feature.labelKey,
-    icon: PromptFeatureIconMap[feature.iconId],
-  }))
-
-export const OfficePromptFeatureOptions: ChatInputPromptFeatureGroupOption[] =
-  PromptFeatureGroupManifests.filter((group) => group.parentId === 'office').map((group) => ({
-    id: group.id,
-    featureIds: [...group.featureIds],
-    labelKey: group.labelKey,
-    icon: PromptFeatureIconMap[group.iconId],
-  }))
-
-export const OfficePromptFeatureIds = [...OfficePromptFeatures]
-export const NonOfficePromptFeatureOptions: ChatInputPromptFeatureOption[] =
-  ChatPromptFeatureOptions.filter((option) => option.id !== 'office')
-export const ChatPromptFeatureOrder: ChatPromptFeatureId[] = [...PromptFeatureOrder]
-export { isOfficePromptFeature }
 
 // ─── File helpers ─────────────────────────────────────────────────────────────
 
@@ -276,21 +178,4 @@ export function normalizeIncomingFile(file: File, index: number): File {
   const ext = file.type.split('/')[1] ?? 'bin'
   const newName = `image-${index + 1}.${ext}`
   return new File([file], newName, { type: file.type, lastModified: file.lastModified })
-}
-
-// ─── Submenu helpers ──────────────────────────────────────────────────────────
-
-export const ComposerSubmenuIds: ComposerSubmenuId[] = ['quick-prompts', 'plugins', 'skills']
-
-// ─── Skill helpers ────────────────────────────────────────────────────────────
-
-export function getSkillIcon(skillId: string): React.ReactNode {
-  switch (skillId) {
-    case 'plan':
-      return <ListChecksIcon size={14} />
-    case 'plugins':
-      return <PuzzlePieceIcon size={14} />
-    default:
-      return null
-  }
 }

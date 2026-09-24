@@ -1484,12 +1484,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "((id: string) => void)"
     },
     {
-      "name": "ChatInputFunctionBar.activePluginOptions",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "ChatInputPromptFeatureGroupOption[]",
-      "recommended": "Required"
-    },
-    {
       "name": "ChatInputFunctionBar.activeSkillOptions",
       "description": "Auto-generated from TypeScript props.",
       "type": "ChatInputSkillOption[]",
@@ -1509,17 +1503,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "name": "ChatInputFunctionBar.onOpenSkillDetail",
       "description": "Auto-generated from TypeScript props.",
       "type": "ChatInputSkillDetailHandler"
-    },
-    {
-      "name": "ChatInputFunctionBar.lockedPromptFeatures",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "ChatPromptFeatureId[]"
-    },
-    {
-      "name": "ChatInputFunctionBar.updatePromptFeatureGroup",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "(option: ChatInputPromptFeatureGroupOption, enabled: boolean) => void",
-      "recommended": "Required"
     },
     {
       "name": "ChatInputFunctionBar.updateSelectedSkill",
@@ -2308,12 +2291,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "((id: string) => void)"
     },
     {
-      "name": "ComposerActiveChipsBar.activePluginOptions",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "ChatInputPromptFeatureGroupOption[]",
-      "recommended": "Required"
-    },
-    {
       "name": "ComposerActiveChipsBar.activeSkillOptions",
       "description": "Auto-generated from TypeScript props.",
       "type": "ChatInputSkillOption[]",
@@ -2333,17 +2310,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "name": "ComposerActiveChipsBar.onOpenSkillDetail",
       "description": "Auto-generated from TypeScript props.",
       "type": "ChatInputSkillDetailHandler"
-    },
-    {
-      "name": "ComposerActiveChipsBar.lockedPromptFeatures",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "ChatPromptFeatureId[]"
-    },
-    {
-      "name": "ComposerActiveChipsBar.updatePromptFeatureGroup",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "(option: ChatInputPromptFeatureGroupOption, enabled: boolean) => void",
-      "recommended": "Required"
     },
     {
       "name": "ComposerActiveChipsBar.updateSelectedSkill",
@@ -2436,12 +2402,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "recommended": "Required"
     },
     {
-      "name": "ComposerAddMenuFeatures.showPluginsSubmenu",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "boolean",
-      "recommended": "Required"
-    },
-    {
       "name": "ComposerAddMenuFeatures.canTogglePlanFeature",
       "description": "Auto-generated from TypeScript props.",
       "type": "boolean",
@@ -2458,21 +2418,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "description": "Auto-generated from TypeScript props.",
       "type": "(enabled: boolean) => void",
       "recommended": "Required"
-    },
-    {
-      "name": "ComposerAddMenuFeatures.canToggleWorkbenchEditorControl",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "boolean"
-    },
-    {
-      "name": "ComposerAddMenuFeatures.workbenchEditorControlActive",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "boolean"
-    },
-    {
-      "name": "ComposerAddMenuFeatures.updateWorkbenchEditorControl",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "((enabled: boolean) => void)"
     },
     {
       "name": "ComposerAddMenuFeatures.canToggleGoalMode",
@@ -2507,24 +2452,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "name": "ComposerAddMenuFeatures.quickPrompts",
       "description": "Auto-generated from TypeScript props.",
       "type": "ChatInputManualTestPromptOption[]",
-      "recommended": "Required"
-    },
-    {
-      "name": "ComposerAddMenuFeatures.pluginOptions",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "ChatInputPromptFeatureGroupOption[]",
-      "recommended": "Required"
-    },
-    {
-      "name": "ComposerAddMenuFeatures.selectedPromptFeatures",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "ReadonlySet<ChatPromptFeatureId>",
-      "recommended": "Required"
-    },
-    {
-      "name": "ComposerAddMenuFeatures.updatePromptFeatureGroup",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "(option: ChatInputPromptFeatureGroupOption, enabled: boolean) => void",
       "recommended": "Required"
     },
     {
@@ -3592,6 +3519,64 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "defaultValue": "'md'"
     }
   ],
+  ExecutionStepFrame: [
+    {
+      "name": "ExecutionStepFrame.slot",
+      "description": "写在根节点 `data-slot` 上，宿主与测试据此认出是哪种步骤卡。",
+      "type": "\"script-execution\" | \"tool-call-step\"",
+      "recommended": "Required"
+    },
+    {
+      "name": "ExecutionStepFrame.tone",
+      "description": "Auto-generated from TypeScript props.",
+      "type": "ExecutionStepTone",
+      "recommended": "Required"
+    },
+    {
+      "name": "ExecutionStepFrame.statusLabel",
+      "description": "状态的读屏文字；图标本身不带字。",
+      "type": "string",
+      "recommended": "Required"
+    },
+    {
+      "name": "ExecutionStepFrame.title",
+      "description": "Auto-generated from TypeScript props.",
+      "type": "string",
+      "recommended": "Required"
+    },
+    {
+      "name": "ExecutionStepFrame.monospaceTitle",
+      "description": "标题是工具名这类标识符时用等宽字。",
+      "type": "boolean",
+      "defaultValue": "false"
+    },
+    {
+      "name": "ExecutionStepFrame.reason",
+      "description": "标题下那行灰红小字：不点开也看得到为什么失败。",
+      "type": "LooseOptional<string>"
+    },
+    {
+      "name": "ExecutionStepFrame.tags",
+      "description": "标题右边的标签（用到的模块、工具名），用 `ExecutionStep.module.css` 的 `tags` / `tag` 排。",
+      "type": "ReactNode"
+    },
+    {
+      "name": "ExecutionStepFrame.meta",
+      "description": "行尾的状态文字（耗时、执行中）。",
+      "type": "ReactNode"
+    },
+    {
+      "name": "ExecutionStepFrame.sourcePreview",
+      "description": "悬停标题行时弹出的源码预览；给了才挂气泡，行尾同时出现代码图标作提示。",
+      "type": "ReactNode"
+    },
+    {
+      "name": "ExecutionStepFrame.renderDetails",
+      "description": "展开后的详情；只在展开期间渲染，收起的卡不付这份开销。",
+      "type": "() => ReactNode",
+      "recommended": "Required"
+    }
+  ],
   FileChangeSummaryList: [
     {
       "name": "FileChangeSummaryList.entries",
@@ -4346,6 +4331,11 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "boolean"
     },
     {
+      "name": "MessageBubble.runInProgress",
+      "description": "这条消息所属的执行还没停（同一次执行后面还在流式，或停在等待作答上）：收尾件先不出现。",
+      "type": "boolean"
+    },
+    {
       "name": "MessageBubble.runMarker",
       "description": "Auto-generated from TypeScript props.",
       "type": "LooseOptional<ConversationMessageRunMarker>"
@@ -4536,11 +4526,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "name": "MessageContentBlock.runMarker",
       "description": "Auto-generated from TypeScript props.",
       "type": "LooseOptional<ConversationMessageRunMarker>"
-    },
-    {
-      "name": "MessageContentBlock.planUpdateIndex",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "number"
     },
     {
       "name": "MessageContentBlock.blockIndex",
@@ -5059,6 +5044,14 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "description": "Auto-generated from TypeScript props.",
       "type": "\"sm\" | \"lg\" | \"md\" | \"none\" | \"xs\" | \"xl\" | null",
       "defaultValue": "'md'"
+    }
+  ],
+  ScriptExecutionCard: [
+    {
+      "name": "ScriptExecutionCard.block",
+      "description": "Auto-generated from TypeScript props.",
+      "type": "ScriptExecutionBlock",
+      "recommended": "Required"
     }
   ],
   ScrollArea: [
@@ -5758,6 +5751,14 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "name": "ToolCallHoverDetails.summary",
       "description": "单次调用时渲染器已算好的结果或状态摘要；缺省按结果计数推导。",
       "type": "string"
+    }
+  ],
+  ToolCallStepCard: [
+    {
+      "name": "ToolCallStepCard.block",
+      "description": "Auto-generated from TypeScript props.",
+      "type": "ToolCallBlock",
+      "recommended": "Required"
     }
   ],
   ToolDisclosureCard: [

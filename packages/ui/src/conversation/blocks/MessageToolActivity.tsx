@@ -1,93 +1,27 @@
 import {
-  memo,
   type MouseEvent,
   type ReactElement,
   type ReactNode,
-  Suspense,
   useEffect,
-  useMemo,
-  useRef,
   useState,
 } from "react";
-import { CaretRightIcon, SpinnerGapIcon } from "@phosphor-icons/react";
+import { CaretRightIcon } from "@phosphor-icons/react";
 
 import { StyleUtils } from "@velaros-ai/ui";
-import { CopyButton } from "@velaros-ai/ui/product/buttons/CopyButton";
 
-import { useConversationI18n, useConversationTranslatorRuntime } from "../i18n";
+import { type ConversationI18nContextValue, useConversationI18n } from "../i18n";
 import { useConversationScrollFollow } from "../react-hooks/conversationScrollFollow";
 import { AutoScrollSuspendEventName } from "../react-hooks/scrollBehavior";
 import { useDisclosurePresence } from "../react-hooks/useDisclosurePresence";
 import { useTimerScope } from "../react-hooks/useTimerScope";
-import { inferToolLeadingKind } from "../tool-render/inferToolLeadingKind";
-import {
-  isToolCallBlockLoaded,
-  LazyToolCallBlock,
-  preloadToolCallBlock,
-} from "../tool-render/LazyToolCallBlock";
-import {
-  getMergedCommandCopyValue,
-  getMergedToolDetails,
-} from "../tool-render/messageBubbleToolModel";
-import { getToolActivityGroupSummary } from "../tool-render/toolActivitySummary";
-import { resolveToolCallHoverContent } from "../tool-render/ToolCallHoverDetails";
-import {
-  type MergedToolCallGroup,
-  mergeToolCallGroups,
-} from "../tool-render/toolCallRenderGrouping";
-import {
-  getMergedToolGroupStatusLabel,
-  getToolDescription,
-} from "../tool-render/toolCallSummary";
-
-import { ToolActivityMotion } from "./ToolActivityMotion";
-import {
-  ToolResultSummaryList,
-  type ToolResultSummaryTone,
-} from "./ToolResultSummaryList";
 
 import styles from "./MessageBubble.module.css";
 
 import type { ToolCallBlock as ToolCallBlockType } from "#contracts";
-import {
-  isBlank,
-  isFunction,
-  isPresent,
-  optionalWhen,
-  optionalWhenLazy,
-  toOptional,
-} from "#internal/runtime";
+import { isEmpty, isFunction } from "#internal/runtime";
 
 const cx = StyleUtils.bindCx(styles);
-const MERGED_TOOL_DETAIL_PREVIEW_LIMIT = 3;
-
-/**
- * 归并工具行的语气按成员真实结果聚合，而非写死 success：
- * 任一成员仍在执行 → running；任一成员报错 → 全错 error / 部分错 warning；否则 success。
- * （修复：归并汇总行此前恒显 success 绿，即使成员里有失败。）
- */
-function resolveMergedToolGroupTone(
-  blocks: ReadonlyArray<Pick<ToolCallBlockType, "isRunning" | "error">>,
-): ToolResultSummaryTone {
-  if (blocks.some((block) => block.isRunning)) return "running";
-
-  const failedCount = blocks.reduce(
-    (count, block) =>
-      isPresent(block.error) && !isBlank(block.error) ? count + 1 : count,
-    0,
-  );
-  if (failedCount === 0) return "success";
-  return failedCount === blocks.length ? "error" : "warning";
-}
 const EmptyToolActivityBlocks: ToolCallBlockType[] = [];
-
-export function preloadToolActivityRenderer(): Promise<void> {
-  return preloadToolCallBlock();
-}
-
-function isToolActivityRendererLoaded(): boolean {
-  return isToolCallBlockLoaded();
-}
 
 export function shouldInitiallyExpandToolActivityDisclosure({
   autoCollapseAfterPaint,
@@ -101,6 +35,19 @@ export function shouldInitiallyExpandToolActivityDisclosure({
   return autoCollapseAfterPaint || defaultExpanded || hasRunningTool;
 }
 
+/** 一组工具调用折起来时的标题：只数调用次数，不再按工具分类拼「已编辑 / 已探索 / 运行命令」。 */
+export function getToolActivityCountLabel(
+  count: number,
+  t: ConversationI18nContextValue["t"],
+): string {
+  return t(
+    count === 1
+      ? "toolSummary.activityUsedToolCountOne"
+      : "toolSummary.activityUsedToolCountMany",
+    { count },
+  );
+}
+
 export function ToolActivityDisclosure({
   blocks,
   children,
@@ -110,14 +57,14 @@ export function ToolActivityDisclosure({
   label,
 }: {
   blocks?: ToolCallBlockType[];
+  /** 传函数时只在展开期间渲染：收着的折叠不必先把里面的卡全画一遍。 */
   children: ReactNode | (() => ReactNode);
   autoCollapseAfterPaint?: boolean;
   defaultExpanded?: boolean;
   isRunning?: boolean;
   label?: string;
 }): ReactElement {
-  const { t, locale } = useConversationI18n();
-  const translatorRuntime = useConversationTranslatorRuntime();
+  const { t } = useConversationI18n();
   const activityBlocks = blocks ?? EmptyToolActivityBlocks;
   const hasRunningTool =
     isRunning ?? activityBlocks.some((block) => block.isRunning);
@@ -133,39 +80,15 @@ export function ToolActivityDisclosure({
   // 与 ThinkingBlock 一致：运行态只决定初始展开；挂载后由用户点击独占 expanded，
   // 后续工具进度/运行状态更新不得把已收起的内容强行展开。
   const [expanded, setExpanded] = useState(shouldInitiallyExpand);
-  const [contentRequested, setContentRequested] = useState(
-    shouldInitiallyExpand,
-  );
-  const [contentLoadPending, setContentLoadPending] = useState(false);
-  const mountedRef = useRef(true);
   const timers = useTimerScope("ToolActivityDisclosure");
   const scrollFollow = useConversationScrollFollow();
   const { mounted: isMounted, visible: isVisible } =
     useDisclosurePresence(expanded);
-  const lazyChildren = isFunction(children)
-    ? (children as () => ReactNode)
-    : null;
-  const eagerChildren: ReactNode = lazyChildren
-    ? null
-    : (children as ReactNode);
-  const contentIsLazy = isPresent(lazyChildren);
-  const shouldShowContentSpinner = contentLoadPending;
-  const summary = useMemo(
-    () =>
-      activityBlocks.length > 0
-        ? getToolActivityGroupSummary(activityBlocks, locale, translatorRuntime)
-        : undefined,
-    [activityBlocks, locale, translatorRuntime],
-  );
-  const displayLabel = label || summary || t("chat.toolCalls");
-
-  useEffect(() => {
-    mountedRef.current = true;
-
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
+  const displayLabel =
+    label ||
+    (isEmpty(activityBlocks)
+      ? t("chat.toolCalls")
+      : getToolActivityCountLabel(activityBlocks.length, t));
 
   useEffect(() => {
     if (!shouldAutoCollapseAfterPaint) return;
@@ -193,62 +116,15 @@ export function ToolActivityDisclosure({
     };
   }, [scrollFollow, shouldAutoCollapseAfterPaint, timers]);
 
-  useEffect(() => {
-    if (contentRequested && contentIsLazy) {
-      void preloadToolActivityRenderer();
-    }
-  }, [contentIsLazy, contentRequested]);
-
-  const requestToolActivityContent = (): void => {
-    if (!contentIsLazy || contentRequested) return;
-
-    setContentRequested(true);
-    void preloadToolActivityRenderer();
-  };
-
   const handleToggleClick = (event: MouseEvent<HTMLButtonElement>): void => {
     event.currentTarget.dispatchEvent(
       new Event(AutoScrollSuspendEventName, { bubbles: true }),
     );
-
-    if (expanded) {
-      setExpanded(false);
-      return;
-    }
-
-    if (!contentIsLazy) {
-      setExpanded(true);
-      return;
-    }
-
-    setContentRequested(true);
-
-    if (isToolActivityRendererLoaded()) {
-      setExpanded(true);
-      return;
-    }
-
-    setContentLoadPending(true);
-    preloadToolActivityRenderer()
-      .then(() => {
-        if (!mountedRef.current) return;
-
-        setExpanded(true);
-      })
-      .catch(() => {
-        if (!mountedRef.current) return;
-
-        setExpanded(true);
-      })
-      .finally(() => {
-        if (!mountedRef.current) return;
-
-        setContentLoadPending(false);
-      });
+    setExpanded((current) => !current);
   };
 
   return (
-    <div className={styles.toolActivityDisclosure}>
+    <div className={styles.toolActivityDisclosure} data-slot="tool-activity-disclosure">
       <button
         type="button"
         className={cx(
@@ -257,20 +133,10 @@ export function ToolActivityDisclosure({
         )}
         aria-expanded={expanded}
         title={displayLabel}
-        onPointerEnter={requestToolActivityContent}
-        onPointerDown={requestToolActivityContent}
-        onFocus={requestToolActivityContent}
         onClick={handleToggleClick}
       >
         {hasRunningTool && (
           <span className={styles.runningStatusDot} aria-hidden="true" />
-        )}
-        {shouldShowContentSpinner && (
-          <SpinnerGapIcon
-            size={12}
-            className={styles.toolActivityLoadingIcon}
-            aria-hidden="true"
-          />
         )}
         <span className={styles.toolActivityLabel}>{displayLabel}</span>
         <CaretRightIcon
@@ -293,9 +159,7 @@ export function ToolActivityDisclosure({
         >
           <div className={styles.toolActivityBodyFrame}>
             <div className={styles.toolActivityBody}>
-              {lazyChildren
-                ? optionalWhenLazy(contentRequested, lazyChildren)
-                : eagerChildren}
+              {isFunction(children) ? (children as () => ReactNode)() : children}
             </div>
           </div>
         </div>
@@ -303,173 +167,3 @@ export function ToolActivityDisclosure({
     </div>
   );
 }
-
-function ToolCallGroupInner({
-  blocks,
-  animateLiveToolActivity,
-  messageId,
-  sessionId,
-  planUpdateIndexByToolCallId,
-  formatPathForDisplay,
-}: {
-  blocks: ToolCallBlockType[];
-  animateLiveToolActivity: boolean;
-  messageId: string;
-  sessionId: string;
-  planUpdateIndexByToolCallId?: ReadonlyMap<string, number>;
-  formatPathForDisplay?: (path: string) => string;
-}): ReactElement {
-  const mergedGroups = useMemo(() => mergeToolCallGroups(blocks), [blocks]);
-
-  return (
-    <div className={styles.toolGroupBody}>
-      {mergedGroups.map((group) => (
-        <MergedToolCallRow
-          key={group.key}
-          group={group}
-          animateLiveToolActivity={animateLiveToolActivity}
-          messageId={messageId}
-          sessionId={sessionId}
-          planUpdateIndexByToolCallId={planUpdateIndexByToolCallId}
-          formatPathForDisplay={formatPathForDisplay}
-        />
-      ))}
-    </div>
-  );
-}
-
-function MergedToolCallRowInner({
-  group,
-  animateLiveToolActivity,
-  messageId,
-  sessionId,
-  planUpdateIndexByToolCallId,
-  formatPathForDisplay,
-}: {
-  group: MergedToolCallGroup;
-  animateLiveToolActivity: boolean;
-  messageId: string;
-  sessionId: string;
-  planUpdateIndexByToolCallId?: ReadonlyMap<string, number>;
-  formatPathForDisplay?: (path: string) => string;
-}): ReactElement {
-  const { locale, t } = useConversationI18n();
-  const translatorRuntime = useConversationTranslatorRuntime();
-  const count = group.blocks.length;
-  const details = getMergedToolDetails(
-    group.blocks,
-    formatPathForDisplay,
-    locale,
-    translatorRuntime,
-  );
-  let detailText = "";
-  const visibleDetailCount = Math.min(
-    details.length,
-    MERGED_TOOL_DETAIL_PREVIEW_LIMIT,
-  );
-  const hasMoreDetails = details.length > visibleDetailCount;
-  const detailSeparator = t("common.shortListSeparator");
-  for (let index = 0; index < visibleDetailCount; index += 1) {
-    const detail = details[index];
-    if (!detail) continue;
-
-    detailText = detailText
-      ? `${detailText}${detailSeparator}${detail}`
-      : detail;
-  }
-  const fallbackDetail = getToolDescription(
-    group.representative,
-    locale,
-    formatPathForDisplay,
-    translatorRuntime,
-  );
-  const displayName = group.toolName;
-  const commandCopyValue = getMergedCommandCopyValue(group);
-  const statusLabel = getMergedToolGroupStatusLabel(
-    group.blocks,
-    locale,
-    translatorRuntime,
-  );
-
-  if (!detailText) detailText = fallbackDetail ?? "";
-  const planUpdateIndex = planUpdateIndexByToolCallId?.get(
-    group.representative.toolCallId,
-  );
-
-  const content =
-    count <= 1 ? (
-      <div className={styles.toolGroupRow}>
-        <Suspense fallback={null}>
-          <LazyToolCallBlock
-            block={group.representative}
-            compact
-            sessionId={sessionId}
-            planUpdateIndex={planUpdateIndex}
-            formatPathForDisplay={formatPathForDisplay}
-          />
-        </Suspense>
-      </div>
-    ) : (
-      <ToolResultSummaryList
-        className={styles.toolGroupRow}
-        aria-label={displayName}
-        items={[
-          {
-            id: group.representative.toolCallId,
-            kind: inferToolLeadingKind(group.toolName),
-            tone: resolveMergedToolGroupTone(group.blocks),
-            label: displayName,
-            detail: optionalWhenLazy(detailText, () => (
-              <>
-                {detailText}
-                {hasMoreDetails && (
-                  <span className={styles.mergedToolCallEllipsis}>…</span>
-                )}
-              </>
-            )),
-            detailTitle:
-              details.join(detailSeparator) || fallbackDetail || undefined,
-            statusLabel: statusLabel ?? `×${count}`,
-            // 逐次调用各自执行了什么，都在悬停详情里按调用顺序列出；行上已经全看得到就不挂气泡。
-            hoverContent: resolveToolCallHoverContent(
-              { blocks: group.blocks, formatPathForDisplay },
-              {
-                label: displayName,
-                detail: hasMoreDetails ? `${detailText}…` : detailText,
-                status: statusLabel ?? `×${count}`,
-              },
-              locale,
-              translatorRuntime,
-            ),
-            actionLayout: optionalWhenLazy(commandCopyValue, () => "overlay"),
-            action: optionalWhen(
-              commandCopyValue,
-              <CopyButton
-                value={toOptional(commandCopyValue) ?? ""}
-                label={t("chat.commandCopy")}
-                copiedLabel={t("chat.codeBlockCopied")}
-              />,
-            ),
-          },
-        ]}
-      />
-    );
-
-  return (
-    <ToolActivityMotion
-      activityKey={`tool:${group.blocks[0]?.toolCallId ?? group.representative.toolCallId}`}
-      blocks={group.blocks}
-      isStreaming={animateLiveToolActivity}
-      messageId={messageId}
-      sessionId={sessionId}
-    >
-      {content}
-    </ToolActivityMotion>
-  );
-}
-
-export const ToolCallGroup = memo(ToolCallGroupInner);
-export const MergedToolCallRow = memo(MergedToolCallRowInner);
-
-ToolCallGroup.displayName = "ToolCallGroup";
-MergedToolCallRow.displayName = "MergedToolCallRow";

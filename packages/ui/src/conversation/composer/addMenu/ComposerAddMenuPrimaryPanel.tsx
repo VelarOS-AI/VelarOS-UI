@@ -10,9 +10,7 @@ import {
   FileCodeIcon,
   ListChecksIcon,
   PaperclipIcon,
-  PuzzlePieceIcon,
   TargetIcon,
-  TerminalWindowIcon,
 } from '@phosphor-icons/react'
 
 import { Button } from '@velaros-ai/ui/primitives/buttons/Button'
@@ -54,13 +52,9 @@ export function ComposerAddMenuPrimaryPanel({
   features: {
     showSkillsSubmenu,
     showQuickPromptsSubmenu,
-    showPluginsSubmenu,
     canTogglePlanFeature,
     planModeActive,
     updatePlanMode,
-    canToggleWorkbenchEditorControl = false,
-    workbenchEditorControlActive = false,
-    updateWorkbenchEditorControl,
     canToggleGoalMode,
     goalModeActive,
     goalModeCopy,
@@ -134,29 +128,6 @@ export function ComposerAddMenuPrimaryPanel({
             </Button>
           )
         )
-      case 'workbench-editor':
-        return (
-          canToggleWorkbenchEditorControl && (
-            <Button
-              variant="ghost"
-              size="block"
-              {...menu.getLeafItemProps<HTMLButtonElement>({
-                className: menu.classes.item,
-              })}
-              aria-pressed={workbenchEditorControlActive}
-              data-active={workbenchEditorControlActive}
-              onClick={() => updateWorkbenchEditorControl?.(!workbenchEditorControlActive)}
-              disabled={disabled}
-            >
-              <TerminalWindowIcon size={14} />
-              <ComposerMenuItemBody
-                label={t('chat.composerWorkbenchEditorControl')}
-                help={t('chat.composerWorkbenchEditorControlHint')}
-              />
-              <ComposerMenuSwitchIndicator checked={workbenchEditorControlActive} />
-            </Button>
-          )
-        )
       case 'goal':
         return (
           canToggleGoalMode && (
@@ -177,24 +148,6 @@ export function ComposerAddMenuPrimaryPanel({
                 help={goalModeCopy?.hint ?? t('chat.composerGoalModeHint')}
               />
               <ComposerMenuSwitchIndicator checked={goalModeActive} />
-            </Button>
-          )
-        )
-      case 'plugins':
-        return (
-          showPluginsSubmenu && (
-            <Button
-              variant="ghost"
-              size="block"
-              data-tour-id="chat-add-menu-plugins"
-              {...menu.getSubmenuTriggerProps<HTMLButtonElement>('plugins', {
-                className: menu.classes.item,
-              })}
-              disabled={disabled}
-            >
-              <PuzzlePieceIcon size={14} />
-              <Text className={menu.classes.itemLabel}>{t('chat.composerPlugins')}</Text>
-              <SubmenuDisclosureIcon size={12} className={menu.classes.disclosure} />
             </Button>
           )
         )

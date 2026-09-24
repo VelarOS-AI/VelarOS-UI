@@ -29,11 +29,9 @@ import {
 } from './hooks/useChatInputDraftActions'
 import { useChatInputFileAttachments } from './hooks/useChatInputFileAttachments'
 import { useChatInputInsertDraftBridge } from './hooks/useChatInputInsertDraftBridge'
-import { useChatInputPromptFeatureActivationBridge } from './hooks/useChatInputPromptFeatureActivationBridge'
 import { useChatInputVoiceRecognition } from './hooks/useChatInputVoiceRecognition'
 import { useComposerAddMenuState } from './hooks/useComposerAddMenuState'
 import { useComposerMentionMenu } from './hooks/useComposerMentionMenu'
-import { useComposerPromptFeatures } from './hooks/useComposerPromptFeatures'
 import { useComposerSkillSelection } from './hooks/useComposerSkillSelection'
 import { useComposerSlashSkillMenu } from './hooks/useComposerSlashSkillMenu'
 import {
@@ -93,7 +91,6 @@ import styles from './ChatInput.module.css'
 
 import type {
   BrowserElementSelection,
-  ChatPromptFeatureId,
   ChatSuggestionItem,
   TurnContextDelta,
 } from '#contracts'
@@ -152,17 +149,11 @@ export interface ChatInputGoalModeCopy {
   hint: string
 }
 
-/**
- * 执行模式控制组（目标 / 计划）。
- *
- * 与 {@link ChatInputFeaturesControl} 的 `promptFeatures` 正交：那一组回答「哪些能力开着」，
- * 这一组回答「这一轮按什么执行姿态跑」。2026-08-06 拆轴前 plan 挤在 promptFeatures 数组里，
- * goal 却已经在这里——同一个概念两种形态，输入区因此得同时读两处才知道当前是什么模式。
- */
+/** 执行模式控制组（目标 / 计划）：这一轮按什么执行姿态跑。 */
 export interface ChatInputExecutionControl {
   goalMode?: boolean
   onGoalModeChange?: (enabled: boolean) => void
-  /** 计划模式开关（原 `promptFeatures` 里的 `plan`）。 */
+  /** 计划模式开关。 */
   planMode?: boolean
   onPlanModeChange?: (enabled: boolean) => void
   /**
@@ -176,13 +167,6 @@ export interface ChatInputExecutionControl {
 }
 
 export interface ChatInputFeaturesControl {
-  /**
-   * 当前工作区不可用的提示特性集合（宿主边界派生：空间不支持的特性 ∪ 未装插件的能力，如未装 computeruse 时的
-   * computer-use）。包内壳不透传原始 `WorkspaceSpaceKind` 枚举、不读插件可用性快照——宿主算好能力位传入。
-   */
-  unavailablePromptFeatures?: ChatPromptFeatureId[]
-  /** 应用资源插件可用性是否已解析完成（未解析前不据此隐藏特性，避免闪烁）。 */
-  resourceAvailabilityResolved?: boolean
   /** 本地 whisper 语音转写插件是否可用（决定走本地转写还是浏览器语音识别）。 */
   localWhisperAvailable?: boolean
   /**
@@ -198,10 +182,7 @@ export interface ChatInputFeaturesControl {
   /** Workbench 当前文件 chip 的移除动作；缺席时 chip 保持只读。 */
   onDismissWorkbenchCurrentFile?: () => void
   onDismissTurnContextDelta?: (id: string) => void
-  lockedPromptFeatures?: ChatPromptFeatureId[]
-  promptFeatures?: ChatPromptFeatureId[]
   onRemoveBrowserElementSelection?: (id: string) => void
-  onPromptFeaturesChange?: (features: ChatPromptFeatureId[]) => void
   availableSkills?: ChatInputSkillOption[]
   selectedSkillIds?: string[]
   onOpenSkillDetail?: ChatInputSkillDetailHandler
@@ -209,8 +190,6 @@ export interface ChatInputFeaturesControl {
   mentionables?: ChatInputMentionables
   manualTestPrompts?: ChatInputManualTestPromptOption[]
   quickPrompts?: ChatInputManualTestPromptOption[]
-  /** 仅 Workbench 注入：在 + 菜单显示 AI 编辑器控制开关。 */
-  workbenchEditorControlAvailable?: boolean
 }
 
 export interface ChatInputChromeControl {
@@ -261,8 +240,6 @@ const cx = StyleUtils.bindCx(styles)
 const EmptyQueuedDrafts: ChatInputQueuedDraft[] = []
 const EmptyBrowserElementSelections: BrowserElementSelection[] = []
 const EmptyTurnContextDeltas: TurnContextDelta[] = []
-const EmptyPromptFeatures: ChatPromptFeatureId[] = []
-const EmptyUnavailablePromptFeatures = new Set<ChatPromptFeatureId>()
 const EmptyAvailableSkills: ChatInputSkillOption[] = []
 const EmptySelectedSkillIds: string[] = []
 const EmptyMentionables: ChatInputMentionableOption[] = []
@@ -383,14 +360,10 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
   // 按「数据 vs 回调」拆成两组取用：features 域字段较多，混取会把状态与动作摊平成一大坨局部变量。
   const {
     browserElementSelections = EmptyBrowserElementSelections,
-    unavailablePromptFeatures = EmptyPromptFeatures,
-    resourceAvailabilityResolved = true,
     localWhisperAvailable = false,
     voiceInput = true,
     turnContextDeltas = EmptyTurnContextDeltas,
     workbenchCurrentFilePath,
-    lockedPromptFeatures = EmptyPromptFeatures,
-    promptFeatures = EmptyPromptFeatures,
     availableSkills = EmptyAvailableSkills,
     selectedSkillIds = EmptySelectedSkillIds,
     mentionables,
@@ -401,7 +374,6 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
     onDismissWorkbenchCurrentFile,
     onDismissTurnContextDelta,
     onOpenSkillDetail,
-    onPromptFeaturesChange,
     onSelectedSkillIdsChange,
   } = control.features ?? {}
   const {
@@ -677,27 +649,6 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
     },
     [handleFileSelect]
   )
-  const unavailablePromptFeatureSet = useMemo(
-    () =>
-      isEmpty(unavailablePromptFeatures)
-        ? EmptyUnavailablePromptFeatures
-        : new Set<ChatPromptFeatureId>(unavailablePromptFeatures),
-    [unavailablePromptFeatures]
-  )
-
-  const {
-    selectedPromptFeatures,
-    pluginOptions,
-    activePluginOptions,
-    updatePromptFeature,
-    updatePromptFeatureGroup,
-  } = useComposerPromptFeatures({
-    lockedPromptFeatures,
-    promptFeatures,
-    onPromptFeaturesChange,
-    unavailablePromptFeatures: unavailablePromptFeatureSet,
-    resourceAvailabilityResolved,
-  })
   const selectedSkillIdSet = new Set(selectedSkillIds)
   const activeSkillOptions: ChatInputSkillOption[] = []
   for (const skill of availableSkills) {
@@ -759,11 +710,6 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
   }
 
   useChatInputInsertDraftBridge(textareaRef, valueRef, onValueChangeLatest, timers)
-  useChatInputPromptFeatureActivationBridge(
-    textareaRef,
-    selectedPromptFeatures,
-    updatePromptFeature
-  )
 
   const handleClearPlanMode = useCallback((): void => {
     onPlanModeChange?.(false)
@@ -773,12 +719,6 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
       onPlanModeChange?.(enabled)
     },
     [onPlanModeChange]
-  )
-  const handleWorkbenchEditorControlChange = useCallback(
-    (enabled: boolean): void => {
-      updatePromptFeature('workbench-editor', enabled)
-    },
-    [updatePromptFeature]
   )
   const handleClearGoalMode = useCallback((): void => {
     onGoalModeChange?.(false)
@@ -792,7 +732,6 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
 
   const canShowComposerMenu =
     !!onFilesChange ||
-    !!onPromptFeaturesChange ||
     !!onGoalModeChange ||
     !!onPlanModeChange ||
     (!!onSelectedSkillIdsChange && !!availableSkills.length) ||
@@ -1075,18 +1014,10 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
     canTogglePlanFeature: !!onPlanModeChange,
     planModeActive: planMode,
     updatePlanMode: handlePlanModeChange,
-    // 「AI 操控编辑器」仍在开发中，暂时隐藏。
-    canToggleWorkbenchEditorControl: false,
-    workbenchEditorControlActive: selectedPromptFeatures.has('workbench-editor'),
-    updateWorkbenchEditorControl: handleWorkbenchEditorControlChange,
     canToggleGoalMode: !!onGoalModeChange,
     goalModeActive: goalMode,
     goalModeCopy,
     updateGoalMode: handleGoalModeChange,
-    canTogglePlugins: !!onPromptFeaturesChange,
-    pluginOptions,
-    selectedPromptFeatures,
-    updatePromptFeatureGroup,
     canToggleSkills: !!onSelectedSkillIdsChange && !isEmpty(availableSkills),
     quickPrompts,
     availableSkills,
@@ -1200,13 +1131,10 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
             workbenchCurrentFilePath={workbenchCurrentFilePath}
             onDismissWorkbenchCurrentFile={onDismissWorkbenchCurrentFile}
             onDismissTurnContextDelta={onDismissTurnContextDelta}
-            activePluginOptions={activePluginOptions}
             activeSkillOptions={activeSkillOptions}
             activeMentionOptions={activeMentionOptions}
             onRemoveMentionSelection={(id) => mentionables?.onToggleSelected(id, false)}
             onOpenSkillDetail={onOpenSkillDetail}
-            lockedPromptFeatures={lockedPromptFeatures}
-            updatePromptFeatureGroup={updatePromptFeatureGroup}
             updateSelectedSkill={updateSelectedSkill}
           />
         }
@@ -1400,13 +1328,10 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
                 workbenchCurrentFilePath={workbenchCurrentFilePath}
                 onDismissWorkbenchCurrentFile={onDismissWorkbenchCurrentFile}
                 onDismissTurnContextDelta={onDismissTurnContextDelta}
-                activePluginOptions={activePluginOptions}
                 activeSkillOptions={activeSkillOptions}
                 activeMentionOptions={activeMentionOptions}
                 onRemoveMentionSelection={(id) => mentionables?.onToggleSelected(id, false)}
                 onOpenSkillDetail={onOpenSkillDetail}
-                lockedPromptFeatures={lockedPromptFeatures}
-                updatePromptFeatureGroup={updatePromptFeatureGroup}
                 updateSelectedSkill={updateSelectedSkill}
               />
             }

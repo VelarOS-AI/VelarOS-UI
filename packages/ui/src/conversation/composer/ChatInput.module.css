@@ -26,8 +26,7 @@
     var(--ui-icon-button-sm) - var(--ui-space-control-y-sm) - var(--ui-space-control-y-sm)
   );
   --chat-input-menu-primary-width: 11.75rem;
-  --chat-input-menu-plugin-width: 10rem;
-  --chat-input-menu-office-detail-width: 9rem;
+  --chat-input-menu-submenu-width: 10rem;
   --chat-input-menu-skill-width: 11rem;
   --chat-input-menu-flyout-gap: 2px;
   --chat-input-menu-item-gap: calc(var(--ui-space-control-y-sm) - 2px);
@@ -615,37 +614,8 @@
   --composer-plugin-bg: var(--status-red-soft);
 }
 
-.activePluginChip[data-plugin-id='office-latex-pdf'] {
-  --composer-plugin-bg: var(--status-violet-soft);
-}
-
-.activePluginChip[data-plugin-id='widget'] {
-  --composer-plugin-bg: var(--status-violet-soft);
-}
-
-.activePluginChip[data-plugin-id='computer-use'] {
-  --composer-plugin-bg: var(--status-amber-soft);
-}
-
-.activePluginChip[data-plugin-id='office-spreadsheet'] {
-  --composer-plugin-bg: var(--status-green-soft);
-}
-
 .activePluginChip[data-plugin-id='permissions'] {
   --composer-plugin-bg: var(--status-red-soft);
-}
-
-.activePluginChip[data-plugin-id='office-presentation'] {
-  --composer-plugin-bg: var(--status-amber-soft);
-}
-
-.activePluginChip[data-plugin-id='office'],
-.activePluginChip[data-plugin-id='office-pdf'] {
-  --composer-plugin-bg: var(--status-red-soft);
-}
-
-.activePluginChip[data-plugin-id='office-document'] {
-  --composer-plugin-bg: var(--status-blue-soft);
 }
 
 .activePluginChip[data-plugin-id='browser-element'] {
@@ -1003,17 +973,16 @@
     var(--ui-icon-button-sm) - var(--ui-space-control-y-sm) - var(--ui-space-control-y-sm)
   );
   --chat-input-menu-primary-width: 11.75rem;
-  --chat-input-menu-plugin-width: 10rem;
-  --chat-input-menu-office-detail-width: 9rem;
+  --chat-input-menu-submenu-width: 10rem;
   --chat-input-menu-skill-width: 11rem;
   --chat-input-menu-flyout-gap: 2px;
   --chat-input-menu-item-gap: calc(var(--ui-space-control-y-sm) - 2px);
   --cascading-menu-divider: var(--chat-input-menu-divider);
   --cascading-menu-primary-width: var(--chat-input-menu-primary-width);
-  --cascading-menu-submenu-width: var(--chat-input-menu-plugin-width);
+  --cascading-menu-submenu-width: var(--chat-input-menu-submenu-width);
   --cascading-menu-primary-min-width: var(--chat-input-menu-primary-width);
   --cascading-menu-primary-max-width: min(22rem, calc(100vw - 32px));
-  --cascading-menu-submenu-min-width: var(--chat-input-menu-plugin-width);
+  --cascading-menu-submenu-min-width: var(--chat-input-menu-submenu-width);
   --cascading-menu-submenu-max-width: min(22rem, calc(100vw - 32px));
   --cascading-menu-flyout-gap: var(--chat-input-menu-flyout-gap);
   --cascading-menu-icon-size: var(--chat-input-menu-icon-size);
@@ -1032,24 +1001,17 @@
 
 .composerMenuContentCompact[data-slot='popover-content'] {
   --chat-input-menu-primary-width: 10.25rem;
-  --chat-input-menu-plugin-width: 8.75rem;
-  --chat-input-menu-office-detail-width: 8rem;
+  --chat-input-menu-submenu-width: 8.75rem;
   --chat-input-menu-skill-width: 9.5rem;
   --chat-input-menu-icon-size: 18px;
   --chat-input-menu-item-gap: 2px;
 }
 
-.composerMenuContentCompact .composerPrimaryMenu,
-.composerMenuContentCompact .composerPluginMenu {
+.composerMenuContentCompact .composerPrimaryMenu {
   padding: 3px;
 }
 
 .composerMenuContentCompact :global(.velar-cascading-menu-item) {
-  min-height: 28px;
-  padding: 3px 7px;
-}
-
-.composerMenuContentCompact .composerPluginItem {
   min-height: 28px;
   padding: 3px 7px;
 }
@@ -1059,8 +1021,7 @@
   width: var(--chat-input-menu-primary-width);
 }
 
-.composerPrimaryMenu,
-.composerPluginMenu {
+.composerPrimaryMenu {
   @apply flex flex-col gap-1;
   padding: var(--ui-space-control-y-sm);
 }
@@ -1283,15 +1244,7 @@
   cursor: not-allowed;
 }
 
-.composerPluginHeader {
-  color: var(--foreground-tertiary);
-  font-size: var(--ui-font-caption);
-  line-height: var(--ui-line-compact);
-  padding: var(--chat-input-menu-item-gap) var(--ui-space-control-x-sm);
-}
-
-.composerMenuItem,
-.composerPluginItem {
+.composerMenuItem {
   @apply flex w-full items-center border-0 bg-transparent text-left text-foreground transition-colors;
   min-height: calc(var(--ui-control-height-xs) - 2px);
   gap: var(--chat-input-menu-item-gap);
@@ -1327,23 +1280,11 @@
   background: var(--background-muted);
 }
 
-.composerPluginItem {
-  cursor: pointer;
-}
-
-.composerPluginItem:hover,
-.composerPluginItem:focus-visible {
-  background: var(--composer-plugin-bg, var(--background-muted));
-  outline: none;
-}
-
-.composerMenuItem:disabled,
-.composerPluginItem:disabled {
+.composerMenuItem:disabled {
   @apply cursor-not-allowed opacity-45;
 }
 
-.composerMenuItem > span,
-.composerPluginItem > span:not(.composerPluginIcon) {
+.composerMenuItem > span {
   @apply min-w-0 flex-1;
 }
 
@@ -1408,167 +1349,6 @@
   [data-selected='true']
   .composerMenuSwitch[data-slot='switch'][data-state='checked'] {
   background: var(--control-switch-checked-hover);
-}
-
-.composerPluginIcon {
-  @apply flex shrink-0 items-center justify-center;
-  flex: 0 0 auto !important;
-  width: var(--chat-input-menu-icon-size);
-  height: var(--chat-input-menu-icon-size);
-  border-radius: var(--ui-radius-chip);
-  color: var(--composer-plugin-fg, var(--chat-input-menu-icon-fg));
-}
-
-.composerPluginMenu {
-  width: var(--chat-input-menu-plugin-width);
-}
-
-.composerPluginItem[data-plugin-id='office'] {
-  --composer-plugin-fg: var(--status-red);
-  --composer-plugin-bg: var(--status-red-soft);
-}
-
-.composerPluginItem[data-plugin-id='widget'] {
-  --composer-plugin-fg: var(--status-violet);
-  --composer-plugin-bg: var(--status-violet-soft);
-}
-
-.composerPluginItem[data-rendering-id='html-artifact'] {
-  --composer-plugin-fg: var(--status-violet);
-  --composer-plugin-bg: var(--status-violet-soft);
-}
-
-.composerPluginItem[data-rendering-id='widget'] {
-  --composer-plugin-fg: var(--status-teal);
-  --composer-plugin-bg: var(--status-teal-soft);
-}
-
-.composerPluginItem[data-rendering-id] .composerPluginIcon {
-  background: var(--composer-plugin-bg);
-}
-
-.composerPluginItem[data-plugin-id='computer-use'] {
-  --composer-plugin-fg: var(--status-amber);
-  --composer-plugin-bg: var(--status-amber-soft);
-}
-
-.composerPluginItem.selected,
-.composerPluginItem[data-selected='true'] {
-  color: var(--composer-plugin-fg);
-  background: var(--composer-plugin-bg);
-}
-
-.composerPluginItem.selected .composerPluginIcon,
-.composerPluginItem[data-selected='true'] .composerPluginIcon {
-  color: var(--composer-plugin-fg);
-}
-
-.composerPluginCheck {
-  @apply shrink-0;
-  color: var(--composer-plugin-fg);
-}
-
-.composerPluginDisclosure {
-  @apply shrink-0;
-  color: var(--composer-plugin-fg, var(--muted-foreground));
-}
-
-.composerOfficeDetailMenu {
-  @apply flex flex-col gap-1;
-}
-
-.composerOfficeDetailMenu::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: calc(-1 * var(--cascading-menu-flyout-gap));
-  width: var(--cascading-menu-flyout-gap);
-}
-
-.composerOfficeDetailItem {
-  @apply inline-flex w-full items-center border bg-transparent text-left font-medium transition-colors;
-  --composer-plugin-fg: var(--chat-input-accent-blue);
-  --composer-plugin-bg: var(--chat-input-accent-blue-soft);
-  --cascading-menu-item-bg: var(--composer-plugin-bg);
-  --cascading-menu-item-fg: var(--composer-plugin-fg);
-  --cascading-menu-item-hover-bg: var(--composer-plugin-bg);
-  --cascading-menu-selected-bg: var(--composer-plugin-bg);
-  --cascading-menu-selected-fg: var(--composer-plugin-fg);
-  min-width: 0;
-  min-height: calc(var(--ui-control-height-xs) - 2px);
-  gap: var(--chat-input-menu-item-gap);
-  padding: var(--chat-input-menu-item-gap) var(--ui-space-control-x-sm);
-  border-radius: var(--ui-radius-control-sm);
-  border-color: transparent;
-  color: var(--composer-plugin-fg);
-  font-size: var(--ui-font-caption);
-  line-height: var(--ui-line-compact);
-  cursor: pointer;
-}
-
-.composerOfficeDetailItem[data-plugin-id='office-document'] {
-  --composer-plugin-fg: var(--chat-input-accent-blue);
-  --composer-plugin-bg: var(--chat-input-accent-blue-soft);
-}
-
-.composerOfficeDetailItem[data-plugin-id='office-spreadsheet'] {
-  --composer-plugin-fg: var(--status-green);
-  --composer-plugin-bg: var(--status-green-soft);
-}
-
-.composerOfficeDetailItem[data-plugin-id='office-presentation'] {
-  --composer-plugin-fg: var(--status-amber);
-  --composer-plugin-bg: var(--status-amber-soft);
-}
-
-.composerOfficeDetailItem[data-plugin-id='office-pdf'] {
-  --composer-plugin-fg: var(--status-red);
-  --composer-plugin-bg: var(--status-red-soft);
-}
-
-.composerOfficeDetailItem[data-plugin-id='office-latex-pdf'] {
-  --composer-plugin-fg: var(--status-violet);
-  --composer-plugin-bg: var(--status-violet-soft);
-}
-
-.composerOfficeDetailItem:hover {
-  background: var(--composer-plugin-bg);
-}
-
-.composerOfficeDetailItem[data-selected='true'] {
-  border-color: color-mix(in srgb, var(--composer-plugin-fg) 14%, transparent);
-  color: var(--composer-plugin-fg);
-  background: var(--composer-plugin-bg);
-}
-
-.composerOfficeDetailItem:disabled {
-  @apply cursor-not-allowed opacity-45;
-}
-
-.composerOfficeDetailIcon,
-.composerOfficeDetailCheck {
-  @apply shrink-0;
-}
-
-.composerOfficeDetailIcon {
-  @apply flex items-center justify-center;
-  width: var(--chat-input-menu-icon-size);
-  height: var(--chat-input-menu-icon-size);
-  border-radius: var(--ui-radius-chip);
-  color: var(--composer-plugin-fg);
-}
-
-.composerOfficeDetailItem[data-selected='true'] .composerOfficeDetailIcon {
-  color: var(--composer-plugin-fg);
-}
-
-.composerOfficeDetailLabel {
-  @apply min-w-0 flex-1 truncate;
-}
-
-.composerOfficeDetailCheck {
-  color: var(--composer-plugin-fg);
 }
 
 .composerSkillMenu {

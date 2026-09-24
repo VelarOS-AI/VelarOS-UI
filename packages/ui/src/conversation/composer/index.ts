@@ -82,7 +82,6 @@ export { buildChatInputComposerAddMenuProps } from './hooks/buildChatInputCompos
 export { useChatInputDraftActions } from './hooks/useChatInputDraftActions'
 export { useChatInputFileAttachments } from './hooks/useChatInputFileAttachments'
 export { useChatInputInsertDraftBridge } from './hooks/useChatInputInsertDraftBridge'
-export { useChatInputPromptFeatureActivationBridge } from './hooks/useChatInputPromptFeatureActivationBridge'
 export { useChatInputVoiceRecognition } from './hooks/useChatInputVoiceRecognition'
 export {
   useComposerAddMenuState,
@@ -92,7 +91,6 @@ export {
   useComposerMentionMenu,
   type UseComposerMentionMenuReturn,
 } from './hooks/useComposerMentionMenu'
-export { useComposerPromptFeatures } from './hooks/useComposerPromptFeatures'
 export { useComposerSkillSelection } from './hooks/useComposerSkillSelection'
 export {
   useComposerSlashSkillMenu,
