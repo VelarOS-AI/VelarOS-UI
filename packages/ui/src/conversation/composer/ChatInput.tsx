@@ -185,6 +185,11 @@ export interface ChatInputFeaturesControl {
   resourceAvailabilityResolved?: boolean
   /** 本地 whisper 语音转写插件是否可用（决定走本地转写还是浏览器语音识别）。 */
   localWhisperAvailable?: boolean
+  /**
+   * 是否提供语音输入（工具条的麦克风按钮），默认提供。宿主没有能用的语音转写时传 false：浏览器语音识别
+   * 在 Electron 里没有语音服务，按钮留着只会点了报错。
+   */
+  voiceInput?: boolean
   browserElementSelections?: BrowserElementSelection[]
   /** 环境回合上下文待附加 delta（已减 dismissed）；chips 可删，发送时冻结。 */
   turnContextDeltas?: TurnContextDelta[]
@@ -381,6 +386,7 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
     unavailablePromptFeatures = EmptyPromptFeatures,
     resourceAvailabilityResolved = true,
     localWhisperAvailable = false,
+    voiceInput = true,
     turnContextDeltas = EmptyTurnContextDeltas,
     workbenchCurrentFilePath,
     lockedPromptFeatures = EmptyPromptFeatures,
@@ -791,7 +797,7 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
     !!onPlanModeChange ||
     (!!onSelectedSkillIdsChange && !!availableSkills.length) ||
     !!quickPrompts.length
-  const showVoiceInput = !hideSubmit
+  const showVoiceInput = voiceInput && !hideSubmit
   const voiceInputDisabled = composerDisabled || isStreaming || isVoiceProcessing
   const voiceInputLabel = isVoiceProcessing
     ? t('chat.voiceInputProcessing')

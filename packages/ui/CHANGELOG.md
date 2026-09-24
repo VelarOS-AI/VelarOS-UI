@@ -48,6 +48,8 @@
 - `ChatMessage.systemNoticeKind`（`rewind` | `goal-continuation`）：系统通知行按类别选图标，目标自动续跑的留痕显示靶心。
 - `scrollBehavior` 新增夹底守卫与自动收起扣留的纯策略（`resolveScrollClampGuard`、
   `resolveAutoCollapseHold`、`ScrollClampGuardCssVariable`）。
+- `ChatInputFeaturesControl.voiceInput`：传 false 时输入框不显示麦克风按钮，供没有可用语音转写的宿主使用；
+  默认 true，现有用法不变。
 
 ## [0.2.35] — 2026-09-08
 
