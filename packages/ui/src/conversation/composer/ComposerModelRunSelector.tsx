@@ -99,11 +99,6 @@ const ThinkingDepthOptions: ComposerThinkingDepthOption[] = [
   { value: "ultra", labelKey: "chat.composerThinkingDepth_ultra" },
 ];
 
-const LegacyThinkingDepthOptions: ComposerThinkingDepthOption[] = [
-  { value: "off", labelKey: "chat.composerThinkingDepth_off" },
-  ...ThinkingDepthOptions,
-];
-
 function getSelectedModelLabel(
   providerOption: Nullable<ChatComposerProviderModelSelectOption>,
   model: string,
@@ -234,7 +229,7 @@ function ComposerModelRunSelectorImpl({
     reasoning?.summaryLabel ??
     reasoning?.options.find((option) => option.value === reasoning.value)
       ?.label;
-  const selectedThinkingDepthLabelKey = LegacyThinkingDepthOptions.find(
+  const selectedThinkingDepthLabelKey = ThinkingDepthOptions.find(
     (option) => option.value === thinkingDepth?.value,
   )?.labelKey;
   // 模型名旁那一格：宿主给了运行档就显示运行档；给了摘要就整格听它的（**包括「这一格什么都不用说」**
@@ -416,10 +411,7 @@ function ComposerModelRunSelectorImpl({
               <div className={styles.composerModelRunMenuSegment}>
                 <ComposerTierSlider
                   value={thinkingDepth.value}
-                  options={(thinkingVisibility
-                    ? ThinkingDepthOptions
-                    : LegacyThinkingDepthOptions
-                  ).map((option) => ({
+                  options={ThinkingDepthOptions.map((option) => ({
                     value: option.value,
                     label: t(option.labelKey),
                   }))}

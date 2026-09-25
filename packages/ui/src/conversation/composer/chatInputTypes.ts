@@ -17,7 +17,7 @@ export interface ChatInputRunProfileControl {
   onChange: (value: RunProfileSelectionId) => void;
 }
 
-/** 思考力度控制；聊天 Composer 配有独立展示开关时只暴露 low/medium/high/ultra。 */
+/** 思考力度控制：low / medium / high / ultra 四档。 */
 export interface ChatInputThinkingDepthControl {
   value: ReasoningLevel;
   disabled?: boolean;

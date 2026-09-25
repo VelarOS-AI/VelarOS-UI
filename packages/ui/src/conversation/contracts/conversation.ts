@@ -29,7 +29,7 @@ export type ChatProviderId =
   | 'custom'
   | (string & {})
 
-export type ReasoningLevel = 'off' | 'low' | 'medium' | 'high' | 'ultra'
+export type ReasoningLevel = 'low' | 'medium' | 'high' | 'ultra'
 export type RunProfileSelectionId = 'auto' | 'compact' | 'balanced' | 'expanded'
 export type WorkspaceSpaceKind = string
 export type AgentRoleId = 'chat' | 'operator' | 'architect' | 'coder' | 'browser' | 'primary-agent'
