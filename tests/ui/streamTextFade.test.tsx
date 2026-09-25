@@ -4,7 +4,11 @@ import { describe, test } from 'node:test'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
-import { StreamingTextBlock } from '../../packages/ui/src/conversation/blocks/MessageMarkdownBlocks'
+import {
+  ConversationBlockHooksProvider,
+  emptyConversationBlockHooks,
+} from '../../packages/ui/src/conversation/blocks/conversationBlockHooks'
+import { StreamingTextBlock, ThinkingBlock } from '../../packages/ui/src/conversation/blocks/MessageMarkdownBlocks'
 import {
   createStreamFadeLedgerStore,
   planStreamFade,
@@ -19,7 +23,10 @@ import {
   useStreamFadeViewState,
   velarStreamFadeTextPlugin,
 } from '../../packages/ui/src/conversation/blocks/streamTextFade'
-import { getStreamingThinkingDisplayWindow } from '../../packages/ui/src/conversation/blocks/thinkingTranslation'
+import {
+  getStreamingThinkingDisplayWindow,
+  readThinkingHeadings,
+} from '../../packages/ui/src/conversation/blocks/thinkingTranslation'
 import { ConversationLocalizationProvider } from '../../packages/ui/src/conversation/i18n'
 
 const Open = Number.POSITIVE_INFINITY
@@ -228,5 +235,48 @@ void describe('stream text fade rendering', () => {
       start: 0,
       truncated: false,
     })
+  })
+})
+
+void describe('thinking headings', () => {
+  void test('whole-line bold headings keep their text and range; other markdown stays as written', () => {
+    assert.deepEqual(readThinkingHeadings('**Drafting**\n\nI need a plan.\n\n**Checking**\nDone'), {
+      text: 'Drafting\n\nI need a plan.\n\nChecking\nDone',
+      headings: [
+        { start: 0, end: 8 },
+        { start: 26, end: 34 },
+      ],
+    })
+    assert.deepEqual(readThinkingHeadings('**Note**: keep\n2 ** 3\n***both***'), {
+      text: '**Note**: keep\n2 ** 3\n***both***',
+      headings: [],
+    })
+  })
+
+  void test('a heading still being streamed on the last line never shows its stars', () => {
+    for (const partial of ['**', '**Draf', '**Drafting*', '**Drafting**'])
+      assert.equal(readThinkingHeadings(`Intro\n${partial}`).text.includes('*'), false, partial)
+    assert.deepEqual(readThinkingHeadings('**Draf').headings, [{ start: 0, end: 4 }])
+  })
+
+  void test('the thinking block renders headings in bold without the stars', () => {
+    const markup = renderToStaticMarkup(
+      createElement(
+        ConversationLocalizationProvider,
+        { value: { locale: 'en-US', t: (key: string) => key } },
+        createElement(
+          ConversationBlockHooksProvider,
+          { value: emptyConversationBlockHooks },
+          createElement(ThinkingBlock, {
+            block: { type: 'thinking', text: '**Drafting the solution**\n\nI need a plan.' },
+            defaultExpanded: true,
+            messageId: 'message-1',
+          })
+        )
+      )
+    )
+    assert.match(markup, /<strong[^>]*>Drafting the solution<\/strong>/u)
+    assert.ok(markup.includes('I need a plan.'))
+    assert.doesNotMatch(markup, /\*\*/u)
   })
 })

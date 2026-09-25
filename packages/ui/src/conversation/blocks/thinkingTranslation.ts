@@ -1,5 +1,5 @@
 import type { AppLocale, ThinkingBlock } from '#contracts'
-import { isBlank, isNonBlankString, isTrue } from '#internal/runtime'
+import { isBlank, isNonBlankString, isNull, isTrue } from '#internal/runtime'
 
 export type ThinkingTextLanguage = 'english' | 'chinese' | 'mixed' | 'neutral'
 
@@ -82,6 +82,46 @@ export function isThinkingTranslationVisible(
 
 export function getThinkingBlockDisplayText(block: ThinkingBlock, locale: AppLocale): string {
   return isThinkingTranslationVisible(block, locale) ? block.translatedText ?? block.text : block.text
+}
+
+/** 思考文字去掉标题记号后的样子：`text` 是要显示的文字，`headings` 是其中标题行的区间。 */
+export interface ThinkingDisplayText {
+  text: string
+  /** 标题行在 `text` 里的 `[start, end)`，按先后排。 */
+  headings: ReadonlyArray<{ readonly start: number; readonly end: number }>
+}
+
+/**
+ * 整行的 `**标题**`（OpenAI 的推理摘要每一段都这样起头）只留标题文字、另记区间，由渲染层加粗；别的
+ * Markdown 原样显示。流式时最后一行的标题可能还没写完，先按标题算，显示的字不会一会儿多出两颗星号。
+ */
+export function readThinkingHeadings(text: string): ThinkingDisplayText {
+  const lines = text.split('\n')
+  const headings: Array<{ start: number; end: number }> = []
+  let display = ''
+  lines.forEach((line, index) => {
+    if (index > 0) display += '\n'
+    const heading = readThinkingHeadingLine(line, index === lines.length - 1)
+    if (isNull(heading)) {
+      display += line
+      return
+    }
+    if (heading) headings.push({ start: display.length, end: display.length + heading.length })
+    display += heading
+  })
+  return { text: display, headings }
+}
+
+/** 这一行是 `**标题**` 就给出标题文字；`last` 时收尾的星号可以还没到齐。 */
+function readThinkingHeadingLine(line: string, last: boolean): Nullable<string> {
+  if (!line.startsWith('**')) return null
+  const body =
+    line.length >= 4 && line.endsWith('**')
+      ? line.slice(2, -2)
+      : last
+        ? line.slice(2).replace(/\*+$/, '')
+        : null
+  return isNull(body) || body.startsWith('*') || body.includes('**') ? null : body
 }
 
 export interface StreamingThinkingDisplayWindow {

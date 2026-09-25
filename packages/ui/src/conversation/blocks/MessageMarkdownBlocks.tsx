@@ -1,7 +1,9 @@
 import React, {
   createContext,
+  Fragment,
   memo,
   type ReactElement,
+  type ReactNode,
   type ReactPortal,
   type RefObject,
   useCallback,
@@ -60,7 +62,10 @@ import {
   getStreamingThinkingDisplayWindow,
   getThinkingBlockDisplayText,
   getThinkingTranslationButtonKind,
+  readThinkingHeadings,
   shouldAutoTranslateThinkingBlock,
+  type StreamingThinkingDisplayWindow,
+  type ThinkingDisplayText,
 } from './thinkingTranslation'
 import {
   type MessageMarkdownRuntime,
@@ -245,14 +250,15 @@ function ThinkingBlockInner({
   const wasStreamingRef = useRef(isStreaming)
   const { mounted: isMounted, visible: isVisible } = useDisclosurePresence(expanded)
   const fullDisplayText = getThinkingBlockDisplayText(block, locale)
-  const displayWindow = getStreamingThinkingDisplayWindow(fullDisplayText, {
+  const thinkingText = readThinkingHeadings(fullDisplayText)
+  const displayWindow = getStreamingThinkingDisplayWindow(thinkingText.text, {
     streaming: isStreaming,
   })
   const blockKey = `${messageId}:${blockIndex ?? 'thinking'}:${block.streamId ?? 'stream'}`
   const fadeChunks = useThinkingTextFadeChunks({
     isStreaming,
     blockKey,
-    textLength: fullDisplayText.length,
+    textLength: thinkingText.text.length,
   })
   const buttonKind = getThinkingTranslationButtonKind(block, locale)
   const canTranslate =
@@ -335,9 +341,7 @@ function ThinkingBlockInner({
     <>
       <pre className={styles.thinkingPlainText}>
         {displayWindow.truncated ? '...\n' : null}
-        {isStreaming
-          ? renderStreamFadeText(displayWindow.text, displayWindow.start, fadeChunks)
-          : displayWindow.text}
+        {renderThinkingText(displayWindow, thinkingText.headings, isStreaming ? fadeChunks : null)}
       </pre>
       {canTranslate && (
         <div className={styles.thinkingTranslateRow}>
@@ -409,6 +413,40 @@ function ThinkingBlockInner({
       )}
     </div>
   )
+}
+
+/** 按标题区间把窗口里的思考切段：标题加粗，流式时每段各自按整段偏移淡入。 */
+function renderThinkingText(
+  window: StreamingThinkingDisplayWindow,
+  headings: ThinkingDisplayText['headings'],
+  fadeChunks: Nullable<readonly StreamFadeChunk[]>
+): ReactNode[] {
+  const end = window.start + window.text.length
+  const pieces: ReactNode[] = []
+  const push = (from: number, to: number, heading: boolean): void => {
+    if (to <= from) return
+    const text = window.text.slice(from - window.start, to - window.start)
+    const content = fadeChunks ? renderStreamFadeText(text, from, fadeChunks) : text
+    pieces.push(
+      heading ? (
+        <strong key={from} className={styles.thinkingHeading}>
+          {content}
+        </strong>
+      ) : (
+        <Fragment key={from}>{content}</Fragment>
+      )
+    )
+  }
+  let cursor = window.start
+  for (const heading of headings) {
+    if (heading.end <= cursor) continue
+    if (heading.start >= end) break
+    push(cursor, heading.start, false)
+    push(Math.max(cursor, heading.start), Math.min(end, heading.end), true)
+    cursor = Math.min(end, heading.end)
+  }
+  push(cursor, end, false)
+  return pieces
 }
 
 export function shouldRenderThinkingAsFlat({

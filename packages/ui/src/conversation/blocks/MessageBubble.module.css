@@ -1898,6 +1898,11 @@
   overflow-wrap: anywhere;
 }
 
+.thinkingHeading {
+  color: var(--foreground-secondary);
+  font-weight: 600;
+}
+
 .liveThinkingBlock {
   @apply flex w-full min-w-0 max-w-full flex-col gap-1;
   padding-block: 2px;
