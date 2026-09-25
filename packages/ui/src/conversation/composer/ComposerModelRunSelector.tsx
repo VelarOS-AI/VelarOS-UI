@@ -234,8 +234,11 @@ function ComposerModelRunSelectorImpl({
     reasoning?.summaryLabel ??
     reasoning?.options.find((option) => option.value === reasoning.value)
       ?.label;
-  // 运行档那一格：宿主给了摘要就整格听它的（**包括「这一格什么都不用说」**——`secondaryLabel`
-  // 缺席时不渲染，而不是回落到 Velar 的「自动」，那是外部执行体根本没有的概念）。
+  const selectedThinkingDepthLabelKey = LegacyThinkingDepthOptions.find(
+    (option) => option.value === thinkingDepth?.value,
+  )?.labelKey;
+  // 模型名旁那一格：宿主给了运行档就显示运行档；给了摘要就整格听它的（**包括「这一格什么都不用说」**
+  // ——`secondaryLabel` 缺席时不渲染）；否则显示推理力度，都没有就空着，不编一个「自动」。
   const selectedRunProfileLabel = runProfile
     ? t(
         visibleRunProfileOptions.find(
@@ -244,7 +247,10 @@ function ComposerModelRunSelectorImpl({
       )
     : modelRunSummary
       ? modelRunSummary.secondaryLabel
-      : (selectedReasoningLabel ?? t("chat.composerRunProfile_auto"));
+      : (selectedReasoningLabel ??
+        (selectedThinkingDepthLabelKey
+          ? t(selectedThinkingDepthLabelKey)
+          : undefined));
   const modelMenuCapabilityControls = capabilityControls.filter(
     (control) => control.placement === "model-menu",
   );
