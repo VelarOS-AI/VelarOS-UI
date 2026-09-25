@@ -63,6 +63,17 @@
   `ToolRendererRegistry`。
 - `buildToolRenderSegments(blocks)` 一块一段，去掉 `collapseMin` 与选项参数；`ToolRenderSegment` 只剩
   `{ kind: 'block', block, key }` 一种形状，脚本执行块的 key 是 `script:${id}`。
+- 执行步骤卡不再画状态图标（对号、感叹号、转圈），状态看整张卡的底色，与原来的工具行同一套：进行中与已取消
+  是很淡的灰，成功淡绿，失败淡红；读屏文字照旧。标题行最左是步骤的图标：执行是命令图标，观察是搜索图标，旧工具
+  调用是工具自己的图标；行尾不再放代码提示图标，也没有状态字。`ExecutionStepFrame` 新增必填 `icon`，删掉
+  `ExecutionStepStatusIcon`。
+- `ScriptExecutionBlock` 新增必填 `kind: 'execute' | 'observe'`：observe 是登记持续观察的声明，与执行只靠图标区分，
+  没有标题时是「持续观察」。新增必填 `durationMs`（这一步执行用了多久，还没有结果时为 null），标题行右边显示耗时；
+  去掉 `modules`，卡上不再列模块标签。
+- 脚本卡点开后只放执行的代码与每次调用的结果（都按语法着色，与聊天代码块共用同一个 Shiki 高亮器与主题），不再
+  列每次调用的「模块 · 操作 · 状态 · 效果」标题行和参数；展开后悬停标题行不再弹源码气泡。`ExecutionStepPayload`
+  的 `label` 改为可选，新增 `language`。文案目录删掉 `scriptExecution.call*`、`noCalls`、`scriptError`、
+  `moreModules` 共 14 条，新增 `scriptExecution.observeTitle`。
 
 ### Deprecated
 

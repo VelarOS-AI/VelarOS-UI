@@ -36,23 +36,9 @@ const ScriptExecutionToneByStatus = {
   cancelled: 'cancelled',
 } as const satisfies Record<ScriptExecutionBlock['status'], ExecutionStepTone>
 
-const ScriptExecutionCallToneByStatus = {
-  pending: 'running',
-  succeeded: 'success',
-  failed: 'error',
-  cancelled: 'cancelled',
-} as const satisfies Record<ScriptExecutionCall['status'], ExecutionStepTone>
-
 /** 脚本执行的外观：编写中与运行中都算进行中。 */
 export function resolveScriptExecutionTone(status: ScriptExecutionBlock['status']): ExecutionStepTone {
   return ScriptExecutionToneByStatus[status]
-}
-
-/** 一次能力调用的外观：等待中算进行中。 */
-export function resolveScriptExecutionCallTone(
-  status: ScriptExecutionCall['status']
-): ExecutionStepTone {
-  return ScriptExecutionCallToneByStatus[status]
 }
 
 /** 模块在标签上的名字：去掉 `velaros:` 这类前缀，只留冒号后的部分；没有前缀时原样返回。 */
@@ -146,6 +132,11 @@ export function formatScriptPayload(text: string): string {
     // arch-guard:silent-catch-ok 被截断的 JSON 本来就解析不了，照原文显示就是想要的结果。
     return text
   }
+}
+
+/** 一次调用的结果按哪种语言着色：排成了 JSON 对象或数组的按 JSON，别的（原文、字符串值）按纯文本。 */
+export function resolveScriptPayloadLanguage(text: string): LooseOptional<'json'> {
+  return /^\s*[[{]/u.test(text) ? 'json' : undefined
 }
 
 /** 参数、返回值是否长到要先折起来。 */

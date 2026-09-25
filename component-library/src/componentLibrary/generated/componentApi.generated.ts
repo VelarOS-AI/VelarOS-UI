@@ -3528,15 +3528,20 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
     },
     {
       "name": "ExecutionStepFrame.tone",
-      "description": "Auto-generated from TypeScript props.",
+      "description": "整张卡的底色跟着它走。",
       "type": "ExecutionStepTone",
       "recommended": "Required"
     },
     {
       "name": "ExecutionStepFrame.statusLabel",
-      "description": "状态的读屏文字；图标本身不带字。",
+      "description": "状态的读屏文字；卡片上的状态只看底色。",
       "type": "string",
       "recommended": "Required"
+    },
+    {
+      "name": "ExecutionStepFrame.icon",
+      "description": "标题行最左边的图标：执行是命令、观察是搜索，旧工具调用是工具自己的图标。",
+      "type": "ReactNode"
     },
     {
       "name": "ExecutionStepFrame.title",
@@ -3567,7 +3572,7 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
     },
     {
       "name": "ExecutionStepFrame.sourcePreview",
-      "description": "悬停标题行时弹出的源码预览；给了才挂气泡，行尾同时出现代码图标作提示。",
+      "description": "收起时悬停标题行弹出的源码预览；给了才挂气泡，展开后不再弹。",
       "type": "ReactNode"
     },
     {

@@ -1,6 +1,7 @@
 /*
  * 执行步骤卡（脚本执行卡与旧工具调用卡共用）：一行标题 + 点开的详情，纯 CSS + 设计令牌。
  * 标题行与工具行同一密度（左右 12px、上下 8px、12px 字），聊天流里连排几张也不显得乱。
+ * 状态只看底色，与原来的工具行同一套：进行中与已取消是很淡的灰，成功淡绿，失败淡红。
  */
 
 .root {
@@ -10,11 +11,15 @@
   box-sizing: border-box;
   overflow: hidden;
   border-radius: var(--ui-radius-control);
-  background: var(--background-muted);
+  background: color-mix(in srgb, var(--foreground-tertiary) 5%, var(--card));
 }
 
-.rootError {
-  background: color-mix(in srgb, var(--status-red) 5%, transparent);
+.root[data-tone='success'] {
+  background: color-mix(in srgb, var(--status-green) 5.5%, var(--card));
+}
+
+.root[data-tone='error'] {
+  background: color-mix(in srgb, var(--status-red) 5%, var(--card));
 }
 
 /* 标题行本身就是展开按钮；第一行各件等高居中，失败原因排在标题下面。 */
@@ -48,31 +53,25 @@
   outline-offset: -2px;
 }
 
-.statusIcon,
-.sectionIcon {
+/* 最左边的图标说明这是哪种步骤（命令、观察、工具），不表示状态。 */
+.icon {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  color: var(--foreground-tertiary);
-}
-
-.statusIcon {
   width: 14px;
   height: 20px;
+  color: var(--muted-foreground);
 }
 
-/* 配色类排在两种图标之后，才压得住它们的默认灰。 */
-.statusIconRunning svg {
-  animation: var(--animate-spin);
-}
-
-.statusIconSuccess {
-  color: var(--status-green);
-}
-
-.statusIconError {
-  color: var(--status-red);
+/* 状态的读屏文字，不占位置、看不见。 */
+.statusLabel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .text {
@@ -125,11 +124,6 @@
   white-space: nowrap;
 }
 
-.tagOverflow {
-  font-family: inherit;
-  font-variant-numeric: tabular-nums;
-}
-
 .meta {
   flex-shrink: 0;
   color: var(--foreground-tertiary);
@@ -137,22 +131,6 @@
   font-variant-numeric: tabular-nums;
   line-height: 20px;
   white-space: nowrap;
-}
-
-/* 行尾的代码图标只是提示「悬停看源码」，平时收淡一点。 */
-.affordance {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  height: 20px;
-  color: var(--foreground-tertiary);
-  opacity: 0.6;
-  transition: opacity var(--ui-transition-fast);
-}
-
-.header:hover .affordance,
-.header:focus-visible .affordance {
-  opacity: 1;
 }
 
 .caret {
@@ -208,37 +186,6 @@
   gap: var(--ui-space-1);
 }
 
-.sectionHeader {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  line-height: 18px;
-}
-
-.sectionName {
-  min-width: 0;
-  color: var(--foreground);
-  font-family: var(--font-mono);
-  font-weight: var(--font-weight-medium);
-  overflow-wrap: anywhere;
-}
-
-.sectionLabel {
-  min-width: 0;
-  color: var(--foreground);
-  font-weight: var(--font-weight-medium);
-}
-
-.sectionMeta {
-  flex-shrink: 0;
-  margin-left: auto;
-  color: var(--foreground-tertiary);
-  font-size: 11px;
-  white-space: nowrap;
-}
-
 .note {
   margin: 0;
   color: var(--foreground-tertiary);
@@ -255,13 +202,17 @@
   white-space: pre-wrap;
 }
 
-/* 参数 / 返回：左列是小标签，右列是等宽正文；长的先折起来，底部渐隐。 */
+/* 代码 / 参数 / 返回：给了标签时左列是小标签，右列是等宽正文；长的先折起来，底部渐隐。 */
 .payload {
   display: grid;
   min-width: 0;
   grid-template-columns: max-content minmax(0, 1fr);
   align-items: start;
   column-gap: var(--ui-space-2);
+}
+
+.payloadBare {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .payloadLabel {
@@ -286,8 +237,9 @@
   box-sizing: border-box;
   overflow: auto;
   padding: 4px var(--ui-space-2);
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
   border-radius: var(--ui-radius-control-sm);
-  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  background: var(--card);
   color: var(--foreground);
   font-family: var(--font-mono);
   font-size: 11px;
@@ -304,6 +256,15 @@
 
 .payloadTextError {
   color: var(--status-red);
+}
+
+/* 语法着色：颜色来自高亮器的分词，浅色主题在 --sdm-c，暗色主题在 --shiki-dark。 */
+.token {
+  color: var(--sdm-c, inherit);
+}
+
+:global(html[data-theme='dark']) .token {
+  color: var(--shiki-dark, var(--sdm-c, inherit));
 }
 
 .payloadToggle {

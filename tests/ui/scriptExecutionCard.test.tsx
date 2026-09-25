@@ -12,6 +12,11 @@ import { MessageBubble } from '../../packages/ui/src/conversation/blocks/Message
 import { buildMessageRenderSegments } from '../../packages/ui/src/conversation/blocks/messageBubbleRenderModel'
 import { MessageContentBlock } from '../../packages/ui/src/conversation/blocks/MessageContentBlock'
 import { ToolActivityDisclosure } from '../../packages/ui/src/conversation/blocks/MessageToolActivity'
+import { HighlightedLines } from '../../packages/ui/src/conversation/cards/ExecutionStepFrame'
+import {
+  type HighlightedCode,
+  highlightedTokenStyle,
+} from '../../packages/ui/src/conversation/cards/executionStepHighlight'
 import {
   formatScriptModuleLabel,
   formatScriptPayload,
@@ -21,6 +26,7 @@ import {
   resolveScriptExecutionFailureReason,
   resolveScriptExecutionTitle,
   resolveScriptExecutionTone,
+  resolveScriptPayloadLanguage,
   resolveToolCallStepTone,
 } from '../../packages/ui/src/conversation/cards/executionStepPresentation'
 import {
@@ -98,13 +104,14 @@ function call(overrides: Partial<ScriptExecutionCall> = {}): ScriptExecutionCall
 function script(overrides: Partial<ScriptExecutionBlock> = {}): ScriptExecutionBlock {
   return {
     type: 'script-execution',
+    kind: 'execute',
     id: 'script-1',
     title: '读取配置并构建',
     status: 'succeeded',
     source: "const result = await shell.run({ command: 'bun run build' })",
     sourceTruncated: false,
-    modules: ['velaros:project', 'velaros:shell'],
     calls: [call()],
+    durationMs: 1_200,
     ...overrides,
   }
 }
@@ -123,6 +130,14 @@ function toolCall(toolCallId: string, toolName: string, extra: Partial<ToolCallB
 
 function countMatches(markup: string, pattern: RegExp): number {
   return [...markup.matchAll(pattern)].length
+}
+
+/** 去掉标签后的正文：着色与否只差 span，断言正文时不看它。 */
+function textOf(markup: string): string {
+  return markup
+    .replaceAll(/<[^>]+>/gu, '')
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#x27;', "'")
 }
 
 void describe('脚本执行卡的呈现判定', () => {
@@ -170,6 +185,12 @@ void describe('脚本执行卡的呈现判定', () => {
     assert.equal(formatScriptPayload('   '), '')
   })
 
+  void test('结果排成了 JSON 对象或数组才按 JSON 着色，原文与字符串值按纯文本', () => {
+    assert.equal(resolveScriptPayloadLanguage('{\n  "exitCode": 0\n}'), 'json')
+    assert.equal(resolveScriptPayloadLanguage('[1, 2]'), 'json')
+    assert.equal(resolveScriptPayloadLanguage('file\ncontent'), undefined)
+  })
+
   void test('长参数按行数或字符数折起来', () => {
     assert.equal(isLongExecutionPayload('a\nb\nc'), false)
     assert.equal(isLongExecutionPayload(Array.from({ length: 9 }, () => 'x').join('\n')), true)
@@ -192,23 +213,27 @@ void describe('脚本执行卡的呈现判定', () => {
 })
 
 void describe('ScriptExecutionCard', () => {
-  void test('收起时一行：状态读屏名、标题、模块标签、「+N」；详情不渲染', () => {
-    const markup = render(
-      createElement(ScriptExecutionCard, {
-        block: script({
-          modules: ['velaros:project', 'velaros:shell', 'mcp:github', 'velaros:web', 'velaros:office'],
-        }),
-      })
-    )
+  void test('收起时一行：底色表示状态、读屏文字、标题，右边是耗时；没有状态图标与模块标签，详情不渲染', () => {
+    const markup = render(createElement(ScriptExecutionCard, { block: script() }))
 
     assert.match(markup, /data-slot="script-execution"/)
     assert.match(markup, /aria-expanded="false"/)
-    assert.match(markup, /role="img" aria-label="已完成"/)
+    assert.match(markup, /data-tone="success"/)
+    assert.match(markup, />已完成</)
+    assert.doesNotMatch(markup, /role="img"/)
     assert.match(markup, />读取配置并构建</)
-    assert.match(markup, />project<\/span><span[^>]*>shell<\/span><span[^>]*>github<\/span>/)
-    assert.match(markup, /aria-label="另有 2 个模块"[^>]*>\+2</)
-    assert.doesNotMatch(markup, />velaros:web</)
+    assert.match(markup, />1秒</)
+    assert.doesNotMatch(markup, />shell</)
     assert.doesNotMatch(markup, /参数/)
+  })
+
+  void test('耗时按毫秒、秒显示；还没有结果或不到 1 毫秒时右边不写', () => {
+    assert.match(render(createElement(ScriptExecutionCard, { block: script({ durationMs: 350 }) })), />350ms</)
+    for (const durationMs of [null, 0.2])
+      assert.doesNotMatch(
+        render(createElement(ScriptExecutionCard, { block: script({ durationMs }) })),
+        />\d+(ms|秒)</u
+      )
   })
 
   void test('失败且有原因时标题下一行露出第一行原因', () => {
@@ -219,7 +244,7 @@ void describe('ScriptExecutionCard', () => {
     )
 
     assert.match(markup, /data-tone="error"/)
-    assert.match(markup, /aria-label="失败"/)
+    assert.match(markup, />失败</)
     assert.match(markup, />TypeError: exitCode of undefined</)
     assert.doesNotMatch(markup, /at script:2:1/)
   })
@@ -232,45 +257,60 @@ void describe('ScriptExecutionCard', () => {
     assert.match(
       render(
         createElement(ScriptExecutionCard, {
-          block: script({ title: '', status: 'writing', source: '', modules: [], calls: [] }),
+          block: script({ title: '', status: 'writing', source: '', calls: [], durationMs: null }),
         })
       ),
-      /aria-label="编写中"[\s\S]*>执行脚本</
+      />执行脚本<[\s\S]*>编写中</
     )
   })
 
-  void test('详情按顺序列出每次调用的模块 · 操作、状态、外部效果、参数与返回，失败的返回标成错误', () => {
+  void test('观察卡与执行卡只靠图标区分，不写方法名；观察卡没有标题时是「持续观察」', () => {
+    const iconOf = (markup: string) => /<svg[\s\S]*?<\/svg>/u.exec(markup)?.[0]
+    const observed = render(
+      createElement(ScriptExecutionCard, { block: script({ kind: 'observe', title: '盯着构建日志' }) })
+    )
+    const executed = render(createElement(ScriptExecutionCard, { block: script() }))
+    assert.match(observed, />盯着构建日志</)
+    assert.doesNotMatch(observed, />observe</)
+    assert.ok(iconOf(observed) && iconOf(executed) && iconOf(observed) !== iconOf(executed))
+    assert.match(
+      render(createElement(ScriptExecutionCard, { block: script({ kind: 'observe', title: '', calls: [] }) })),
+      />持续观察</
+    )
+  })
+
+  void test('详情先给执行的代码，再按顺序给每次调用的结果；不列参数与调用标题行，脚本本身的错误排在最后', () => {
     const markup = render(
       createElement(ScriptExecutionDetails, {
         block: script({
           calls: [
-            call({ module: 'velaros:project', operation: 'edit', effect: 'committed', inputTruncated: true }),
-            call({
-              status: 'failed',
-              effect: 'partial',
-              output: JSON.stringify({ message: 'exit 2' }),
-            }),
+            call({ module: 'velaros:project', operation: 'edit', output: JSON.stringify({ changed: true }) }),
+            call({ status: 'pending', output: '' }),
+            call({ status: 'failed', output: JSON.stringify({ message: 'exit 2' }), outputTruncated: true }),
           ],
           error: 'TypeError: boom',
         }),
       })
     )
+    const text = textOf(markup)
 
-    assert.ok(markup.indexOf('velaros:project · edit') < markup.indexOf('velaros:shell · run'))
-    assert.match(markup, />成功 · 已生效</)
-    assert.match(markup, />失败 · 部分生效</)
-    assert.equal(countMatches(markup, />参数</gu), 2)
-    assert.equal(countMatches(markup, />返回</gu), 1)
-    assert.equal(countMatches(markup, />错误</gu), 1)
-    assert.match(markup, /&quot;command&quot;: &quot;bun run build&quot;/)
+    assert.ok(text.indexOf("shell.run({ command: 'bun run build' })") < text.indexOf('"changed": true'))
+    assert.ok(text.indexOf('"changed": true') < text.indexOf('"message": "exit 2"'))
+    assert.ok(text.indexOf('"message": "exit 2"') < text.indexOf('TypeError: boom'))
+    assert.doesNotMatch(markup, />参数<|>返回<|velaros:project · edit|已生效/u)
+    assert.doesNotMatch(markup, /command&quot;: &quot;bun run build/u)
+    assert.equal(countMatches(markup, /<pre/gu), 3, '代码一段、有返回的两次调用各一段，等待中的不占位置')
     assert.equal(countMatches(markup, />内容过长，已截断</gu), 1)
-    assert.match(markup, />脚本出错<[\s\S]*>TypeError: boom</)
   })
 
-  void test('没有调用也没有错误时说明这一步没调用能力', () => {
+  void test('编写中还没有源码时详情说正在编写', () => {
     assert.match(
-      render(createElement(ScriptExecutionDetails, { block: script({ calls: [] }) })),
-      />这一步没有调用能力模块。</
+      render(
+        createElement(ScriptExecutionDetails, {
+          block: script({ status: 'writing', source: '', calls: [] }),
+        })
+      ),
+      />正在编写…</
     )
   })
 
@@ -281,7 +321,7 @@ void describe('ScriptExecutionCard', () => {
       })
     )
     assert.match(withSource, /data-slot="script-execution-source"/)
-    assert.match(withSource, /<pre[^>]*><code>const a = 1\n {2}return a<\/code><\/pre>/)
+    assert.match(textOf(withSource), /const a = 1\n {2}return a/)
     assert.match(withSource, />源码过长，后面的部分已截断。</)
 
     assert.match(
@@ -292,6 +332,39 @@ void describe('ScriptExecutionCard', () => {
       render(createElement(ScriptSourcePreview, { block: { source: ' ', sourceTruncated: false, status: 'cancelled' } })),
       />没有源码。</
     )
+  })
+})
+
+void describe('语法着色', () => {
+  void test('浅色主题的颜色放进 --sdm-c，暗色主题的变量原样带上，底色不要', () => {
+    assert.deepEqual(
+      highlightedTokenStyle({
+        content: 'const',
+        offset: 0,
+        color: '#D73A49',
+        htmlStyle: { color: '#D73A49', '--shiki-dark': '#F97583', 'background-color': '#fff' },
+      }),
+      { '--sdm-c': '#D73A49', '--shiki-dark': '#F97583' }
+    )
+  })
+
+  void test('一行一组分词，行与行之间补回换行', () => {
+    const code = {
+      tokens: [
+        [
+          { content: 'const', offset: 0, color: '#D73A49' },
+          { content: ' a = 1', offset: 5, color: '#24292E' },
+        ],
+        [{ content: 'return a', offset: 12, color: '#24292E' }],
+      ],
+      fg: '#24292E',
+      bg: '#fff',
+      themeName: 'github-light',
+    } as unknown as HighlightedCode
+    const markup = renderToStaticMarkup(createElement(HighlightedLines, { code }))
+
+    assert.equal(textOf(markup), 'const a = 1\nreturn a')
+    assert.match(markup, /style="--sdm-c:#D73A49"[^>]*>const</)
   })
 })
 
@@ -311,7 +384,8 @@ void describe('旧工具调用的通用卡', () => {
 
     assert.match(markup, /data-slot="tool-call-step"/)
     assert.match(markup, />project:run</)
-    assert.match(markup, /aria-label="失败"/)
+    assert.match(markup, /data-tone="error"/)
+    assert.match(markup, />失败</)
     assert.match(markup, />4秒</)
     assert.match(markup, />error TS2307: Cannot find module &#x27;\.\/env&#x27;</)
     assert.match(markup, /aria-expanded="false"/)

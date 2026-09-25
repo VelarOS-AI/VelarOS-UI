@@ -521,17 +521,19 @@ export interface ScriptExecutionBlock {
   type: 'script-execution'
   /** 稳定身份，同一张卡的更新按它原位替换。 */
   id: string
+  /** 哪种程序声明：execute 这一轮执行一次；observe 登记持续观察，从下一回合起每帧运行。 */
+  kind: 'execute' | 'observe'
   /** 一句话说明这一步做什么；可能为空串，此时界面按模块与操作兜底。 */
   title: string
   status: 'writing' | 'running' | 'succeeded' | 'failed' | 'cancelled'
   /** 脚本源码（有界）；writing 阶段可能为空。 */
   source: string
   sourceTruncated: boolean
-  /** 这一步用到的模块 id，去重、按首次出现排序。 */
-  modules: string[]
   calls: ScriptExecutionCall[]
   /** 脚本本身失败（导入、检查或运行错误）的原因。 */
   error?: string
+  /** 这一步执行用了多少毫秒；观察卡是最近一次运行的。还没有结果时为 null。 */
+  durationMs: Nullable<number>
 }
 
 export type ContentBlock =

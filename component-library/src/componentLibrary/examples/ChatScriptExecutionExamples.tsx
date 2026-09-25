@@ -23,23 +23,24 @@ return { scripts, build: { exitCode: build.exitCode, tail: build.stdout.split('\
 
 const writingBlock: ScriptExecutionBlock = {
   type: 'script-execution',
+  kind: 'execute',
   id: 'script-writing',
   title: '',
   status: 'writing',
   source: '',
   sourceTruncated: false,
-  modules: [],
   calls: [],
+  durationMs: null,
 }
 
 const runningBlock: ScriptExecutionBlock = {
   type: 'script-execution',
+  kind: 'execute',
   id: 'script-running',
   title: '运行类型检查并收集报错',
   status: 'running',
   source: typecheckSource,
   sourceTruncated: false,
-  modules: ['velaros:shell'],
   calls: [
     {
       module: 'velaros:shell',
@@ -52,16 +53,17 @@ const runningBlock: ScriptExecutionBlock = {
       outputTruncated: false,
     },
   ],
+  durationMs: null,
 }
 
 const succeededBlock: ScriptExecutionBlock = {
   type: 'script-execution',
+  kind: 'execute',
   id: 'script-succeeded',
   title: '读取项目配置并确认构建脚本能跑通',
   status: 'succeeded',
   source: buildConfigSource,
   sourceTruncated: false,
-  modules: ['velaros:project', 'velaros:shell'],
   calls: [
     {
       module: 'velaros:project',
@@ -94,10 +96,12 @@ const succeededBlock: ScriptExecutionBlock = {
       outputTruncated: true,
     },
   ],
+  durationMs: 4_386,
 }
 
 const failedBlock: ScriptExecutionBlock = {
   type: 'script-execution',
+  kind: 'execute',
   id: 'script-failed',
   title: '更新接口地址后重新构建',
   status: 'failed',
@@ -105,7 +109,6 @@ const failedBlock: ScriptExecutionBlock = {
 const build = await shell.run({ command: 'bun run build' })
 return build.result.exitCode`,
   sourceTruncated: false,
-  modules: ['velaros:project', 'velaros:shell', 'mcp:github', 'velaros:web'],
   calls: [
     {
       module: 'velaros:project',
@@ -129,16 +132,17 @@ return build.result.exitCode`,
     },
   ],
   error: "TypeError: Cannot read properties of undefined (reading 'exitCode')\n    at script:3:21",
+  durationMs: 2_140,
 }
 
 const cancelledBlock: ScriptExecutionBlock = {
   type: 'script-execution',
+  kind: 'execute',
   id: 'script-cancelled',
   title: '',
   status: 'cancelled',
   source: `await shell.run({ command: 'bun run dev' })`,
   sourceTruncated: false,
-  modules: ['velaros:shell'],
   calls: [
     {
       module: 'velaros:shell',
@@ -151,15 +155,46 @@ const cancelledBlock: ScriptExecutionBlock = {
       outputTruncated: false,
     },
   ],
+  durationMs: null,
 }
 
-/** 脚本执行卡的几种状态：编写中 / 运行中 / 成功 / 失败（标题下露出原因）/ 已取消（标题按首个调用兜底）。 */
+const observeBlock: ScriptExecutionBlock = {
+  type: 'script-execution',
+  kind: 'observe',
+  id: 'script-observe',
+  title: '盯着开发服务器的最新日志',
+  status: 'succeeded',
+  source: `// 盯着开发服务器的最新日志
+const log = await shell.output({ task: 'dev-server', tail: 20 })
+return { running: log.running, tail: log.lines }`,
+  sourceTruncated: false,
+  calls: [
+    {
+      module: 'velaros:shell',
+      operation: 'output',
+      status: 'succeeded',
+      effect: 'none',
+      input: JSON.stringify({ task: 'dev-server', tail: 20 }),
+      output: JSON.stringify({ running: true, lines: ['VITE v6 ready in 412 ms', '➜  Local: http://localhost:5173/'] }),
+      inputTruncated: false,
+      outputTruncated: false,
+    },
+  ],
+  durationMs: 38,
+}
+
+/**
+ * 脚本执行卡的几种状态：编写中 / 运行中 / 成功 / 失败（标题下露出原因）/ 已取消（标题按首个调用兜底），
+ * 以及登记持续观察的观察卡。状态看底色，点开看执行的代码与每次调用的结果。
+ */
 export function ScriptExecutionCardStatesExample(): ReactElement {
   return (
     <Stack gap="sm">
-      {[writingBlock, runningBlock, succeededBlock, failedBlock, cancelledBlock].map((block) => (
-        <ScriptExecutionCard key={block.id} block={block} />
-      ))}
+      {[writingBlock, runningBlock, succeededBlock, failedBlock, cancelledBlock, observeBlock].map(
+        (block) => (
+          <ScriptExecutionCard key={block.id} block={block} />
+        )
+      )}
     </Stack>
   )
 }

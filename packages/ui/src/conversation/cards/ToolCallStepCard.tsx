@@ -1,7 +1,7 @@
 /**
  * 旧会话里的工具调用卡。
  *
- * 不再按工具分类换图标、换专属卡片：一律是「状态 + 工具名 + 耗时」一行，点开看参数、进度、结果与错误。
+ * 不再换专属卡片：一律是「工具图标 + 工具名 + 耗时」一行，状态看底色，点开看参数、进度、结果与错误。
  * 与脚本执行卡共用一副外框，旧会话与新会话里的每一步长同一个样子。
  */
 import { memo, type ReactElement, useMemo } from 'react'
@@ -12,6 +12,7 @@ import {
   useConversationTranslatorRuntime,
 } from '../i18n'
 import { getToolStatusLabel } from '../tool-render/toolCallSummary'
+import { toolLeadingPhosphorIconForTool } from '../tool-render/toolLeadingPhosphorIcon'
 
 import { ExecutionStepFrame, ExecutionStepPayload } from './ExecutionStepFrame'
 import {
@@ -50,6 +51,7 @@ function ToolCallStepCardInner({ block }: ToolCallStepCardProps): ReactElement {
       slot="tool-call-step"
       tone={tone}
       statusLabel={t(StatusMessageKeysByTone[tone])}
+      icon={toolLeadingPhosphorIconForTool(block.toolName, 13)}
       title={title}
       monospaceTitle={!hasOwnTitle}
       reason={resolveToolCallFailureReason(block)}

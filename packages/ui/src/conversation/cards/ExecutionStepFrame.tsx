@@ -1,19 +1,18 @@
 /**
- * 执行步骤卡的外框：一行标题（状态图标 + 一句话 + 标签 + 行尾状态）本身就是展开按钮，点开看详情；
- * 给了源码预览时悬停标题行弹出可追进去滚动、选中复制的气泡（HoverCard），Escape 关闭。
- * 脚本执行卡与旧工具调用卡共用这副外框，聊天流里的每一步都长同一个样子。
+ * 执行步骤卡的外框：一行标题（图标 + 一句话 + 标签 + 行尾状态）本身就是展开按钮，点开看详情。
+ * 状态不画图标，看整张卡的底色：进行中与已取消是很淡的灰，成功淡绿，失败淡红。给了源码预览时，收起
+ * 状态下悬停标题行弹出可追进去滚动、选中复制的气泡（HoverCard），Escape 关闭；展开后详情里就有源码，
+ * 不再弹气泡。脚本执行卡与旧工具调用卡共用这副外框，聊天流里的每一步都长同一个样子。
  */
-import { type MouseEvent, type ReactElement, type ReactNode, useId, useState } from 'react'
 import {
-  CaretRightIcon,
-  CheckCircleIcon,
-  CodeIcon,
-  type Icon,
-  type IconWeight,
-  MinusCircleIcon,
-  SpinnerGapIcon,
-  WarningCircleIcon,
-} from '@phosphor-icons/react'
+  Fragment,
+  type MouseEvent,
+  type ReactElement,
+  type ReactNode,
+  useId,
+  useState,
+} from 'react'
+import { CaretRightIcon } from '@phosphor-icons/react'
 
 import { StyleUtils } from '@velaros-ai/ui'
 import { HoverCard } from '@velaros-ai/ui/primitives/overlays/HoverCard'
@@ -22,6 +21,12 @@ import { useConversationI18n } from '../i18n'
 import { AutoScrollSuspendEventName } from '../react-hooks/scrollBehavior'
 import { useDisclosurePresence } from '../react-hooks/useDisclosurePresence'
 
+import {
+  type ExecutionStepCodeLanguage,
+  type HighlightedCode,
+  highlightedTokenStyle,
+  useHighlightedCode,
+} from './executionStepHighlight'
 import { type ExecutionStepTone, isLongExecutionPayload } from './executionStepPresentation'
 
 import styles from './ExecutionStep.module.css'
@@ -30,67 +35,15 @@ import { optionalWhen } from '#internal/runtime'
 
 const cx = StyleUtils.bindCx(styles)
 
-const StatusIconByTone = {
-  running: SpinnerGapIcon,
-  success: CheckCircleIcon,
-  error: WarningCircleIcon,
-  cancelled: MinusCircleIcon,
-} as const satisfies Record<ExecutionStepTone, Icon>
-
-const StatusIconWeightByTone = {
-  running: 'bold',
-  success: 'fill',
-  error: 'fill',
-  cancelled: 'fill',
-} as const satisfies Record<ExecutionStepTone, IconWeight>
-
-/** 进行中的图标在转，其余只换颜色；已取消沿用默认的灰。 */
-const StatusIconClassByTone = {
-  running: 'statusIconRunning',
-  success: 'statusIconSuccess',
-  error: 'statusIconError',
-  cancelled: false,
-} as const satisfies Record<ExecutionStepTone, string | false>
-
-/** 标题行与详情段头两种位置的图标尺寸。 */
-const StatusIconSizeByPlacement = {
-  header: 13,
-  section: 12,
-} as const
-
-/** 与步骤状态同色的小图标。给了 `label` 就作为带名字的图像读出来，否则只是装饰。 */
-export function ExecutionStepStatusIcon({
-  tone,
-  placement,
-  label,
-}: {
-  tone: ExecutionStepTone
-  placement: keyof typeof StatusIconSizeByPlacement
-  label?: string
-}): ReactElement {
-  const StatusIcon = StatusIconByTone[tone]
-
-  return (
-    <span
-      className={cx(
-        placement === 'header' ? 'statusIcon' : 'sectionIcon',
-        StatusIconClassByTone[tone]
-      )}
-      role={optionalWhen(label, 'img')}
-      aria-label={label}
-      aria-hidden={optionalWhen(!label, true)}
-    >
-      <StatusIcon size={StatusIconSizeByPlacement[placement]} weight={StatusIconWeightByTone[tone]} />
-    </span>
-  )
-}
-
 export interface ExecutionStepFrameProps {
   /** 写在根节点 `data-slot` 上，宿主与测试据此认出是哪种步骤卡。 */
   slot: 'script-execution' | 'tool-call-step'
+  /** 整张卡的底色跟着它走。 */
   tone: ExecutionStepTone
-  /** 状态的读屏文字；图标本身不带字。 */
+  /** 状态的读屏文字；卡片上的状态只看底色。 */
   statusLabel: string
+  /** 标题行最左边的图标：执行是命令、观察是搜索，旧工具调用是工具自己的图标。 */
+  icon: ReactNode
   title: string
   /** 标题是工具名这类标识符时用等宽字。 */
   monospaceTitle?: boolean
@@ -100,7 +53,7 @@ export interface ExecutionStepFrameProps {
   tags?: ReactNode
   /** 行尾的状态文字（耗时、执行中）。 */
   meta?: ReactNode
-  /** 悬停标题行时弹出的源码预览；给了才挂气泡，行尾同时出现代码图标作提示。 */
+  /** 收起时悬停标题行弹出的源码预览；给了才挂气泡，展开后不再弹。 */
   sourcePreview?: ReactNode
   /** 展开后的详情；只在展开期间渲染，收起的卡不付这份开销。 */
   renderDetails: () => ReactNode
@@ -110,6 +63,7 @@ export function ExecutionStepFrame({
   slot,
   tone,
   statusLabel,
+  icon,
   title,
   monospaceTitle = false,
   reason,
@@ -136,18 +90,16 @@ export function ExecutionStepFrame({
       aria-controls={optionalWhen(mounted, detailsId)}
       onClick={handleToggle}
     >
-      <ExecutionStepStatusIcon tone={tone} placement="header" label={statusLabel} />
+      <span className={styles.icon} aria-hidden="true">
+        {icon}
+      </span>
       <span className={styles.text}>
         <span className={cx('title', monospaceTitle && 'titleMono')}>{title}</span>
         {!!reason && <span className={styles.reason}>{reason}</span>}
       </span>
       {tags}
       {!!meta && <span className={styles.meta}>{meta}</span>}
-      {!!sourcePreview && (
-        <span className={styles.affordance} aria-hidden="true">
-          <CodeIcon size={13} />
-        </span>
-      )}
+      <span className={styles.statusLabel}>{statusLabel}</span>
       <span className={cx('caret', expanded && 'caretExpanded')} aria-hidden="true">
         <CaretRightIcon size={12} weight="bold" />
       </span>
@@ -155,9 +107,9 @@ export function ExecutionStepFrame({
   )
 
   return (
-    <div className={cx('root', tone === 'error' && 'rootError')} data-slot={slot} data-tone={tone}>
+    <div className={styles.root} data-slot={slot} data-tone={tone}>
       {sourcePreview ? (
-        <HoverCard content={sourcePreview} widthStrategy="anchor">
+        <HoverCard content={sourcePreview} widthStrategy="anchor" disabled={expanded}>
           {header}
         </HoverCard>
       ) : (
@@ -174,15 +126,21 @@ export function ExecutionStepFrame({
   )
 }
 
-/** 详情里的一段参数 / 返回 / 错误：左边小标签，右边等宽正文；长的先折起来，点「展开全部」再看。 */
+/**
+ * 详情里的一段代码、参数、返回或错误：等宽正文，给了语言就按语法着色；给了标签时左边一列小标签。
+ * 长的先折起来，点「展开全部」再看。
+ */
 export function ExecutionStepPayload({
   label,
   text,
+  language,
   truncated = false,
   tone = 'default',
 }: {
-  label: string
+  label?: string
   text: string
+  /** 按哪种语言着色；不给就按纯文本显示，错误一律纯文本。 */
+  language?: LooseOptional<ExecutionStepCodeLanguage>
   /** 宿主或渲染层按上限截过，末尾标一句。 */
   truncated?: boolean
   tone?: 'default' | 'error'
@@ -190,10 +148,11 @@ export function ExecutionStepPayload({
   const { t } = useConversationI18n()
   const [expanded, setExpanded] = useState(false)
   const foldable = isLongExecutionPayload(text)
+  const highlighted = useHighlightedCode(text, optionalWhen(tone !== 'error', language))
 
   return (
-    <div className={styles.payload}>
-      <span className={styles.payloadLabel}>{label}</span>
+    <div className={cx('payload', !label && 'payloadBare')}>
+      {!!label && <span className={styles.payloadLabel}>{label}</span>}
       <div className={styles.payloadBody}>
         <pre
           className={cx(
@@ -202,7 +161,7 @@ export function ExecutionStepPayload({
             foldable && !expanded && 'payloadTextFolded'
           )}
         >
-          {text}
+          {highlighted ? <HighlightedLines code={highlighted} /> : text}
         </pre>
         {truncated && <p className={styles.note}>{t('executionStep.payloadTruncated')}</p>}
         {foldable && (
@@ -217,5 +176,24 @@ export function ExecutionStepPayload({
         )}
       </div>
     </div>
+  )
+}
+
+/** 着过色的代码：一行一组分词，行与行之间补回换行。 */
+export function HighlightedLines({ code }: { code: HighlightedCode }): ReactElement {
+  return (
+    <code>
+      {code.tokens.map((line, index) => (
+        // 分词结果随正文整段重算，行的序号就是它的身份。
+        <Fragment key={index}>
+          {index > 0 && '\n'}
+          {line.map((token, position) => (
+            <span key={position} className={styles.token} style={highlightedTokenStyle(token)}>
+              {token.content}
+            </span>
+          ))}
+        </Fragment>
+      ))}
+    </code>
   )
 }
