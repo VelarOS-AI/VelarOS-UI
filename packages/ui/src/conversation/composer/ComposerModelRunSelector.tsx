@@ -96,7 +96,8 @@ const ThinkingDepthOptions: ComposerThinkingDepthOption[] = [
   { value: "low", labelKey: "chat.composerThinkingDepth_low" },
   { value: "medium", labelKey: "chat.composerThinkingDepth_medium" },
   { value: "high", labelKey: "chat.composerThinkingDepth_high" },
-  { value: "ultra", labelKey: "chat.composerThinkingDepth_ultra" },
+  { value: "xhigh", labelKey: "chat.composerThinkingDepth_xhigh" },
+  { value: "max", labelKey: "chat.composerThinkingDepth_max" },
 ];
 
 function getSelectedModelLabel(
