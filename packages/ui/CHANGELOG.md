@@ -57,6 +57,12 @@
 
 ### Changed
 
+- 子 Agent 面板能挂在 ScriptAct 脚本卡后面：`ConversationWorkerThread` 新增可选的 `anchorId`（派发它的那张脚本卡的
+  id），写了而且那张卡在对话里，面板就直接画在它后面；没写的照旧按 `agent:dispatch` 调用与时间落位。
+  `ChatTranscript` / `MessageBubble` / `AssistantMessageBubble` 的 `renderAfterToolCall` 改名 `renderAfterStep`，
+  参数换成新的 `ConversationStepBlock`（工具调用或脚本卡）；`WorkerThreadTranscriptPlacement.afterToolCallId`
+  改名 `afterStepId`，工具调用按 toolCallId、脚本卡按块 id。
+
 - 会话里的 `tool-call` 块不再按工具分类渲染（分类图标、命令 / 文件改动 / 搜索结果等专属卡、同名归并的「×N」行、
   悬停里按工具登记的操作摘要），一律是 `ToolCallStepCard`，按发生顺序各占一行；连续的调用仍收在活动折叠里，
   折叠标题只数次数，不再拼「已编辑 / 已探索 / 运行命令」。需要专属卡的宿主单独嵌 `ToolCallBlock` 并传自己的

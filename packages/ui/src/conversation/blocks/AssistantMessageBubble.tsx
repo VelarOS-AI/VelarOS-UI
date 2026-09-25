@@ -51,8 +51,8 @@ import styles from './MessageBubble.module.css'
 import type {
   ChatMessage,
   ContentBlock,
+  ConversationStepBlock,
   ProjectRootEntry,
-  ToolCallBlock as ToolCallBlockType,
   UserActionCardResult,
 } from '#contracts'
 import { isEmpty, toNullable } from '#internal/runtime'
@@ -94,7 +94,7 @@ export function AssistantMessageBubble({
   goalCompletionSummary = null,
   activityLeadingElement = null,
   activityTrailingElement = null,
-  renderAfterToolCall,
+  renderAfterStep,
   onOpenBrowserLink,
   onOpenFileChange,
   onOpenProjectPath,
@@ -123,7 +123,8 @@ export function AssistantMessageBubble({
   goalCompletionSummary?: LooseOptional<GoalCompletionActivitySummary>
   activityLeadingElement?: LooseOptional<ReactElement>
   activityTrailingElement?: LooseOptional<ReactElement>
-  renderAfterToolCall?: (block: ToolCallBlockType) => Nullable<ReactNode>
+  /** 每一步（工具调用、脚本卡）后面接着画的东西，比如它派出的子 Agent 面板。 */
+  renderAfterStep?: (block: ConversationStepBlock) => Nullable<ReactNode>
   onOpenBrowserLink?: (url: string) => void | Promise<void>
   onOpenFileChange?: (entry: FileChangeSummaryListEntry) => void | Promise<void>
   onOpenProjectPath?: (path: string) => unknown
@@ -308,7 +309,7 @@ export function AssistantMessageBubble({
             activityLeadingElement={activityLeadingElement}
             activityTrailingElement={combinedActivityTrailingElement}
             hasGroupedRunActivity={hasGroupedRunActivity}
-            renderAfterToolCall={renderAfterToolCall}
+            renderAfterStep={renderAfterStep}
           />
 
           {canShowFileChangeSummary &&

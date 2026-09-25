@@ -33,6 +33,7 @@ import styles from './MessageBubble.module.css'
 import type {
   ChatMessage,
   ContentBlock,
+  ConversationStepBlock,
   ToolCallBlock as ToolCallBlockType,
   UserActionCardResult,
 } from '#contracts'
@@ -168,6 +169,20 @@ function collectToolCallBlocksFromMessageRenderSegment(
   if (segment.segment.block.type === 'tool-call') blocks.push(segment.segment.block)
 }
 
+/** 这一段里的每一步：工具调用与脚本卡，按出现顺序。 */
+function collectStepBlocksFromMessageRenderSegment(
+  segment: MessageRenderSegment,
+  blocks: ConversationStepBlock[]
+): void {
+  if (segment.kind === 'activity-group') {
+    blocks.push(...segment.blocks)
+    return
+  }
+
+  const { block } = segment.segment
+  if (block.type === 'tool-call' || block.type === 'script-execution') blocks.push(block)
+}
+
 /** 消息里已有的正文与思考字数（淡入判断「刚诞生的回答」用，只在挂载时算一次）。 */
 function measureStreamedTextLength(segments: readonly MessageRenderSegment[]): number {
   let length = 0
@@ -202,7 +217,7 @@ function AssistantMessageSegmentsInner({
   hasGroupedRunActivity = false,
   goalCompletionSummary = null,
   questionMessage = null,
-  renderAfterToolCall,
+  renderAfterStep,
 }: {
   messageRenderSegments: MessageRenderSegment[]
   isStreaming: boolean
@@ -228,7 +243,8 @@ function AssistantMessageSegmentsInner({
   activityTrailingElement?: LooseOptional<ReactElement>
   hasGroupedRunActivity?: boolean
   goalCompletionSummary?: LooseOptional<GoalCompletionActivitySummary>
-  renderAfterToolCall?: (block: ToolCallBlockType) => Nullable<ReactNode>
+  /** 每一步（工具调用、脚本卡）后面接着画的东西，比如它派出的子 Agent 面板。 */
+  renderAfterStep?: (block: ConversationStepBlock) => Nullable<ReactNode>
 }): ReactElement {
   const { locale } = useConversationI18n()
   const translatorRuntime = useConversationTranslatorRuntime()
@@ -337,24 +353,18 @@ function AssistantMessageSegmentsInner({
     () => buildMessageSegmentSuffixStates(visibleMessageRenderSegments),
     [visibleMessageRenderSegments]
   )
-  const renderAfterToolCallElements = (
-    segment: MessageRenderSegment,
-    keyPrefix: string
-  ): ReactNode[] => {
-    if (!renderAfterToolCall) return []
+  const renderAfterStepElements = (segment: MessageRenderSegment, keyPrefix: string): ReactNode[] => {
+    if (!renderAfterStep) return []
 
-    const toolCallBlocks: ToolCallBlockType[] = []
-    collectToolCallBlocksFromMessageRenderSegment(segment, toolCallBlocks)
+    const stepBlocks: ConversationStepBlock[] = []
+    collectStepBlocksFromMessageRenderSegment(segment, stepBlocks)
 
-    return toolCallBlocks.flatMap((block) => {
-      const element = renderAfterToolCall(block)
+    return stepBlocks.flatMap((block) => {
+      const element = renderAfterStep(block)
+      const id = block.type === 'tool-call' ? block.toolCallId : block.id
 
       return isPresent(element)
-        ? [
-            <React.Fragment key={`${keyPrefix}:after-tool:${block.toolCallId}`}>
-              {element}
-            </React.Fragment>,
-          ]
+        ? [<React.Fragment key={`${keyPrefix}:after-step:${id}`}>{element}</React.Fragment>]
         : []
     })
   }
@@ -436,7 +446,7 @@ function AssistantMessageSegmentsInner({
 
     const pushAfterToolCallElements = (segment: MessageRenderSegment): void => {
       renderedSegments.push(
-        ...renderAfterToolCallElements(segment, `message-segment:${segment.key}`)
+        ...renderAfterStepElements(segment, `message-segment:${segment.key}`)
       )
     }
 
@@ -540,7 +550,7 @@ function AssistantMessageSegmentsInner({
         }
 
         postDisclosureElements.push(
-          ...renderAfterToolCallElements(segment, `processed-segment:${segment.key}`)
+          ...renderAfterStepElements(segment, `processed-segment:${segment.key}`)
         )
       })
 
@@ -638,7 +648,7 @@ function AssistantMessageSegmentsInner({
         inlineActivityRenderers.push(() => renderMessageRenderSegment(segment))
         collectToolCallBlocksFromMessageRenderSegment(segment, inlineActivityBlocks)
         inlineActivityAfterToolCallElements.push(
-          ...renderAfterToolCallElements(segment, `inline-segment:${segment.key}`)
+          ...renderAfterStepElements(segment, `inline-segment:${segment.key}`)
         )
         return
       }

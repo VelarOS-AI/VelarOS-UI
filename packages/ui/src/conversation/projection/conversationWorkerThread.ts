@@ -14,6 +14,8 @@ import type { ChatMessage, StreamWorkerThreadPayload } from '#contracts'
 export interface ConversationWorkerThread {
   threadId: string
   activationId?: string
+  /** 派发它的那一步（脚本卡）的 id；给了而且那张卡在对话里，面板就挂在它后面。 */
+  anchorId?: string
   taskId: Nullable<string>
   nodeId: Nullable<string>
   title: string

@@ -59,8 +59,8 @@ import styles from './ChatConversationPane.module.css'
 import type {
   ActiveContextArtifact,
   ChatMessage,
+  ConversationStepBlock,
   ProjectRootEntry,
-  ToolCallBlock as ToolCallBlockType,
   UserActionCard as UserActionCardType,
   UserActionCardResult,
 } from '#contracts'
@@ -600,7 +600,7 @@ export function ChatConversationPane({
     [goalCompletionSummaryByMessageId]
   )
   // 消息数组随每个 token 换新，线程落位多半没变：逐项相同就沿用上一份，
-  // 让 renderAfterToolCall 引用不变，带派发卡的消息气泡不随正文重画。
+  // 让 renderAfterStep 引用不变，带派发卡的消息气泡不随正文重画。
   const previousWorkerThreadPlacementRef = useRef<Nullable<WorkerThreadTranscriptPlacement>>(null)
   const workerThreadPlacement = useMemo(() => {
     const next = groupWorkerThreadsByTranscriptAnchor(visibleMessages, workerThreads)
@@ -628,9 +628,11 @@ export function ChatConversationPane({
     },
     [renderWorkerThreadPanel, workerThreadPlacement]
   )
-  const renderWorkerThreadsAfterToolCall = useCallback(
-    (block: ToolCallBlockType) => {
-      const threads = workerThreadPlacement.afterToolCallId.get(block.toolCallId)
+  const renderWorkerThreadsAfterStep = useCallback(
+    (block: ConversationStepBlock) => {
+      const threads = workerThreadPlacement.afterStepId.get(
+        block.type === 'tool-call' ? block.toolCallId : block.id
+      )
 
       return threads && !isEmpty(threads) ? renderWorkerThreadPanel(threads) : null
     },
@@ -694,7 +696,7 @@ export function ChatConversationPane({
                 getRunCostEstimate={getTranscriptRunCostEstimate}
                 getGoalCompletionSummary={getTranscriptGoalCompletionSummary}
                 renderAfterMessage={renderWorkerThreadsAfterMessage}
-                renderAfterToolCall={renderWorkerThreadsAfterToolCall}
+                renderAfterStep={renderWorkerThreadsAfterStep}
                 onOpenBrowserLink={onOpenBrowserLink}
                 onOpenFileChange={onOpenFileChange}
                 onOpenProjectPath={onOpenProjectPath}

@@ -536,6 +536,9 @@ export interface ScriptExecutionBlock {
   durationMs: Nullable<number>
 }
 
+/** 对话里的一步：旧的工具调用，或 ScriptAct 的脚本卡；子 Agent 面板挂在派发它的那一步后面。 */
+export type ConversationStepBlock = ToolCallBlock | ScriptExecutionBlock
+
 export type ContentBlock =
   | TextBlock
   | ThinkingBlock

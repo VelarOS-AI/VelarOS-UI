@@ -26,9 +26,9 @@ import {
 import type {
   ChatMessage,
   ChatProviderId,
+  ConversationStepBlock,
   ModelPricingCatalog,
   ProjectRootEntry,
-  ToolCallBlock as ToolCallBlockType,
   UserActionCardResult,
 } from '#contracts'
 import { isEmpty, toNullable } from '#internal/runtime'
@@ -133,7 +133,8 @@ export interface ChatTranscriptProps {
   renderActivityLeadingElement?: (message: ChatMessage) => Nullable<ReactElement>
   renderBeforeMessage?: (message: ChatMessage) => Nullable<ReactNode>
   renderAfterMessage?: (message: ChatMessage) => Nullable<ReactNode>
-  renderAfterToolCall?: (block: ToolCallBlockType) => Nullable<ReactNode>
+  /** 每一步（工具调用、脚本卡）后面接着画的东西，比如它派出的子 Agent 面板。 */
+  renderAfterStep?: (block: ConversationStepBlock) => Nullable<ReactNode>
   onOpenBrowserLink?: (url: string) => void | Promise<void>
   onOpenFileChange?: (entry: FileChangeSummaryListEntry) => void | Promise<void>
   onOpenProjectPath?: (path: string) => unknown
@@ -170,7 +171,7 @@ function ChatTranscriptInner({
   renderActivityLeadingElement,
   renderBeforeMessage,
   renderAfterMessage,
-  renderAfterToolCall,
+  renderAfterStep,
   onOpenBrowserLink: onOpenBrowserLinkProp,
   onOpenFileChange: onOpenFileChangeProp,
   onOpenProjectPath: onOpenProjectPathProp,
@@ -323,7 +324,7 @@ function ChatTranscriptInner({
           }
           activityLeadingElement={activityLeadingElement}
           activityTrailingElement={activityTrailingElement}
-          renderAfterToolCall={renderAfterToolCall}
+          renderAfterStep={renderAfterStep}
           onOpenBrowserLink={onOpenBrowserLink}
           onOpenFileChange={onOpenFileChange}
           onOpenProjectPath={onOpenProjectPath}

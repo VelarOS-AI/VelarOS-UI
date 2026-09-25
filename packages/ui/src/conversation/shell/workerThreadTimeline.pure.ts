@@ -31,6 +31,8 @@ interface PendingDispatchPlaceholder {
 }
 
 interface WorkerThreadTranscriptAnchorIndex {
+  /** 对话里的脚本卡：线程写明了派发它的卡时直接挂过去。 */
+  scriptIds: ReadonlySet<string>
   messageAnchors: WorkerThreadMessageAnchor[]
   dispatchAnchors: WorkerThreadDispatchAnchor[]
   dispatchAnchorsByThreadId: Map<string, WorkerThreadDispatchAnchor[]>
@@ -40,7 +42,8 @@ interface WorkerThreadTranscriptAnchorIndex {
 export interface WorkerThreadTranscriptPlacement {
   beforeTranscript: ConversationWorkerThread[]
   afterMessageId: Map<string, ConversationWorkerThread[]>
-  afterToolCallId: Map<string, ConversationWorkerThread[]>
+  /** 挂在某一步后面的线程，按那一步的身份：工具调用是 toolCallId，脚本卡是块 id。 */
+  afterStepId: Map<string, ConversationWorkerThread[]>
 }
 
 function sortWorkerThreadsByStartTime(
@@ -304,6 +307,7 @@ function findNearestTranscriptAnchor<T extends WorkerThreadTimestampAnchor>(
 function createWorkerThreadTranscriptAnchorIndex(
   messages: readonly ChatMessage[]
 ): WorkerThreadTranscriptAnchorIndex {
+  const scriptIds = new Set<string>()
   const messageAnchors: WorkerThreadMessageAnchor[] = []
   const dispatchAnchors: WorkerThreadDispatchAnchor[] = []
   const pendingDispatchPlaceholders: PendingDispatchPlaceholder[] = []
@@ -317,6 +321,7 @@ function createWorkerThreadTranscriptAnchorIndex(
     })
 
     message.blocks.forEach((block) => {
+      if (block.type === 'script-execution') scriptIds.add(block.id)
       if (block.type !== 'tool-call' || block.toolName !== 'agent:dispatch') return
 
       const timestamp = readFiniteTimestamp(block.startedAt) ?? message.timestamp
@@ -357,6 +362,7 @@ function createWorkerThreadTranscriptAnchorIndex(
   })
 
   return {
+    scriptIds,
     messageAnchors: sortTimestampAnchors(messageAnchors),
     dispatchAnchors: sortedDispatchAnchors,
     dispatchAnchorsByThreadId,
@@ -375,9 +381,10 @@ function preferSamePromptAnchors(
 }
 
 /**
- * 线程挂到哪次 `agent:dispatch` 调用下面：先认身份，时间只作兜底。
+ * 线程挂到哪一步下面：先认身份，时间只作兜底。
  *
- * 1. 调用的参数或结果里写明了这个线程 id（续跑的、已完成的调用）。
+ * 0. 宿主写明了派发它的脚本卡（`anchorId`），而且那张卡在对话里：直接挂在它后面。
+ * 1. `agent:dispatch` 调用的参数或结果里写明了这个线程 id（续跑的、已完成的调用）。
  * 2. 还没有结果的调用拿不到线程 id，按任务说明认领；一次调用只被认领一次（记进 `claimedToolCallIds`）。
  * 3. 两样都认不出（旧记录、不是派发出来的线程）才找时间上最近的调用；这样落上去的不算认领。
  *
@@ -386,11 +393,12 @@ function preferSamePromptAnchors(
  * 就落到上一次调用上；同一轮并行派发时各调用也都早于各自的线程。落错之后，自己那次调用下面只剩
  * 乐观占位卡，同一个子 Agent 就出现两张卡。
  */
-function resolveWorkerThreadAnchorToolCallId(
+function resolveWorkerThreadAnchorStepId(
   anchorIndex: WorkerThreadTranscriptAnchorIndex,
   thread: ConversationWorkerThread,
   claimedToolCallIds: Set<string>
 ): Nullable<string> {
+  if (thread.anchorId && anchorIndex.scriptIds.has(thread.anchorId)) return thread.anchorId
   const prompt = readNonBlankText(thread.input)
   const explicitAnchor = findNearestTranscriptAnchor(
     preferSamePromptAnchors(anchorIndex.dispatchAnchorsByThreadId.get(thread.threadId) ?? [], prompt),
@@ -426,12 +434,12 @@ function findWorkerThreadAnchorMessageId(
 
 function appendPendingDispatchAgentPlaceholders(
   pendingDispatchPlaceholders: readonly PendingDispatchPlaceholder[],
-  afterToolCallId: Map<string, ConversationWorkerThread[]>
+  afterStepId: Map<string, ConversationWorkerThread[]>
 ): void {
   pendingDispatchPlaceholders.forEach(({ toolCallId, thread }) => {
-    if (afterToolCallId.has(toolCallId)) return
+    if (afterStepId.has(toolCallId)) return
 
-    afterToolCallId.set(toolCallId, [thread])
+    afterStepId.set(toolCallId, [thread])
   })
 }
 
@@ -441,22 +449,22 @@ export function groupWorkerThreadsByTranscriptAnchor(
 ): WorkerThreadTranscriptPlacement {
   const beforeTranscript: ConversationWorkerThread[] = []
   const afterMessageId = new Map<string, ConversationWorkerThread[]>()
-  const afterToolCallId = new Map<string, ConversationWorkerThread[]>()
+  const afterStepId = new Map<string, ConversationWorkerThread[]>()
   const anchorIndex = createWorkerThreadTranscriptAnchorIndex(messages)
   const claimedToolCallIds = new Set<string>()
 
   sortWorkerThreadsByStartTime(threads).forEach((thread) => {
-    const anchorToolCallId = resolveWorkerThreadAnchorToolCallId(anchorIndex, thread, claimedToolCallIds)
+    const anchorStepId = resolveWorkerThreadAnchorStepId(anchorIndex, thread, claimedToolCallIds)
 
-    if (anchorToolCallId) {
-      const anchoredThreads = afterToolCallId.get(anchorToolCallId)
+    if (anchorStepId) {
+      const anchoredThreads = afterStepId.get(anchorStepId)
 
       if (anchoredThreads) {
         anchoredThreads.push(thread)
         return
       }
 
-      afterToolCallId.set(anchorToolCallId, [thread])
+      afterStepId.set(anchorStepId, [thread])
       return
     }
 
@@ -477,9 +485,9 @@ export function groupWorkerThreadsByTranscriptAnchor(
     afterMessageId.set(anchorMessageId, [thread])
   })
 
-  appendPendingDispatchAgentPlaceholders(anchorIndex.pendingDispatchPlaceholders, afterToolCallId)
+  appendPendingDispatchAgentPlaceholders(anchorIndex.pendingDispatchPlaceholders, afterStepId)
 
-  return { beforeTranscript, afterMessageId, afterToolCallId }
+  return { beforeTranscript, afterMessageId, afterStepId }
 }
 
 /**
@@ -494,7 +502,7 @@ export function isSameWorkerThreadPlacement(
   return (
     isSameThreadList(left.beforeTranscript, right.beforeTranscript) &&
     isSameThreadMap(left.afterMessageId, right.afterMessageId) &&
-    isSameThreadMap(left.afterToolCallId, right.afterToolCallId)
+    isSameThreadMap(left.afterStepId, right.afterStepId)
   )
 }
 
@@ -531,7 +539,7 @@ export function listWorkerThreadsFromTranscriptPlacement(
 
   appendThreads(placement.beforeTranscript)
   placement.afterMessageId.forEach(appendThreads)
-  placement.afterToolCallId.forEach(appendThreads)
+  placement.afterStepId.forEach(appendThreads)
 
   return sortWorkerThreadsByStartTime([...byThreadId.values()])
 }
@@ -543,7 +551,7 @@ export function findWorkerThreadReplacementForDispatchPlaceholder(
   if (!placeholderThreadId.startsWith('dispatch:')) return null
 
   const toolCallId = placeholderThreadId.slice('dispatch:'.length)
-  const anchoredThreads = placement.afterToolCallId.get(toolCallId) ?? []
+  const anchoredThreads = placement.afterStepId.get(toolCallId) ?? []
 
   return toNullable(anchoredThreads.find((thread) => thread.threadId !== placeholderThreadId))
 }

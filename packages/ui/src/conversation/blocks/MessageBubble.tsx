@@ -22,9 +22,9 @@ import { UserMessageBubble } from './UserMessageBubble'
 import type {
   ChatMessage,
   ChatProviderId,
+  ConversationStepBlock,
   ModelPricingCatalog,
   ProjectRootEntry,
-  ToolCallBlock as ToolCallBlockType,
   UserActionCardResult,
 } from '#contracts'
 import { isSystemNoticeMessage } from '#contracts'
@@ -62,7 +62,8 @@ interface MessageBubbleProps {
   goalCompletionSummary?: LooseOptional<GoalCompletionActivitySummary>
   activityLeadingElement?: LooseOptional<ReactElement>
   activityTrailingElement?: LooseOptional<ReactElement>
-  renderAfterToolCall?: (block: ToolCallBlockType) => Nullable<ReactNode>
+  /** 每一步（工具调用、脚本卡）后面接着画的东西，比如它派出的子 Agent 面板。 */
+  renderAfterStep?: (block: ConversationStepBlock) => Nullable<ReactNode>
   onOpenBrowserLink?: (url: string) => void | Promise<void>
   onOpenFileChange?: (entry: FileChangeSummaryListEntry) => void | Promise<void>
   onOpenProjectPath?: (path: string) => unknown
@@ -80,7 +81,7 @@ interface MessageBubbleProps {
 }
 
 const UserActionCardPresenceByMessage = new WeakMap<ChatMessage, boolean>()
-const WorkerThreadAnchorToolPresenceByMessage = new WeakMap<ChatMessage, boolean>()
+const WorkerThreadAnchorPresenceByMessage = new WeakMap<ChatMessage, boolean>()
 
 function hasUserActionCardBlock(message: ChatMessage): boolean {
   const cached = UserActionCardPresenceByMessage.get(message)
@@ -97,18 +98,22 @@ function hasUserActionCardBlock(message: ChatMessage): boolean {
   return false
 }
 
-function hasWorkerThreadAnchorToolBlock(message: ChatMessage): boolean {
-  const cached = WorkerThreadAnchorToolPresenceByMessage.get(message)
+/** 消息里有没有能挂子 Agent 面板的一步：旧的派发工具调用，或脚本卡。 */
+function hasWorkerThreadAnchorBlock(message: ChatMessage): boolean {
+  const cached = WorkerThreadAnchorPresenceByMessage.get(message)
   if (isPresent(cached)) return cached
 
   for (const block of message.blocks) {
-    if (block.type === 'tool-call' && block.toolName === 'agent:dispatch') {
-      WorkerThreadAnchorToolPresenceByMessage.set(message, true)
+    if (
+      (block.type === 'tool-call' && block.toolName === 'agent:dispatch') ||
+      block.type === 'script-execution'
+    ) {
+      WorkerThreadAnchorPresenceByMessage.set(message, true)
       return true
     }
   }
 
-  WorkerThreadAnchorToolPresenceByMessage.set(message, false)
+  WorkerThreadAnchorPresenceByMessage.set(message, false)
   return false
 }
 
@@ -129,12 +134,12 @@ function areToolSlotRenderPropsEqual(
   next: Readonly<MessageBubbleProps>
 ): boolean {
   if (
-    !hasWorkerThreadAnchorToolBlock(prev.message) &&
-    !hasWorkerThreadAnchorToolBlock(next.message)
+    !hasWorkerThreadAnchorBlock(prev.message) &&
+    !hasWorkerThreadAnchorBlock(next.message)
   )
     return true
 
-  return prev.renderAfterToolCall === next.renderAfterToolCall
+  return prev.renderAfterStep === next.renderAfterStep
 }
 
 /**
@@ -179,7 +184,7 @@ function renderMessageBubbleContent(props: MessageBubbleProps): ReactElement {
       goalCompletionSummary={props.goalCompletionSummary}
       activityLeadingElement={props.activityLeadingElement}
       activityTrailingElement={props.activityTrailingElement}
-      renderAfterToolCall={props.renderAfterToolCall}
+      renderAfterStep={props.renderAfterStep}
       onOpenBrowserLink={props.onOpenBrowserLink}
       onOpenFileChange={props.onOpenFileChange}
       onOpenProjectPath={props.onOpenProjectPath}

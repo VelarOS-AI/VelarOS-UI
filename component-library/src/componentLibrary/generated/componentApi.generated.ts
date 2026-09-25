@@ -1850,9 +1850,9 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "((message: ChatMessage) => Nullable<ReactNode>)"
     },
     {
-      "name": "ChatTranscript.renderAfterToolCall",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "((block: ToolCallBlockType) => Nullable<ReactNode>)"
+      "name": "ChatTranscript.renderAfterStep",
+      "description": "每一步（工具调用、脚本卡）后面接着画的东西，比如它派出的子 Agent 面板。",
+      "type": "((block: ConversationStepBlock) => Nullable<ReactNode>)"
     },
     {
       "name": "ChatTranscript.onOpenBrowserLink",
@@ -4421,9 +4421,9 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "LooseOptional<ReactElement<unknown, string | JSXElementConstructor<any>>>"
     },
     {
-      "name": "MessageBubble.renderAfterToolCall",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "((block: ToolCallBlockType) => Nullable<ReactNode>)"
+      "name": "MessageBubble.renderAfterStep",
+      "description": "每一步（工具调用、脚本卡）后面接着画的东西，比如它派出的子 Agent 面板。",
+      "type": "((block: ConversationStepBlock) => Nullable<ReactNode>)"
     },
     {
       "name": "MessageBubble.onOpenBrowserLink",

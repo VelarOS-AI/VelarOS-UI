@@ -73,12 +73,49 @@ function anchoredThreadIds(
   placement: ReturnType<typeof groupWorkerThreadsByTranscriptAnchor>,
   toolCallId: string
 ): string[] {
-  return (placement.afterToolCallId.get(toolCallId) ?? []).map(
+  return (placement.afterStepId.get(toolCallId) ?? []).map(
     (thread) => thread.activationId ?? thread.threadId
   )
 }
 
 void describe('worker thread transcript placement', () => {
+  void test('a thread naming the script card that dispatched it sits right after that card', () => {
+    const script = (id: string) =>
+      ({
+        type: 'script-execution',
+        id,
+        kind: 'execute',
+        title: '派一个子任务',
+        status: 'succeeded',
+        source: '',
+        sourceTruncated: false,
+        calls: [],
+        durationMs: 12,
+      }) as const
+    const message: ChatMessage = {
+      id: 'conversation:run:run-1',
+      role: 'assistant',
+      blocks: [script('card-1'), script('card-2')],
+      timestamp: 500,
+    }
+    const thread = (threadId: string, anchorId: string) => ({
+      ...workerThread(threadId, { startedAt: 600, input: null }),
+      anchorId,
+    })
+    const placement = groupWorkerThreadsByTranscriptAnchor(
+      [message],
+      [thread('job-b', 'card-2'), thread('job-a', 'card-1'), thread('job-gone', 'card-missing')]
+    )
+
+    assert.deepEqual(anchoredThreadIds(placement, 'card-1'), ['job-a'])
+    assert.deepEqual(anchoredThreadIds(placement, 'card-2'), ['job-b'])
+    // 写明的卡不在对话里：照旧按时间落到消息后面
+    assert.deepEqual(
+      (placement.afterMessageId.get('conversation:run:run-1') ?? []).map((item) => item.threadId),
+      ['job-gone']
+    )
+  })
+
   void test('a running dispatch keeps its own thread even when the thread started a few ms before the tool block', () => {
     // 宿主记工具块开始时间用的是收到 tool-start 的时刻，线程开始时间是主进程发 pending 的时刻：
     // 线程会比自己那次调用"早"，按时间最近邻会落到上一次调用上。
@@ -184,7 +221,7 @@ void describe('worker thread transcript placement', () => {
       []
     )
 
-    const [placeholder] = placement.afterToolCallId.get('call-pending') ?? []
+    const [placeholder] = placement.afterStepId.get('call-pending') ?? []
     assert.equal(placeholder?.threadId, 'dispatch:call-pending')
     assert.equal(placeholder?.agentName, 'Scout')
     assert.equal(placeholder?.status, 'pending')
@@ -221,7 +258,7 @@ void describe('worker thread transcript placement', () => {
     )
 
     assert.equal(isSameWorkerThreadPlacement(before, after), true)
-    assert.equal(before.afterToolCallId.get('call-running')?.[0], after.afterToolCallId.get('call-running')?.[0])
+    assert.equal(before.afterStepId.get('call-running')?.[0], after.afterStepId.get('call-running')?.[0])
   })
 
   void test('an updated thread makes the placement differ', () => {
