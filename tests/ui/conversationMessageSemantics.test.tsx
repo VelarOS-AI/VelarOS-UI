@@ -499,6 +499,28 @@ void test('真实长任务在下一轮开始后即使漏存完成 marker 也生�
   assert.match(markup, /最终总结留在已处理外面。/)
 })
 
+void test('撤回消息是一条照常起一轮的用户消息，带撤回标签，也能再被撤回', () => {
+  const markup = renderToStaticMarkup(
+    createElement(
+      ConversationLocalizationProvider,
+      { value: localization },
+      createElement(UserMessageBubble, {
+        message: {
+          ...message('revert', 'user', 'turn-input'),
+          revertOf: { fromMessageId: 'earlier', turnCount: 2 },
+        },
+        onRewindToMessage: async () => {},
+        canRewindToMessage: true,
+      })
+    ) as ReactElement
+  )
+
+  assert.match(markup, /data-conversation-kind="turn-input"/)
+  assert.match(markup, /chat\.revertedTurnsMany/)
+  assert.doesNotMatch(markup, /已引导对话/)
+  assert.match(markup, /chat\.rewindToBeforeMessage/)
+})
+
 void test('运行内引导复用气泡视觉，但展示自己的标签和复制语义', () => {
   const markup = renderToStaticMarkup(
     createElement(

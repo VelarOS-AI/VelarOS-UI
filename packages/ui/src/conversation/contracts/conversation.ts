@@ -696,6 +696,16 @@ export interface ChatMessage {
     /** 双方所在的会话组 id。 */
     folderId: string
   }
+  /**
+   * 非空 = 这条用户消息撤回了此前的对话：从 `fromMessageId` 那条用户消息起、到这条消息之前的几轮作废，
+   * 记录照常保留。与 `peerOrigin` 一样是独立的一根轴：撤回消息照样起一轮（`turn-input`）。
+   */
+  revertOf?: {
+    /** 被撤回的第一条用户消息。 */
+    fromMessageId: string
+    /** 撤回的用户轮次数。 */
+    turnCount: number
+  }
   timestamp: number
 }
 
