@@ -2,7 +2,6 @@ import type { ChatStatusRuntime } from '../status/chatStatus'
 
 import type {
   ConfirmationRequestDetail,
-  ProjectAutoApprovalNotice,
   StreamUsageTelemetryPayload,
   UserActionCard,
 } from '#contracts'
@@ -12,7 +11,6 @@ import type {
  * 不表达停靠位置；Plan / Goal 的 sticky dock 由会话壳根据权威状态自行派生。
  */
 export type ConversationCardItem =
-  | { kind: 'project-auto-approval'; id: string; createdAt: number; notice: ProjectAutoApprovalNotice }
   /** 宿主自有的会话转交建议卡：批准即建新会话，身份必须是声明式的，不能靠 id 前缀嗅。 */
   | { kind: 'handoff-suggestion'; id: string; createdAt: number; card: UserActionCard }
 

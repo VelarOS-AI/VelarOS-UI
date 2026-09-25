@@ -161,7 +161,7 @@ describe('外壳文档', () => {
     expect(shell).toMatch(/window\.artifactBridge/)
     expect(shell).toMatch(new RegExp(HtmlArtifactBridgeMessageTypes.wheel))
     expect(shell).toMatch(/\)\(720,3\);function invalidateHeightMeasurement/)
-    expect(shell).toMatch(/pendingPatches=\[\];invalidateHeightMeasurement\(\);applyPatches\(patches\)/)
+    expect(shell).toMatch(/invalidateHeightMeasurement\(\);render\(data\.html\);hasRendered=true/)
     expect(shell).toMatch(/shouldPublishMeasuredSize/)
     expect(shell).not.toMatch(/widgetBridge|show_widget/)
   })

@@ -6,7 +6,7 @@
 ## 这个切片是什么
 
 **host 无关的会话渲染件**——一整个聊天页所需要的 React 零件:消息气泡与消息块管线、
-工具卡族、流式屏显起搏、输入框、HTML 制品预览、会话壳组合层(`ChatConversationPane`)。
+工具卡族、流式屏显起搏、输入框、Widget 预览、会话壳组合层(`ChatConversationPane`)。
 
 底座(`CardKit` / `ActionCard` / 全部原语)留在 `@velaros-ai/ui`,本切片**消费**它们。
 
@@ -32,7 +32,7 @@
 | --- | --- | --- |
 | 是否必填 | **必填** | **可选** |
 | 缺注入时 | 那张卡**不显示**(正文不受影响) | 回落**官方内置件的原行为** |
-| 举例 | 能力批准卡 / 定时任务提案 / 旗标任务 / 浏览器截图组 / worker 线程面板 / `systemToolInstall` / `askUser` / `userActionCard` / `messageFileChangeSummary` | `messageMarkdown` / `messageCodeBlock` |
+| 举例 | 浏览器截图组 / worker 线程面板 / `askUser` / `userActionCard` / `messageFileChangeSummary` | `messageMarkdown` / `messageCodeBlock` |
 
 替换槽的 props 由官方件的**真实入参收窄**(`ConversationMarkdownSlotProps` = `{ text, isStreaming }`;
 `ConversationCodeBlockSlotProps` = `{ language, code, isStreaming }`),
@@ -100,7 +100,7 @@ Render Slot 组合接入。
 | `./i18n` | `ConversationTranslatorRuntime` / Provider / `useConversationI18n` |
 | `./status` | 会话运行状态渲染纯 util(`getChatStatusMeta` / `getChatNoticeMeta` / …) |
 | `./markdown` | streamdown 渲染配置、链接与围栏处理、流式冲刷纯 util |
-| `./artifacts`、`./html-preview` | HTML 制品渲染与沙箱 iframe 预览簇 |
+| `./artifacts`、`./html-preview` | HTML 源码视图与沙箱 iframe 预览簇（Widget 用） |
 
 **重件走独立子路径是有意的**:`./artifacts` 与 `./html-preview` 按需 lazy 加载,
 这样任意 root import 都不会预载沙箱。

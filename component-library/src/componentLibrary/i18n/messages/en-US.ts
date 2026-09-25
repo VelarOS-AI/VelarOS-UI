@@ -1196,15 +1196,6 @@ export const enUSMessages = {
     widgetClosePreview: 'Close widget preview',
     widgetShowCode: 'Show source',
     widgetHideCode: 'Hide source',
-    htmlArtifactDefaultTitle: 'HTML Live Preview',
-    htmlArtifactLoading: 'Generating HTML…',
-    htmlArtifactCopyCode: 'Copy HTML source',
-    htmlArtifactDownloadHtml: 'Download HTML',
-    htmlArtifactReload: 'Rerun',
-    htmlArtifactShowCode: 'Show source',
-    htmlArtifactHideCode: 'Hide source',
-    htmlArtifactRenderError: 'This page ran into a rendering problem.',
-    htmlArtifactRetry: 'Retry',
     richExpand: 'Expand',
     richCollapse: 'Collapse',
     richSearchTitle: 'Web search',
@@ -1309,9 +1300,6 @@ export const enUSMessages = {
     composerProposalMode: 'Proposal mode',
     composerProposalModeHint:
       'Limits the conversation to research, questions, and proposal review. It closes automatically after approval.',
-    composerHtmlArtifacts: 'HTML Live Preview',
-    composerHtmlArtifactsHint:
-      'Best for simple pages, cards, static content, and lightweight interactions.',
     composerWorkbenchEditorControl: 'AI editor control',
     composerWorkbenchEditorControlHint:
       'Let Workbench AI search, open, navigate, move, and safely delete files while keeping the editor UI synchronized.',
@@ -2155,19 +2143,8 @@ export const enUSMessages = {
     approveAndInstall: 'Approve and install',
     readyTitle: 'System tool is ready',
     commandStillMissingTitle: 'Command still not detected',
-    installing: 'Installing',
-    install: 'Install',
-    suggestionTitle: 'Install {label}',
-    compactSuggestionDescription: '{command} is missing and can be installed automatically.',
     suggestionDescription:
       '{command} was not found. After installation, future sessions can inject the matching system-tool hint automatically.',
-    rejectDraftWithReason: 'I do not want to install {label} right now. {reason}',
-    rejectDraftFallback:
-      'I do not want to install {label} right now. Please decide whether another approach can work.',
-    suggestionRejectionPlaceholder:
-      'Tell the model about an alternative tool, existing environment, or preference. You can leave this blank.',
-    tellModel: 'Tell model',
-    doNotInstall: 'Do not install',
   },
   workspaceAutoApproval: {
     title: 'Workspace approval auto-approved',
@@ -2732,7 +2709,6 @@ export const enUSMessages = {
     profileFeatureVelarOSControl: 'VelarOS Control',
     profileFeatureOffice: 'Office documents',
     profileFeatureWidget: 'Widget visuals',
-    profileFeatureHtmlArtifact: 'HTML Live Preview',
     profileVisualModeLabel: 'Rendering capabilities (choose any)',
     profileVisualModeHint:
       'HTML Live Preview handles simple pages and light interactions; Widget handles complex charts, data-driven states, Canvas/WebGL, and multi-step interactions. You can enable both.',
@@ -2779,8 +2755,6 @@ export const enUSMessages = {
       'Draft a concise work email template that updates the team on today’s progress, risks, and next steps. Do not send it.',
     systemTopicWidgetPromptEnhancement:
       'Use the Widget capability to turn the final result into a clear, interactive visual: read the Widget skill page first and follow its rules; use a card layout with system theme variables, restrained colors, and clear hierarchy, plus light interactions such as click-to-check or progress updates; output the complete widget in one go — never source code alone or a half-finished shell.',
-    systemTopicHtmlArtifactPromptEnhancement:
-      'Use HTML Live Preview to turn the final result into a polished, directly previewable page: read the HTML Live Preview skill page first and follow its rules; default to brand variables for colors, keep the background transparent so it blends into the app, size by content, and add tasteful motion and light interaction; the skeleton, styles, content, and scripts must all be completed within this single reply — never ship only a skeleton or raw source.',
     projectTopicTitle: 'What would you like to do in this project first?',
     projectTopicStructure: 'Understand the structure',
     projectTopicStructurePrompt:
@@ -2994,9 +2968,6 @@ export const enUSMessages = {
     optionalWidgetTitle: 'Widget: visualize inside the conversation',
     optionalWidgetBody:
       'Enable Widget from “+ → Rendering” when needed. The AI can render charts, SVGs, diagrams, and interactive components directly in its answer—useful for data relationships, comparisons, and small interactive tools.',
-    optionalHtmlArtifactTitle: 'HTML Live Preview: watch the page take shape',
-    optionalHtmlArtifactBody:
-      'Enable HTML Live Preview from “+ → Rendering”. The AI streams HTML, CSS, and JavaScript into an isolated preview block so you can watch the page take shape while it is generated. It works well for prototypes, dashboards, and interactive pages, with fullscreen preview, source view, and HTML download afterward.',
     modelDeepTitle: 'Model settings that matter',
     modelDeepBody:
       '“Provider” decides whose models the AI uses; configure any supported provider with your own credentials. “Default model” powers chat and the workbench. “Auxiliary models” below let you assign faster models to small jobs like translation and completion.',

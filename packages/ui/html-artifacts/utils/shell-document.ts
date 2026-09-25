@@ -1,6 +1,6 @@
 /**
  * 沙箱 iframe 的文档构造：两种形态——内容已经齐了的静态文档，和内容随后经消息桥送进去的外壳文档。
- * 两种形态共用同一份桥接脚本、同一个尺寸控制器和同一套补丁运行时，因此宿主两边看到的行为完全一致。
+ * 两种形态共用同一份桥接脚本、同一个尺寸控制器和同一套渲染运行时，因此宿主两边看到的行为完全一致。
  * 注入脚本里的每个缺省数字都从常量表插进来，不在这里另抄一份。
  */
 import {
@@ -11,7 +11,6 @@ import type {
   HtmlArtifactBridgeMessages,
   HtmlArtifactContentKind,
   HtmlArtifactDocumentOptions,
-  HtmlArtifactRenderPatch,
   HtmlArtifactShellDocumentOptions,
 } from '../types/html-artifacts.js'
 
@@ -113,14 +112,6 @@ function jsString(value: string): string {
   return JSON.stringify(value)
 }
 
-/** 把一个值序列化成可以安全嵌进内联脚本的 JSON：尖括号与 `&` 一律转义，免得提前闭合 `</script>`。 */
-function safeJsonForInlineScript(value: unknown): string {
-  return JSON.stringify(value)
-    .replace(/</g, '\\u003c')
-    .replace(/>/g, '\\u003e')
-    .replace(/&/g, '\\u0026')
-}
-
 /** 装在 `<head>` 里的桥接脚本：错误上报、`sendPrompt` / `openLink` / `artifactBridge`，以及滚轮转发。 */
 function bridgeHeadScript(messages: HtmlArtifactBridgeMessages): string {
   return (
@@ -153,7 +144,7 @@ function bridgeHeadScript(messages: HtmlArtifactBridgeMessages): string {
 
 /**
  * 单一尺寸控制器(静态/live 两条测量路径共用,高与宽同轨):
- * - 只有真实 DOM/style patch 会使旧测量失效;宿主按回传尺寸调整 iframe 不会重置状态。
+ * - 只有真实的 DOM/样式变更会使旧测量失效;宿主按回传尺寸调整 iframe 不会重置状态。
  * - 高:溢出时记录 scrollHeight 地板,避免 scrollHeight 与子元素几何值互相拉扯;连续两轮随
  *   viewport 等量增长即判定为 100vh/百分比反馈并冻结;maxReportedHeight 是硬上限,超过后由
  *   iframe 内部滚动承接。
@@ -221,8 +212,8 @@ function resizeTailScript(
   )
 }
 
-/** 补丁运行时：把一批补丁应用到根节点上，顺带管住脚本激活、样式块与 DOM ready 的兼容。 */
-function patchRuntimeScript(rootExpression: string): string {
+/** 渲染运行时：把一份 HTML 对比着落到根节点上，顺带管住脚本激活与 DOM ready 的兼容。 */
+function renderRuntimeScript(rootExpression: string): string {
   return (
     `var root=${rootExpression};`
     + `function readPatchId(patch){return patch&&String(patch.scriptId||patch.styleId||patch.target||'');}`
@@ -235,7 +226,6 @@ function patchRuntimeScript(rootExpression: string): string {
     + `if(window.__htmlArtifactReportRuntimeError){window.__htmlArtifactReportRuntimeError(error||'制品补丁应用失败',meta);return;}`
     + `}catch(ignore){}`
     + `}`
-    + `window.__htmlArtifactReportPatchError=function(error,meta){reportPatchError(error,meta,'script');};`
     + `function createArtifactEvent(name){`
     + `try{return new Event(name,{bubbles:true});}catch(ignore){var event=document.createEvent('Event');event.initEvent(name,true,false);return event;}`
     + `}`
@@ -309,64 +299,18 @@ function patchRuntimeScript(rootExpression: string): string {
     + `});`
     + `while(targetChild){var next=targetChild.nextSibling;target.removeChild(targetChild);targetChild=next;}`
     + `}`
-    + `function findPatchTarget(selector){`
-    + `if(!root)return;`
-    + `if(!selector)return root;`
-    + `try{if(root.matches&&root.matches(selector))return root;return root.querySelector(selector);}catch(error){return null;}`
-    + `}`
-    + `function applyStylePatch(patch){`
-    + `try{`
-    + `var styleId=String(patch.styleId||patch.target||'default');`
-    + `var styles=Array.prototype.slice.call(document.head.querySelectorAll('style[data-artifact-style]'));`
-    + `var style=styles.find(function(entry){return entry.getAttribute('data-artifact-style')===styleId;});`
-    + `if(!style){style=document.createElement('style');style.setAttribute('data-artifact-style',styleId);document.head.appendChild(style);}`
-    + `style.textContent=String(patch.css||'');`
-    + `}catch(error){reportPatchError(error,patch,'patch');}`
-    + `}`
-    + `function applyScriptPatch(patch){`
-    + `try{`
-    + `var scriptId=String(patch.scriptId||patch.target||'default');`
-    + `var scriptName=scriptId.replace(/[^\\w.-]+/g,'-')||'script';`
-    + `var scripts=Array.prototype.slice.call(document.querySelectorAll('script[data-artifact-script]'));`
-    + `scripts.forEach(function(entry){if(entry.getAttribute('data-artifact-script')===scriptId){entry.parentNode&&entry.parentNode.removeChild(entry);}});`
-    + `var script=document.createElement('script');`
-    + `script.setAttribute('data-artifact-script',scriptId);`
-    + `script.onerror=function(event){reportPatchError(event&&event.error||'制品脚本补丁加载失败',patch,'script');};`
-    + `script.text='try{\\n'+String(patch.code||'')+'\\n}catch(error){if(window.__htmlArtifactReportPatchError){window.__htmlArtifactReportPatchError(error,{type:"script",scriptId:'+JSON.stringify(scriptId)+'});}}\\n//# sourceURL=html-artifact-'+scriptName+'.js';`
-    + `document.body.appendChild(script);`
-    + `}catch(error){reportPatchError(error,patch,'script');}`
-    + `}`
-    + `function applyPatch(patch){`
-    + `try{`
-    + `if(!patch||!patch.type)return;`
-    + `if(patch.type==='style'){applyStylePatch(patch);return;}`
-    + `if(patch.type==='script'){applyScriptPatch(patch);return;}`
-    + `var target=findPatchTarget(patch.target);`
-    + `if(!target)return;`
-    + `var template=document.createElement('template');`
-    + `template.innerHTML=String(patch.html||'');`
-    + `if(patch.type==='append'){Array.prototype.slice.call(template.content.childNodes).forEach(function(child){target.appendChild(child.cloneNode(true));});}`
-    + `else{patchChildren(target,template.content);}`
-    + `activateScripts();`
-    + `}catch(error){reportPatchError(error,patch,'patch');}`
-    + `}`
-    + `function applyPatches(patches){`
-    + `if(!Array.isArray(patches))return;`
-    + `patches.forEach(applyPatch);`
-    + `}`
-    + `function render(html,patches){`
+    + `function render(html){`
     + `if(!root)return;`
     + `var template=document.createElement('template');`
     + `template.innerHTML=String(html||'');`
     + `patchChildren(root,template.content);`
-    + `applyPatches(patches);`
     + `activateScripts();`
     + `dispatchArtifactReady();`
     + `}`
   )
 }
 
-/** 外壳文档尾部的脚本：监听宿主消息渲染与打补丁，量出尺寸报回去。 */
+/** 外壳文档尾部的脚本：监听宿主的渲染消息，量出尺寸报回去。 */
 function liveRenderTailScript(
   rootId: string,
   messages: HtmlArtifactBridgeMessages,
@@ -374,7 +318,7 @@ function liveRenderTailScript(
   maxWidthRatio: number
 ): string {
   return (
-    `(function(){${patchRuntimeScript(
+    `(function(){${renderRuntimeScript(
       `document.getElementById(${jsString(rootId)})`
     )}function measureContentSize(target){`
     + `var body=document.body||{};var doc=document.documentElement||{};var viewportWidth=Math.max(doc.clientWidth||0,window.innerWidth||0);`
@@ -413,28 +357,10 @@ function liveRenderTailScript(
     + `function reportSoon(){`
     + `setTimeout(reportHeight,0);setTimeout(reportHeight,80);setTimeout(reportHeight,360);`
     + `}`
-    + `var pendingPatches=[];`
-    + `var pendingPatchFrame=0;`
-    + `function flushQueuedPatches(){`
-    + `pendingPatchFrame=0;`
-    + `var patches=pendingPatches;`
-    + `pendingPatches=[];`
-    + `invalidateHeightMeasurement();`
-    + `applyPatches(patches);`
-    + `dispatchArtifactReady();`
-    + `reportSoon();`
-    + `}`
-    + `function queuePatches(patches){`
-    + `if(!Array.isArray(patches)||!patches.length)return;`
-    + `pendingPatches=pendingPatches.concat(patches);`
-    + `if(pendingPatchFrame)return;`
-    + `pendingPatchFrame=(window.requestAnimationFrame||function(callback){return setTimeout(callback,0);})(flushQueuedPatches);`
-    + `}`
     + `window.addEventListener('message',function(event){`
     + `if(event.source!==window.parent)return;`
     + `var data=event.data||{};`
-    + `if(data.type===${jsString(messages.render)}){invalidateHeightMeasurement();render(data.html,data.patches);hasRendered=true;reportSoon();}`
-    + `if(data.type===${jsString(messages.patch)}){queuePatches(data.patches||(data.patch?[data.patch]:[]));}`
+    + `if(data.type===${jsString(messages.render)}){invalidateHeightMeasurement();render(data.html);hasRendered=true;reportSoon();}`
     + `});`
     + `if(window.ResizeObserver){var resizeObserver=new ResizeObserver(reportHeight);if(root)resizeObserver.observe(root);if(document.body)resizeObserver.observe(document.body);}`
     + `if(window.MutationObserver&&(document.documentElement||document.body)){new MutationObserver(function(){invalidateHeightMeasurement();reportSoon();}).observe(document.documentElement||document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class','width','height']});}`
@@ -445,14 +371,9 @@ function liveRenderTailScript(
   )
 }
 
-/** 静态文档尾部的补丁脚本：把宿主指定的初始补丁一次性应用上去。 */
-function initialPatchesTailScript(patches: readonly HtmlArtifactRenderPatch[]): string {
-  return (
-    `(function(){${patchRuntimeScript('document.body')}var initialPatches=${safeJsonForInlineScript(patches)};`
-    + `applyPatches(initialPatches);`
-    + `dispatchArtifactReady();`
-    + `})();`
-  )
+/** 静态文档尾部的就绪脚本：装上迟到 DOMContentLoaded 的兼容，再发一次就绪事件，与外壳文档渲染完成后一致。 */
+function readyTailScript(): string {
+  return `(function(){${renderRuntimeScript('document.body')}dispatchArtifactReady();})();`
 }
 
 /** 造一份内容已经齐了的静态制品文档。 */
@@ -472,14 +393,12 @@ export function buildHtmlArtifactDocument(
     `<!doctype html><html><head><meta charset="utf-8">`
     + `<meta name="viewport" content="width=device-width,initial-scale=1">`
     + `<style>${HIDE_IFRAME_SCROLLBAR_CSS}${options.designCss ?? ''}${svgCss}body{${bodyStyle}}</style>`
-    + `<script>${bridgeHeadScript(messages)}</script></head><body>${content}<script>${initialPatchesTailScript(
-      options.initialPatches ?? []
-    )}</script>`
+    + `<script>${bridgeHeadScript(messages)}</script></head><body>${content}<script>${readyTailScript()}</script>`
     + `<script>${resizeTailScript(messages, maxReportedHeight, maxWidthRatio)}</script></body></html>`
   )
 }
 
-/** 造一份外壳文档：内容随后经消息桥一段一段送进去。 */
+/** 造一份外壳文档：内容随后经消息桥送进去。 */
 export function buildHtmlArtifactShellDocument(
   options: HtmlArtifactShellDocumentOptions = {}
 ): string {

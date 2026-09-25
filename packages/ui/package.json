@@ -1,7 +1,7 @@
 {
   "name": "@velaros-ai/ui",
   "version": "0.2.54",
-  "description": "A reusable React component library with accessible primitives, application shells, and design tokens, plus the host-agnostic conversation UI (message blocks, tool renderers, stream pacing) under ./conversation and the HTML artifacts unit under ./html-artifacts (a framework-neutral streaming HTML artifact protocol and sandboxed iframe runtime).",
+  "description": "A reusable React component library with accessible primitives, application shells, and design tokens, plus the host-agnostic conversation UI (message blocks, tool renderers, stream pacing) under ./conversation and the HTML artifacts unit under ./html-artifacts (framework-neutral sandboxed iframe documents for HTML previews).",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=20"

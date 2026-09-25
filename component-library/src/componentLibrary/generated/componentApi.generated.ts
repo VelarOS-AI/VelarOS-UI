@@ -1322,16 +1322,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "((request: { messageId: string; blockIndex: number; text: string; }) => Promise<void>)"
     },
     {
-      "name": "ChatConversationPane.onDismissConversationCard",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "((itemId: string) => void)"
-    },
-    {
-      "name": "ChatConversationPane.onDismissStickyDockItem",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "((itemId: string) => void)"
-    },
-    {
       "name": "ChatConversationPane.onFollowLockedChange",
       "description": "Auto-generated from TypeScript props.",
       "type": "(locked: boolean) => void",
@@ -3873,18 +3863,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "defaultValue": "false"
     },
     {
-      "name": "HtmlPreviewFrame.patches",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "readonly HtmlArtifactRenderPatch[]",
-      "defaultValue": "[]"
-    },
-    {
-      "name": "HtmlPreviewFrame.patchRevision",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "number",
-      "defaultValue": "patches.length"
-    },
-    {
       "name": "HtmlPreviewFrame.initialHeight",
       "description": "Auto-generated from TypeScript props.",
       "type": "number",
@@ -3895,17 +3873,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "description": "Auto-generated from TypeScript props.",
       "type": "number",
       "recommended": "Required"
-    },
-    {
-      "name": "HtmlPreviewFrame.protocolText",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "string"
-    },
-    {
-      "name": "HtmlPreviewFrame.sizeLockReady",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "boolean",
-      "defaultValue": "true"
     },
     {
       "name": "HtmlPreviewFrame.title",
@@ -3973,11 +3940,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "description": "Auto-generated from TypeScript props.",
       "type": "string",
       "recommended": "Required"
-    },
-    {
-      "name": "HtmlPreviewToolbar.sourceToggleAction",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "React.ReactNode"
     },
     {
       "name": "HtmlPreviewToolbar.onDownload",

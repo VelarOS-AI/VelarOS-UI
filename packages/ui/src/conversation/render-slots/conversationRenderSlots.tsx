@@ -8,7 +8,6 @@ import type {
   ChatGoalLifecycleAction,
   ChatMessage,
   ContentBlock,
-  ProjectAutoApprovalNotice,
   UserActionCard,
 } from '#contracts'
 import type { GoalDockViewModel } from '#internal/goalLifecycle'
@@ -33,11 +32,6 @@ export type ConversationCardContent =
       sessionId: string
       onResolve: (resolution: UserActionResolution) => void
       onOpenArtifact?: (path: string) => unknown
-    }
-  | {
-      kind: 'project-auto-approval'
-      notice: ProjectAutoApprovalNotice
-      onDismiss?: () => void
     }
   | {
       kind: 'preflight-action'
@@ -82,9 +76,9 @@ export interface ConversationMarkdownSlotProps {
 /**
  * `messageCodeBlock` 替换槽的 props。
  *
- * 由 `useMessageMarkdownComponents(...)` 内 `ExpandableCodeBlockFrame` / `RenderableHtmlCodeBlockFrame`
- * 的真实入参收窄而来。语言原样给出（含 `mermaid` / `html` 这些官方走专用分支的值），替换件自己判
- * 要不要接管——闭集判定留在官方分支里，替换件就永远拿不到新语言。
+ * 由 `useMessageMarkdownComponents(...)` 内 `ExpandableCodeBlockFrame` 的真实入参收窄而来。
+ * 语言原样给出（含 `mermaid` 这种官方走专用分支的值），替换件自己判要不要接管——闭集判定留在
+ * 官方分支里，替换件就永远拿不到新语言。
  */
 export interface ConversationCodeBlockSlotProps {
   /** 代码围栏的语言标注（小写；无标注为空串）。 */
@@ -98,7 +92,7 @@ export interface ConversationCodeBlockSlotProps {
  * 会话渲染 render-slot 契约（§12.9 封闭）：**有限具名集合**，非任意 children 洞。
  *
  * 管线组件（`MessageContentBlock` / `AssistantMessageBubble`）不硬 import 宿主专属的黑名单卡件
- * （能力自动批准 / 定时任务提案 / 旗标任务建议 / 浏览器截图组），而是经此注入面消费——每个 slot
+ * （浏览器截图组 / worker 线程面板 / 用户动作卡 / 提问卡），而是经此注入面消费——每个 slot
  * 是一个具名、带类型 props 的渲染函数。宿主在装配点提供实现（`desktopConversationRenderSlots`）。
  * 缺注入时各 slot 默认渲染 `null`（这些卡是渲染增强，缺失即不显示，不影响正文），宿主装配后即生效。
  *
@@ -109,21 +103,6 @@ export interface ConversationCodeBlockSlotProps {
  *   而这两格空白掉的是消息正文本身。可选性就是那道机械防线：不写它 = 官方实现。
  */
 export interface ConversationRenderSlots {
-  capabilityAutoApprovalNotice: (props: {
-    block: Extract<ContentBlock, { type: 'capability-auto-approval' }>
-  }) => Nullable<ReactElement>
-  /**
-   * 定时任务提案卡。「已创建」不再由管线传状态——它是 `block.resolution`（随会话存档落盘）
-   * 的读法，宿主件自己读、自己在创建成功后写回去。
-   */
-  scheduledTaskProposal: (props: {
-    block: Extract<ContentBlock, { type: 'scheduled-task-proposal' }>
-    sessionId: string
-  }) => Nullable<ReactElement>
-  flaggedTaskSuggestion: (props: {
-    block: Extract<ContentBlock, { type: 'flagged-task' }>
-    sessionId: string
-  }) => Nullable<ReactElement>
   browserScreenshotGroup: (props: {
     blocks: ContentBlock[]
     displayMode: BrowserScreenshotDisplayMode
@@ -135,13 +114,6 @@ export interface ConversationRenderSlots {
     variant?: ConversationWorkerThreadVariant
     selectedThreadId?: LooseOptional<string>
     onOpenThread?: (threadId: string) => void
-  }) => Nullable<ReactElement>
-  /**
-   * 系统工具安装建议卡（宿主 `SystemToolInstallSuggestionCard` 薄容器，**永久** slot）——viewmodel 触达
-   * rendererIpc.settings.installSystemTool + 全局提示留宿主。block-dispatch：MessageContentBlock 经此分发。
-   */
-  systemToolInstall: (props: {
-    block: Extract<ContentBlock, { type: 'system-tool-install-suggestion' }>
   }) => Nullable<ReactElement>
   /**
    * 提问卡（wizard，宿主 `AskUserCarousel` 薄容器，**永久** slot）——有状态 viewmodel（表单/超时/localStorage）
@@ -201,8 +173,8 @@ export interface ConversationRenderSlots {
    */
   messageMarkdown?: (props: ConversationMarkdownSlotProps) => Nullable<ReactElement>
   /**
-   * **替换槽**：markdown 围栏代码块渲染器（官方件 = `ExpandableCodeBlockFrame` /
-   * `RenderableHtmlCodeBlockFrame` / mermaid 直渲分支）。高亮、图表、可运行都在这一格里换。
+   * **替换槽**：markdown 围栏代码块渲染器（官方件 = `ExpandableCodeBlockFrame` / mermaid 直渲分支）。
+   * 高亮、图表都在这一格里换。
    *
    * 缺席 = 官方原路径。取不到围栏正文时也回落官方——替换件唯一的输入没有，替换就没有意义。
    * 行内代码（`inlineCode`）不属于本槽：它是句中片段，不是块级渲染器。
@@ -233,12 +205,8 @@ export type ConversationWorkerThreadVariant = 'default' | 'side'
  * 等于把「没人替换」写成「替换成空白」，正文会整块消失。缺席就是缺席，由调用点判 `undefined` 走官方件。
  */
 const defaultConversationRenderSlots: ConversationRenderSlots = {
-  capabilityAutoApprovalNotice: () => null,
-  scheduledTaskProposal: () => null,
-  flaggedTaskSuggestion: () => null,
   browserScreenshotGroup: () => null,
   workerThreadPanel: () => null,
-  systemToolInstall: () => null,
   askUser: () => null,
   userActionCard: () => null,
   messageFileChangeSummary: () => null,

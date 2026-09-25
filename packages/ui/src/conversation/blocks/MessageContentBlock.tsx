@@ -54,12 +54,6 @@ const LazyThinkingBlock = lazy(async () =>
   })),
 );
 
-const LazyHtmlArtifactBlock = lazy(async () =>
-  import("../artifacts/HtmlArtifactBlock").then((module) => ({
-    default: module.HtmlArtifactBlock,
-  })),
-);
-
 type MessageContentBlockRenderContext = {
   isStreaming: boolean;
   animateLiveToolActivity: boolean;
@@ -165,27 +159,6 @@ const STRUCTURED_BLOCK_RENDERERS = {
       />
     </Suspense>
   ),
-  "html-artifact": (block) => (
-    <Suspense fallback={null}>
-      <LazyHtmlArtifactBlock
-        block={block as Extract<ContentBlock, { type: "html-artifact" }>}
-      />
-    </Suspense>
-  ),
-  "system-tool-install-suggestion": (block, ctx) =>
-    ctx.slots.systemToolInstall({
-      block: block as Extract<
-        ContentBlock,
-        { type: "system-tool-install-suggestion" }
-      >,
-    }),
-  "capability-auto-approval": (block, ctx) =>
-    ctx.slots.capabilityAutoApprovalNotice({
-      block: block as Extract<
-        ContentBlock,
-        { type: "capability-auto-approval" }
-      >,
-    }),
   "user-action-card": (block, ctx) => {
     const userActionBlock = block as Extract<
       ContentBlock,
@@ -228,26 +201,8 @@ const STRUCTURED_BLOCK_RENDERERS = {
       onOpenArtifact: ctx.onOpenProjectPath,
     });
   },
-  "project-auto-approval": () => null,
   "assistant-generated-file": () => null,
   "assistant-source": () => null,
-  "scheduled-task-proposal": (block, ctx) => {
-    const proposalBlock = block as Extract<
-      ContentBlock,
-      { type: "scheduled-task-proposal" }
-    >;
-
-    // 「已创建」只读 block 自身的结算记录（随会话存档落盘），组件不再持第二份 useState。
-    return ctx.slots.scheduledTaskProposal({
-      block: proposalBlock,
-      sessionId: ctx.sessionId,
-    });
-  },
-  "flagged-task": (block, ctx) =>
-    ctx.slots.flaggedTaskSuggestion({
-      block: block as Extract<ContentBlock, { type: "flagged-task" }>,
-      sessionId: ctx.sessionId,
-    }),
 } satisfies Record<
   Exclude<ContentBlock["type"], "text">,
   StructuredBlockRenderer
@@ -535,20 +490,8 @@ function areMessageContentBlockPropsEqual(
     case "tool-call":
     case "script-execution":
       return areStepBlockPropsEqual(prev, next);
-    case "html-artifact":
-      return true;
     case "user-action-card":
       return areUserActionCardBlockPropsEqual(prev, next);
-    case "system-tool-install-suggestion":
-    case "capability-auto-approval":
-    case "project-auto-approval":
-      return true;
-    // 「已创建」随 block.resolution 走，block 引用相同即等价。
-    case "scheduled-task-proposal":
-      return prev.sessionId === next.sessionId;
-    // 卡片状态由 flaggedTaskStore 订阅驱动，block 与 sessionId 相同即等价。
-    case "flagged-task":
-      return prev.sessionId === next.sessionId;
     case "assistant-generated-file":
     case "assistant-source":
       return true;

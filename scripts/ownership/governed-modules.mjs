@@ -56,12 +56,8 @@ export const GovernedModules = [
     // 零运行时依赖的浏览器库：两个入口渲染进程与浏览器扩展都能加载
     browserSafeEntries: ['index.ts', 'contracts.ts'],
     layers: [
-      // 浏览器宿主：一个 iframe 接一条流，整条生命周期归它
-      ['HtmlArtifactRuntime.ts'],
-      // 三件能力的出口，加上注入面的缺省 DOM 实现
-      ['HtmlArtifactProtocol.ts', 'HtmlArtifactDocuments.ts', 'DomHtmlArtifactEnvironment.ts'],
-      // 自己管状态的解析器，由 htmlArtifactProtocol.createParser() 给出
-      ['HtmlArtifactProtocolParser.ts'],
+      // 沙箱文档这件能力的唯一出口
+      ['HtmlArtifactDocuments.ts'],
     ],
     card: 'html-artifacts/MODULE.md',
     invariants: 'html-artifacts/spec/invariants.md',

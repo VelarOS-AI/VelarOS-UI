@@ -1,8 +1,6 @@
 /**
- * artifacts 原子——HTML 制品渲染件（沙箱预览 + 源码视图）。重件（HtmlPreviewFrame/sandbox），经
- * 子路径按需 lazy 加载，**不进根门面**（避免任意 root import 预载沙箱）。
+ * artifacts 原子——HTML 源码视图与它的着色分词器（Widget 的「查看源码」用它）。经子路径按需加载，
+ * **不进根门面**。
  */
-export * from './HtmlArtifactBlock'
 export * from './htmlArtifactCodeTokenizer'
-export * from './htmlArtifactPresentation'
 export * from './HtmlArtifactSourceCode'

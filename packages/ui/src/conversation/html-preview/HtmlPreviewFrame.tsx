@@ -6,18 +6,14 @@ import {
   HtmlArtifactBridgeMessageTypes,
   htmlArtifactDocuments,
   type HtmlArtifactFrameFit,
-  type HtmlArtifactRenderPatch,
 } from '@velaros-ai/ui/html-artifacts'
 
 import { useIntersectionObserver } from '../react-hooks/useIntersectionObserver'
 import { useTimerScope } from '../react-hooks/useTimerScope'
 
 import {
-  HTML_PREVIEW_ERROR_EVENT,
   HTML_PREVIEW_IFRAME_SANDBOX,
-  HTML_PREVIEW_MSG_ERROR,
   HTML_PREVIEW_MSG_OPEN_LINK,
-  HTML_PREVIEW_MSG_PATCH,
   HTML_PREVIEW_MSG_RENDER,
   HTML_PREVIEW_MSG_RESIZE,
   HTML_PREVIEW_MSG_SEND_PROMPT,
@@ -27,7 +23,7 @@ import { buildHtmlPreviewFrameShell } from './htmlPreviewDocument'
 
 import styles from './HtmlPreview.module.css'
 
-import { isEmpty, isNull, isNumber, isObject, isPresent, isTrue, numberOrNull, toNullable, toOptional } from '#internal/runtime'
+import { isNull, isNumber, isObject, isPresent, isTrue, numberOrNull, toNullable } from '#internal/runtime'
 import type { TimerLease } from '#internal/timerScope'
 import { readStringScalar as readString } from '#internal/unknownJsonRecord'
 
@@ -71,29 +67,21 @@ function readHostWidth(host: Nullable<HTMLDivElement>): Nullable<number> {
 
 export interface HtmlPreviewFrameProps {
   html: string
+  /** @deprecated 预览已不读它；保留只为还在传它的 Widget。 */
   artifactId?: string
   fillHost?: boolean
   fitViewportWidth?: boolean
-  patches?: readonly HtmlArtifactRenderPatch[]
-  patchRevision?: number
   initialHeight: number
   reloadKey: number
-  protocolText?: string
-  sizeLockReady?: boolean
   title: string
 }
 
 export function HtmlPreviewFrame({
   html,
-  artifactId,
   fillHost = false,
   fitViewportWidth = false,
-  patches = [],
-  patchRevision = patches.length,
   initialHeight,
   reloadKey,
-  protocolText,
-  sizeLockReady = true,
   title,
 }: HtmlPreviewFrameProps): React.ReactElement {
   const { ref: hostRef, isIntersecting: isInViewport } = useIntersectionObserver<HTMLDivElement>({
@@ -110,12 +98,7 @@ export function HtmlPreviewFrame({
   const [frameFit, setFrameFit] = useState<HtmlArtifactFrameFit>(() => frameFitRef.current)
   const timers = useTimerScope('HtmlPreviewFrame')
   const titleLatest = useLatest(title)
-  const artifactIdLatest = useLatest(artifactId)
   const htmlLatest = useLatest(html)
-  const patchesLatest = useLatest(patches)
-  const protocolTextLatest = useLatest(protocolText)
-  const sizeLockReadyLatest = useLatest(sizeLockReady)
-  const appliedPatchCountRef = useRef(0)
   const shellKind = html.trimStart().startsWith('<svg') ? 'svg' : 'html'
 
   const clearFrameFitFinalization = useMemoizedFn((): void => {
@@ -128,13 +111,13 @@ export function HtmlPreviewFrame({
   const scheduleFrameFitFinalization = useMemoizedFn((): void => {
     clearFrameFitFinalization()
 
-    if (!sizeLockReadyLatest.current || !frameFitRef.current.locked) return
+    if (!frameFitRef.current.locked) return
 
     frameFitFinalizeTimerRef.current = timers.after(
       420,
       () => {
         frameFitFinalizeTimerRef.current = null
-        if (sizeLockReadyLatest.current && frameFitRef.current.locked) {
+        if (frameFitRef.current.locked) {
           frameFitFinalizedRef.current = true
         }
       },
@@ -150,28 +133,9 @@ export function HtmlPreviewFrame({
       {
         type: HTML_PREVIEW_MSG_RENDER,
         html: htmlLatest.current,
-        patches: patchesLatest.current,
       },
       '*'
     )
-    appliedPatchCountRef.current = patchesLatest.current.length
-  })
-
-  const postPatchMessage = useMemoizedFn((): void => {
-    const iframeWindow = iframeRef.current?.contentWindow
-    if (!iframeWindow) return
-
-    const nextPatches = patchesLatest.current.slice(appliedPatchCountRef.current)
-    if (isEmpty(nextPatches)) return
-
-    iframeWindow.postMessage(
-      {
-        type: HTML_PREVIEW_MSG_PATCH,
-        patches: nextPatches,
-      },
-      '*'
-    )
-    appliedPatchCountRef.current = patchesLatest.current.length
   })
 
   const readFrameMaxWidth = useMemoizedFn(
@@ -198,22 +162,11 @@ export function HtmlPreviewFrame({
   })
 
   useEffect(() => {
-    appliedPatchCountRef.current = 0
     maxFrameWidthRef.current = null
     frameFitFinalizedRef.current = false
     clearFrameFitFinalization()
     setResolvedFrameFit(htmlArtifactDocuments.resolveFrameFit({ fallbackHeight: initialHeight }))
   }, [clearFrameFitFinalization, initialHeight, reloadKey, setResolvedFrameFit])
-
-  useEffect(() => {
-    if (!sizeLockReady) {
-      clearFrameFitFinalization()
-      frameFitFinalizedRef.current = false
-      return
-    }
-
-    scheduleFrameFitFinalization()
-  }, [clearFrameFitFinalization, scheduleFrameFitFinalization, sizeLockReady])
 
   useEffect(() => () => clearFrameFitFinalization(), [clearFrameFitFinalization])
 
@@ -270,10 +223,6 @@ export function HtmlPreviewFrame({
     postRenderMessage()
   }, [html, postRenderMessage])
 
-  useEffect(() => {
-    postPatchMessage()
-  }, [patchRevision, postPatchMessage])
-
   const handleIframeMessage = useMemoizedFn((event: MessageEvent): void => {
     const iframeWindow = iframeRef.current?.contentWindow
     if (!iframeWindow || event.source !== iframeWindow) return
@@ -287,10 +236,6 @@ export function HtmlPreviewFrame({
       rendered?: any
       prompt?: any
       url?: any
-      message?: any
-      phase?: any
-      patchType?: any
-      patchId?: any
     }
     if (!data || !isObject(data)) return
 
@@ -324,7 +269,7 @@ export function HtmlPreviewFrame({
       })
       setResolvedFrameFit(nextFit)
 
-      if (nextFit.locked && sizeLockReadyLatest.current) {
+      if (nextFit.locked) {
         scheduleFrameFitFinalization()
       }
       return
@@ -356,29 +301,6 @@ export function HtmlPreviewFrame({
       const externalUrl = htmlArtifactDocuments.normalizeExternalUrl(url)
       if (externalUrl) {
         window.open(externalUrl, '_blank', 'noopener,noreferrer')
-      }
-      return
-    }
-
-    if (data.type === HTML_PREVIEW_MSG_ERROR) {
-      const message = readString(data.message)
-      if (message) {
-        const phase = readString(data.phase)
-        const patchType = readString(data.patchType)
-        const patchId = readString(data.patchId)
-        window.dispatchEvent(
-          new CustomEvent(HTML_PREVIEW_ERROR_EVENT, {
-            detail: {
-              message,
-              artifactId: artifactIdLatest.current,
-              title: titleLatest.current,
-              protocolText: protocolTextLatest.current,
-              phase: toOptional(phase),
-              patchType: toOptional(patchType),
-              patchId: toOptional(patchId),
-            },
-          })
-        )
       }
     }
   })

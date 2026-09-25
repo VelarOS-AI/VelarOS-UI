@@ -1150,15 +1150,6 @@ export const zhCNMessages = {
     widgetClosePreview: '关闭组件预览',
     widgetShowCode: '显示源码',
     widgetHideCode: '隐藏源码',
-    htmlArtifactDefaultTitle: 'HTML 实时预览',
-    htmlArtifactLoading: '正在生成 HTML…',
-    htmlArtifactCopyCode: '复制 HTML 源码',
-    htmlArtifactDownloadHtml: '下载 HTML',
-    htmlArtifactReload: '重新运行',
-    htmlArtifactShowCode: '显示源码',
-    htmlArtifactHideCode: '隐藏源码',
-    htmlArtifactRenderError: '这个页面渲染时出了点问题。',
-    htmlArtifactRetry: '重试',
     richExpand: '展开',
     richCollapse: '收起',
     richSearchTitle: '网页搜索',
@@ -1256,8 +1247,6 @@ export const zhCNMessages = {
     composerProposalMode: '方案模式',
     composerProposalModeHint:
       '开启后整个对话只做调研、提问和方案评审，不执行实现；方案批准后自动关闭。',
-    composerHtmlArtifacts: 'HTML 实时预览',
-    composerHtmlArtifactsHint: '适合简单页面、卡片、静态内容和轻交互。',
     composerWorkbenchEditorControl: 'AI 操控编辑器',
     composerWorkbenchEditorControlHint:
       '允许 Workbench AI 搜索、打开、定位、移动和安全删除文件，并让编辑器界面实时同步。',
@@ -2061,17 +2050,8 @@ export const zhCNMessages = {
     approveAndInstall: '同意并安装',
     readyTitle: '系统工具已可用',
     commandStillMissingTitle: '安装后仍未检测到命令',
-    installing: '安装中',
-    install: '安装',
-    suggestionTitle: '建议安装 {label}',
-    compactSuggestionDescription: '缺少 {command}，可自动安装。',
     suggestionDescription:
       '刚才系统没有找到 {command}。安装后，后续会话会自动把对应系统工具提示重新注入给模型。',
-    rejectDraftWithReason: '我暂时不安装 {label}。{reason}',
-    rejectDraftFallback: '我暂时不安装 {label}。请判断是否可以用其他方式完成。',
-    suggestionRejectionPlaceholder: '可以告诉模型你的替代工具、已有环境或偏好。留空也可以。',
-    tellModel: '告诉模型',
-    doNotInstall: '不安装',
   },
   workspaceAutoApproval: {
     title: '已自动批准工作区授权',
@@ -2592,7 +2572,6 @@ export const zhCNMessages = {
     profileFeatureVelarOSControl: 'VelarOS Control',
     profileFeatureOffice: 'Office 文档',
     profileFeatureWidget: 'Widget 作图',
-    profileFeatureHtmlArtifact: 'HTML 实时预览',
     profileVisualModeLabel: '渲染能力（可多选）',
     profileVisualModeHint:
       'HTML 实时预览适合简单页面和轻交互；Widget 适合复杂图表、数据状态、Canvas/WebGL 与多步交互。两种可以同时开启。',
@@ -2636,8 +2615,6 @@ export const zhCNMessages = {
       '请起草一封简洁的工作邮件模板，用于向团队同步今天的进展、风险和下一步，不要发送。',
     systemTopicWidgetPromptEnhancement:
       '请调用 Widget 能力，把最终结果做成一个清晰、可交互的可视化组件：先读取 Widget 技能页并遵守其中的规范；用卡片式布局与系统主题变量取色，层级清晰、配色克制，并加入点击勾选、进度联动这类轻量交互；一次性输出完整组件，不要只返回源码或半成品。',
-    systemTopicHtmlArtifactPromptEnhancement:
-      '请使用 HTML 实时预览，把最终结果做成一个可直接预览的精美页面：先读取 HTML 实时预览技能页并遵守其中的规范；默认用品牌变量取色、背景透明融入界面、按内容高度排版，可加少量优雅动效与轻交互；骨架、样式、内容、脚本必须在本条回复里一次性全部输出完成，不要只发骨架或只返回源码。',
     projectTopicTitle: '你想先在项目里做什么？',
     projectTopicStructure: '快速看懂项目结构',
     projectTopicStructurePrompt: '先阅读这个项目，简要介绍目录结构和主要模块，不要修改文件。',
@@ -2842,9 +2819,6 @@ export const zhCNMessages = {
     optionalWidgetTitle: 'Widget：在对话里直接作图',
     optionalWidgetBody:
       '从「+ → 渲染」按需开启 Widget，就能让 AI 在回答中展示图表、SVG、流程图和交互组件；适合快速看数据关系、方案对比或做可操作的小工具。',
-    optionalHtmlArtifactTitle: 'HTML 实时预览：边生成边看页面成形',
-    optionalHtmlArtifactBody:
-      '从「+ → 渲染」开启 HTML 实时预览后，AI 会把 HTML、CSS 和 JavaScript 以流式增量写入隔离预览块，生成过程中就能看到页面逐步成形。适合原型、仪表盘和交互网页，完成后还可全屏预览、查看源码或下载 HTML。',
     modelDeepTitle: '模型配置：这几项最常用',
     modelDeepBody:
       '「服务商」决定 AI 使用谁的模型，可以用自己的凭证配置任意受支持服务商；「默认模型」是聊天与工作台的主力；下方「辅助模型」可以为翻译、补全、摘要这类小任务单独指定更快的模型，省钱提速。',

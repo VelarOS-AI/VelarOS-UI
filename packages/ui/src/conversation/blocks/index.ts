@@ -1,5 +1,5 @@
 /**
- * 消息块原子包含工具活动、提供方制品、模型图片、系统工具安装建议、工具结果汇总、消息气泡、
+ * 消息块原子包含工具活动、提供方制品、模型图片、工具结果汇总、消息气泡、
  * 动作行、渲染模型、成本、思考翻译与品牌帆标。渲染组件只负责呈现，视图模型与进程通信能力通过
  * 投影及宿主钩子、插槽注入。
  *
@@ -31,7 +31,6 @@ export {
   addConversationRunUsageTelemetry,
   createConversationRunUsage,
 } from './runUsage'
-export * from './SystemToolInstallSuggestionCard'
 export * from './thinkingTranslation'
 export * from './ToolModelImageGroup'
 export * from './ToolResultSummaryList'

@@ -638,14 +638,6 @@
   margin-left: 0.25rem;
 }
 
-.systemToolSuggestionRejectPanel {
-  @apply mt-1;
-}
-
-.systemToolSuggestionRejectTextarea {
-  min-height: 74px;
-}
-
 .memorySaveDialogBody {
   @apply grid gap-3;
 }

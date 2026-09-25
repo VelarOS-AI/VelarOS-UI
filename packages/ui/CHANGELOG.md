@@ -8,6 +8,28 @@
 
 ### Removed
 
+- 流式 HTML 渲染（HTML 实时预览）整条下线，Widget 不受影响：会话块 `html-artifact`（`ContentBlock` 去掉
+  `HtmlArtifactBlock`）、`HtmlArtifactBlock` 组件与 `htmlArtifactPresentation`，`./conversation/artifacts` 只剩
+  `HtmlArtifactSourceCode` 与 `tokenizeHtmlArtifactSource`；markdown 里 `html` 围栏代码块的「预览」切换（代码块只显示代码）；
+  `./html-artifacts` 的增量协议与浏览器宿主——`htmlArtifactProtocol`、`mountHtmlArtifact`、`HtmlArtifactController`、
+  `HtmlArtifactBrowserEnvironment`、`MountHtmlArtifactOptions`、`HtmlArtifactHostError`，常量 `HtmlArtifactProtocolContract`、
+  `HtmlArtifactPatchTypes`、`HtmlArtifactProtocolModes`、`HtmlArtifactProtocolDiagnosticCodes`、
+  `HtmlArtifactProtocolLimitDefaults`、`HtmlArtifactHostErrorPhases` 及其派生类型，协议事件、状态与补丁类型
+  （`HtmlArtifactProtocolEvent`、`HtmlArtifactProtocolStreamState`、`HtmlArtifactRenderPatch` 等），
+  `HtmlArtifactDocumentOptions.initialPatches` 与桥接消息 `patch`，`HtmlArtifactDefaults` 的 `initialHeight`、
+  `declaredHeightMin`、`declaredHeightMax`、`title`，只留沙箱文档 `htmlArtifactDocuments`；`./conversation/html-preview`
+  里只为它服务的部分——`HtmlPreviewFrame` 的 `patches`、`patchRevision`、`protocolText`、`sizeLockReady`
+  （`artifactId` 保留但不再使用）、`HTML_PREVIEW_ERROR_EVENT`、`HtmlPreviewFullscreenLayer.statusText`、
+  `HtmlPreviewToolbar.sourceToggleAction`、`buildHtmlPreviewDocument` / `buildPortableHtmlDocument` 的补丁参数、
+  `getHtmlPreviewCodeLanguage`、`DEFAULT_HTML_PREVIEW_HEIGHT`、`HTML_PREVIEW_MSG_PATCH`；文案目录删掉 `chat.htmlArtifact*` 10 条。
+- 五种早已没有来源的旧会话块：`flagged-task`、`scheduled-task-proposal`、`system-tool-install-suggestion`、
+  `project-auto-approval`、`capability-auto-approval`（连同 `FlaggedTaskSuggestionBlock`、`ScheduledTaskProposalBlock`、
+  `SystemToolInstallSuggestionBlock`、`ProjectAutoApprovalNoticeBlock`、`ProjectAutoApprovalNotice`、
+  `CapabilityAutoApprovalNoticeBlock`）；render slot `flaggedTaskSuggestion`、`scheduledTaskProposal`、`systemToolInstall`、
+  `capabilityAutoApprovalNotice`；会话卡 `ConversationCardItem` / `ConversationCardContent` 的 `project-auto-approval` 一种，
+  以及只为它存在的 `ChatConversationPane.onDismissConversationCard` / `onDismissStickyDockItem`；`SystemToolInstallSuggestionCard`
+  与 `SystemToolInstallSuggestionView` / `SystemToolInstallSuggestionStatus`；文案目录删掉 `systemToolInstall` 里只给建议卡用的
+  9 条。命令结果的 `systemToolSuggestion` 字段不变，形状改由新导出的 `SystemToolInstallSuggestion` 描述。
 - 发布包不再随附 `LICENSE`、`NOTICE`、`THIRD_PARTY_NOTICES.md` 与 Tailwind CSS 第三方许可文本：许可证只有
   仓库根目录一份 `LICENSE`。
 - 卡片动作 `enable_prompt_features`：`UserActionCardAction` 去掉这一支，`UserActionCardResult.actionKind` /

@@ -26,7 +26,7 @@ import {
 export interface HtmlArtifactDocumentsApi {
   /** 造一份内容已经齐了的静态制品文档（下载、导出、一次性预览都走它）。 */
   buildDocument: (rawContent: string, options?: HtmlArtifactDocumentOptions) => string
-  /** 造一份外壳文档：内容随后经消息桥一段一段送进去，流式渲染走它。 */
+  /** 造一份外壳文档：内容随后经消息桥送进去，宿主自己托管的预览 iframe 走它。 */
   buildShellDocument: (options?: HtmlArtifactShellDocumentOptions) => string
   /** 剥掉包住整段源码的 CDATA 或 Markdown 代码围栏；没有包装就原样返回。 */
   normalizeSource: (content: string) => string

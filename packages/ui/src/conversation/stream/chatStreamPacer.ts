@@ -183,7 +183,7 @@ export interface ChatStreamPacerOptions<TEvent> {
    * 与挂起的收尾，再立即应用——一轮照常收尾，回到前台后恢复逐帧吐字。
    */
   isPacingSuspended?: () => boolean
-  /** 把一段正文增量应用到 session（htmlArtifact 感知）。 */
+  /** 把一段正文增量应用到 session。 */
   applyTextChunk: (sessionId: string, text: string) => void
   applyDeferredLiveEvent: (sessionId: string, event: TEvent) => void
   applyImmediateLiveEvent: (sessionId: string, event: TEvent) => void

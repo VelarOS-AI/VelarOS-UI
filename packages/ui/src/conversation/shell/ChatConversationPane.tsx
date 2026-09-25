@@ -124,9 +124,6 @@ export interface ChatConversationPaneProps {
     blockIndex: number
     text: string
   }) => Promise<void>
-  onDismissConversationCard?: (itemId: string) => void
-  /** @deprecated 旧宿主回调名；新代码使用 `onDismissConversationCard`。 */
-  onDismissStickyDockItem?: (itemId: string) => void
   onFollowLockedChange: (locked: boolean) => void
   onResolvePreflightUserActionCard?: (result: UserActionCardResult) => void
 }
@@ -154,8 +151,6 @@ export function ChatConversationPane({
   onRewindToMessage,
   getRewindPlan,
   onTranslateThinkingBlock,
-  onDismissConversationCard,
-  onDismissStickyDockItem,
   onFollowLockedChange,
   onResolvePreflightUserActionCard,
 }: ChatConversationPaneProps): ReactElement {
@@ -453,16 +448,10 @@ export function ChatConversationPane({
     () => runtime.conversationCards ?? runtime.stickyDockItems ?? [],
     [runtime.conversationCards, runtime.stickyDockItems]
   )
-  const dismissConversationCard = onDismissConversationCard ?? onDismissStickyDockItem
   const inlineConversationCards = useMemo<ReactElement[]>(() => {
     const cards: ReactElement[] = []
 
     for (const item of conversationCards) {
-      const onDismiss = optionalWhenLazy(
-        dismissConversationCard,
-        () => () => dismissConversationCard!(item.id)
-      )
-
       if (item.kind === 'handoff-suggestion') {
         const content = slots.conversationCardContent({
           kind: 'handoff-suggestion',
@@ -476,21 +465,6 @@ export function ChatConversationPane({
               approved: resolution.approved && resolution.actionKind === 'acknowledge',
             }),
           onOpenArtifact: onOpenProjectPath,
-        })
-        if (content)
-          cards.push(
-            <div key={item.id} className={styles.inlineConversationCard}>
-              {content}
-            </div>
-          )
-        continue
-      }
-
-      if (item.kind === 'project-auto-approval') {
-        const content = slots.conversationCardContent({
-          kind: 'project-auto-approval',
-          notice: item.notice,
-          onDismiss,
         })
         if (content)
           cards.push(
@@ -528,7 +502,6 @@ export function ChatConversationPane({
   }, [
     actionPort,
     conversationCards,
-    dismissConversationCard,
     onOpenProjectPath,
     onResolvePreflightUserActionCard,
     preflightUserActionCard,

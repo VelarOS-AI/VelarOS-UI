@@ -16,22 +16,18 @@ import { useConversationI18n } from '../i18n'
 import styles from './HtmlPreview.module.css'
 
 /**
- * Widget 与 HTML Artifact 通过中立预览适配层共用的全屏层:不透明应用背景全屏融入、
- * 零面板框,顶栏=标题+可选状态行+关闭。生成期增量预览与手动全屏预览走同一实现——
+ * Widget 的全屏预览层:不透明应用背景全屏融入、零面板框,顶栏=标题+关闭——
  * 共享 `velar-image-preview-*` 类是给暗底图片预览设计的白字,这里逐项覆写成应用前景配色。
  */
 export function HtmlPreviewFullscreenLayer({
   open,
   onOpenChange,
   title,
-  statusText,
   children,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
-  /** 有值时在标题下显示运行圆点+状态文案(生成中);省略则只有标题。 */
-  statusText?: LooseOptional<string>
   children: React.ReactNode
 }): React.ReactElement {
   const { t } = useConversationI18n()
@@ -52,15 +48,6 @@ export function HtmlPreviewFullscreenLayer({
               <DialogTitle className={`velar-image-preview-dialog-title ${styles.generationTitle}`}>
                 {title}
               </DialogTitle>
-              {!!statusText && (
-                <p className={`velar-image-preview-dialog-subtitle ${styles.generationSubtitle}`}>
-                  <span
-                    className={`${styles.runningDot} ${styles.generationStatusDot}`}
-                    aria-hidden="true"
-                  />
-                  {statusText}
-                </p>
-              )}
             </div>
             <DialogClose asChild>
               <IconButton

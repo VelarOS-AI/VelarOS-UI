@@ -34,7 +34,7 @@ tone 与主题一律走 CSS 变量单源。需要单点特殊外貌 → 在**消
 | `@velaros-ai/ui/i18n/UiLocalizationProvider` | 窄本地化 Provider |
 | `@velaros-ai/ui/lib/cn`、`/lib/styleUtils` | class 合并与样式辅助(纯函数) |
 | `@velaros-ai/ui/utility-types` | 显式模块化 utility types——**本包不安装任何 ambient global** |
-| `@velaros-ai/ui/html-artifacts` | HTML 工件：把模型的增量文本流变成实时、隔离的 HTML 界面（增量协议、沙箱文档、iframe 宿主），零运行时依赖、不依赖 React；用法见 [docs/html-artifacts.md](./docs/html-artifacts.md) |
+| `@velaros-ai/ui/html-artifacts` | HTML 工件：给自己托管沙箱 iframe 的宿主造 HTML 文档（桥接脚本、尺寸协商、frame 缩放、外链校验），零运行时依赖、不依赖 React；用法见 [docs/html-artifacts.md](./docs/html-artifacts.md) |
 | `@velaros-ai/ui/html-artifacts/contracts` | HTML 工件的约定常量与可移植数据 |
 
 **只有 `package.json#exports` 里声明的路径属于公共 API**;未声明的 `src` / `dist` 深路径

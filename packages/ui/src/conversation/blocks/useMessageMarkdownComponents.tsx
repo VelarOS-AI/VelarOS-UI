@@ -1,12 +1,9 @@
 import React, {
   createContext,
-  lazy,
   type ReactElement,
   type ReactNode,
-  Suspense,
   useCallback,
   useContext,
-  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -41,22 +38,13 @@ import { ReplaceableRenderSlot } from '../render-slots/ReplaceableRenderSlot'
 
 import styles from './MessageBubble.module.css'
 
-import type { HtmlArtifactBlock as HtmlArtifactContentBlock } from '#contracts'
 import { isArray } from '#internal/runtime'
 import { isEmpty, isPresent, isString, toNullable, trimmedStringOrEmpty } from '#internal/runtime'
 
 const CodeLanguageClassPattern = /(?:^|\s)language-([^\s]+)/u
 const DefaultCodeBlockLanguage = 'text'
 const DiagramCodeBlockLanguages = new Set(['mermaid'])
-const RenderableHtmlCodeBlockLanguages = new Set(['html', 'htm'])
 const TailMarkerCandidateTags = ['p', 'li', 'h1', 'h2', 'h3', 'h4'] as const
-// PERF GUARD: 不要静态导入 HtmlArtifactBlock；它会继续拉入 HtmlPreviewFrame 和源码预览，
-// 导致普通 markdown 消息也为从未打开的 HTML 预览支付首屏成本。
-const LazyHtmlArtifactBlock = lazy(async () =>
-  import('../artifacts/HtmlArtifactBlock').then((module) => ({
-    default: module.HtmlArtifactBlock,
-  }))
-)
 
 const ConversationExpandableViewportHeightPx = 400
 const ConversationExpandableViewportOverflowTolerancePx = 1
@@ -76,10 +64,6 @@ function normalizeCodeBlockClassName(className: unknown): string {
 
 function readCodeText(children: unknown): string {
   return isString(children) ? children : ''
-}
-
-function isRenderableHtmlCodeBlockLanguage(language: string): boolean {
-  return RenderableHtmlCodeBlockLanguages.has(language)
 }
 
 function openUrlInExternalBrowser(url: string): void {
@@ -339,57 +323,6 @@ function PreviewableCodeBlockFrame({
   )
 }
 
-function RenderableHtmlCodeBlockFrame({
-  children,
-  code,
-  isStreaming,
-}: {
-  children: ReactElement
-  code: string
-  isStreaming: boolean
-}): ReactElement {
-  const { t } = useConversationI18n()
-  const reactId = useId()
-  const artifactId = useMemo(
-    () => `markdown-html-code-${reactId.replace(/[^a-zA-Z0-9_-]+/gu, '-')}`,
-    [reactId]
-  )
-  const block = useMemo<HtmlArtifactContentBlock>(
-    () => ({
-      type: 'html-artifact',
-      artifactId,
-      title: t('chat.htmlArtifactDefaultTitle'),
-      html: code,
-      protocolText: code,
-      isStreaming: false,
-    }),
-    [artifactId, code, t]
-  )
-
-  return (
-    <PreviewableCodeBlockFrame
-      code={code}
-      language="html"
-      isStreaming={isStreaming}
-      initialView="source"
-      renderPreview={(toggleAction) => (
-        <Suspense
-          fallback={
-            <>
-              <ExpandableCodeBlockFrame>
-                {children}
-              </ExpandableCodeBlockFrame>
-              <div className={styles.previewableCodeBlockToggleSlot}>{toggleAction}</div>
-            </>
-          }
-        >
-          <LazyHtmlArtifactBlock block={block} sourceToggleAction={toggleAction} />
-        </Suspense>
-      )}
-    />
-  )
-}
-
 function RenderableDiagramCodeBlockFrame({
   children,
   code,
@@ -465,7 +398,7 @@ function ExpandableCodeBlockFrame({ children }: { children: ReactElement }): Rea
   )
 }
 
-/** 官方代码块渲染的三条分支（声明式预览 / 可运行 HTML / 可展开框），抽出以便充当替换槽的回落。 */
+/** 官方代码块渲染的两条分支（声明式预览 / 可展开框），抽出以便充当替换槽的回落。 */
 function renderOfficialCodeBlock({
   blockChild,
   language,
@@ -482,13 +415,6 @@ function renderOfficialCodeBlock({
       <RenderableDiagramCodeBlockFrame code={code} language={language} isStreaming={isStreaming}>
         {blockChild}
       </RenderableDiagramCodeBlockFrame>
-    )
-
-  if (isRenderableHtmlCodeBlockLanguage(language))
-    return (
-      <RenderableHtmlCodeBlockFrame code={code} isStreaming={isStreaming}>
-        {blockChild}
-      </RenderableHtmlCodeBlockFrame>
     )
 
   return <ExpandableCodeBlockFrame>{blockChild}</ExpandableCodeBlockFrame>

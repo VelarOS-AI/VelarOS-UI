@@ -217,35 +217,6 @@ export interface StreamToolResultEffects {
   changedRoot?: string
 }
 
-export interface HtmlArtifactBlock {
-  type: 'html-artifact'
-  artifactId: string
-  protocolVersion?: string
-  title: string
-  html: string
-  protocolText?: string
-  protocolDiagnostics?: Array<{
-    code: string
-    message: string
-    phase: 'protocol'
-    patchType?: 'replace' | 'append' | 'style' | 'script'
-    patchId?: string
-    createdAt?: number
-  }>
-  patches?: Array<
-    | { type: 'replace'; target?: string; html: string }
-    | { type: 'append'; target?: string; html: string }
-    | { type: 'style'; styleId: string; css: string }
-    | { type: 'script'; scriptId: string; code: string }
-  >
-  patchRevision?: number
-  isStreaming?: boolean
-  initialHeight?: number
-  updateCount?: number
-  createdAt?: number
-  updatedAt?: number
-}
-
 export interface AssistantGeneratedFileBlock {
   type: 'assistant-generated-file'
   id: string
@@ -262,32 +233,6 @@ export interface AssistantSourceBlock {
   sourceType: 'url'
   url: string
   title?: string
-}
-
-export interface CapabilityAutoApprovalNoticeBlock {
-  type: 'capability-auto-approval'
-  notice: {
-    id: string
-    categories: ToolCategoryId[]
-    promptFeatures: string[]
-    reason: string
-    message: string
-    approvedAt: number
-  }
-}
-
-export interface ProjectAutoApprovalNotice {
-  id: string
-  path: string
-  reason: string
-  action: 'add' | 'mutation'
-  message: string
-  approvedAt: number
-}
-
-export interface ProjectAutoApprovalNoticeBlock {
-  type: 'project-auto-approval'
-  notice: ProjectAutoApprovalNotice
 }
 
 export type UserActionCardTone = 'info' | 'warning' | 'success' | 'danger'
@@ -448,55 +393,27 @@ export interface UserActionCardBlock {
   resolution?: ConversationCardResolution
 }
 
-export interface SystemToolInstallSuggestionBlock {
-  type: 'system-tool-install-suggestion'
-  suggestion: {
-    id: string
-    toolId: string
-    label: string
+/** 命令因缺系统工具失败时，宿主随命令结果附上的安装建议（`ProjectCommandResult.systemToolSuggestion`）。 */
+export interface SystemToolInstallSuggestion {
+  id: string
+  toolId: string
+  label: string
+  command: string
+  packageName: string
+  reason: string
+  installCommand: Nullable<string>
+  installAvailable: boolean
+  detectedAt: number
+  triggeredBy: {
+    scope: 'project' | 'system'
     command: string
-    packageName: string
-    reason: string
-    installCommand: Nullable<string>
-    installAvailable: boolean
-    detectedAt: number
-    triggeredBy: {
-      scope: 'project' | 'system'
-      command: string
-    }
-    alternatives?: Array<{
-      id: string
-      label: { 'zh-CN': string; 'en-US': string }
-      description: { 'zh-CN': string; 'en-US': string }
-      draft: { 'zh-CN': string; 'en-US': string }
-    }>
   }
-}
-
-export interface ScheduledTaskProposalBlock {
-  type: 'scheduled-task-proposal'
-  proposal: {
+  alternatives?: Array<{
     id: string
-    name: string
-    prompt: string
-    createdAt: number
-  }
-  /** 结算记录（单源）：有值即「已创建」，重载后不再复活成可提交状态。 */
-  resolution?: ConversationCardResolution
-}
-
-export interface FlaggedTaskSuggestionBlock {
-  type: 'flagged-task'
-  suggestion: {
-    id: string
-    title: string
-    tldr: string
-    prompt: string
-    files: string[]
-    workspaceRoot: Nullable<string>
-    space: Nullable<WorkspaceSpaceKind>
-    createdAt: number
-  }
+    label: { 'zh-CN': string; 'en-US': string }
+    description: { 'zh-CN': string; 'en-US': string }
+    draft: { 'zh-CN': string; 'en-US': string }
+  }>
 }
 
 /** 脚本执行里的一次能力调用，按发出顺序排在 `ScriptExecutionBlock.calls` 里。 */
@@ -544,15 +461,9 @@ export type ContentBlock =
   | ThinkingBlock
   | ToolCallBlock
   | ScriptExecutionBlock
-  | HtmlArtifactBlock
   | AssistantGeneratedFileBlock
   | AssistantSourceBlock
-  | CapabilityAutoApprovalNoticeBlock
-  | ProjectAutoApprovalNoticeBlock
   | UserActionCardBlock
-  | SystemToolInstallSuggestionBlock
-  | ScheduledTaskProposalBlock
-  | FlaggedTaskSuggestionBlock
 
 export interface ChatAttachmentMeta {
   id: string
@@ -1016,7 +927,7 @@ export interface ProjectCommandResult {
   success: boolean
   backgroundProcess?: LooseOptional<ProjectBackgroundProcessInfo>
   verification: ProjectVerificationSummary
-  systemToolSuggestion?: LooseOptional<SystemToolInstallSuggestionBlock['suggestion']>
+  systemToolSuggestion?: LooseOptional<SystemToolInstallSuggestion>
 }
 
 export interface SystemFileChangePreviewResult {

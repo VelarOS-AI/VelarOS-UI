@@ -253,7 +253,6 @@ export function getVisibleMessageBlocks(
 
   const visibleBlocks: ContentBlock[] = []
   message.blocks.forEach((block) => {
-    if (block.type === 'project-auto-approval') return
     if (isFalse(options.showThinkingProcess) && block.type === 'thinking') return
     if (hasPendingBlockingUserActionCard && block.type === 'text') return
     // 工具调用与脚本执行都是执行过程的细节，跟随同一个开关。
@@ -272,14 +271,8 @@ export function hasVisibleSegmentContent(segment: ToolRenderSegment): boolean {
   switch (segment.block.type) {
     case 'tool-call':
     case 'script-execution':
-    case 'system-tool-install-suggestion':
-    case 'capability-auto-approval':
-    case 'html-artifact':
     case 'user-action-card':
-    case 'scheduled-task-proposal':
       return true
-    case 'project-auto-approval':
-      return false
     case 'text':
       return !isBlank(segment.block.text)
     default:
@@ -294,12 +287,6 @@ export function shouldRenderSegmentOutsideProcessedActivityDisclosure(
 
   const { block } = segment.segment
   switch (block.type) {
-    // 未创建的提案卡要留在「已处理」折叠外（用户还得填它）；已结算的收进折叠里。
-    case 'scheduled-task-proposal':
-      return !block.resolution
-    // HTML artifact 是用户要看的成品预览,始终展开在「已处理」折叠外,不能被工具活动收起。
-    case 'html-artifact':
-      return true
     case 'tool-call':
       return isToolActivitySummaryExcludedToolCall(block)
     default:

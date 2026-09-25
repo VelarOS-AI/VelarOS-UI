@@ -55,14 +55,8 @@ function getBlockSegmentKey(block: ContentBlock, index: number): string {
       return `script:${block.id}`
     case 'thinking':
       return `thinking:${index}`
-    case 'system-tool-install-suggestion':
-      return `system-tool:${block.suggestion.id}`
-    case 'capability-auto-approval':
-      return `capability-auto-approval:${block.notice.id}`
     case 'user-action-card':
       return `user-action-card:${block.card.id}`
-    case 'project-auto-approval':
-      return `project-auto-approval:${block.notice.id}`
     default:
       return `text:${index}`
   }

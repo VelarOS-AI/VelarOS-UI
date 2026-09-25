@@ -1,6 +1,6 @@
 /**
  * 外链归一化：沙箱里的制品要打开一个链接时，先在这里过一道协议白名单。
- * 不合法的一律返回 null——`javascript:` 这类主动执行型 URL 永远到不了宿主的 `onLink`。
+ * 不合法的一律返回 null——`javascript:` 这类主动执行型 URL 永远到不了宿主的跳转。
  */
 import { HtmlArtifactExternalUrlProtocols } from '../contract/constants.js'
 import type { NormalizeHtmlArtifactExternalUrlOptions } from '../types/html-artifacts.js'

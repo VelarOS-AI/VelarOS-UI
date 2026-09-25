@@ -1,7 +1,6 @@
 import type {
   HtmlArtifactContentKind,
   HtmlArtifactDocumentOptions,
-  HtmlArtifactRenderPatch,
 } from '@velaros-ai/ui/html-artifacts'
 import { htmlArtifactDocuments } from '@velaros-ai/ui/html-artifacts'
 
@@ -10,7 +9,6 @@ import {
   HTML_PREVIEW_MSG_ERROR,
   HTML_PREVIEW_MSG_GENERIC,
   HTML_PREVIEW_MSG_OPEN_LINK,
-  HTML_PREVIEW_MSG_PATCH,
   HTML_PREVIEW_MSG_RENDER,
   HTML_PREVIEW_MSG_RESIZE,
   HTML_PREVIEW_MSG_SEND_PROMPT,
@@ -20,17 +18,12 @@ import { HTML_PREVIEW_DESIGN_CSS, HTML_PREVIEW_SVG_FIT_CSS } from './htmlPreview
 const HTML_PREVIEW_ROOT_ID = 'velaros-html-preview-root'
 const HTML_PREVIEW_BRIDGE_MESSAGES = {
   render: HTML_PREVIEW_MSG_RENDER,
-  patch: HTML_PREVIEW_MSG_PATCH,
   resize: HTML_PREVIEW_MSG_RESIZE,
   sendPrompt: HTML_PREVIEW_MSG_SEND_PROMPT,
   openLink: HTML_PREVIEW_MSG_OPEN_LINK,
   generic: HTML_PREVIEW_MSG_GENERIC,
   error: HTML_PREVIEW_MSG_ERROR,
 } as const
-
-export function getHtmlPreviewCodeLanguage(source: string): string {
-  return htmlArtifactDocuments.inferContentKind(source) === 'svg' ? 'svg' : 'html'
-}
 
 function resolveHtmlPreviewBodyStyle(kind: HtmlArtifactContentKind): string {
   return kind === 'svg'
@@ -89,14 +82,8 @@ function buildHtmlPreviewDocumentOptions(source: string): HtmlArtifactDocumentOp
   }
 }
 
-export function buildHtmlPreviewDocument(
-  source: string,
-  patches: readonly HtmlArtifactRenderPatch[] = []
-): string {
-  return htmlArtifactDocuments.buildDocument(source, {
-    ...buildHtmlPreviewDocumentOptions(source),
-    initialPatches: patches,
-  })
+export function buildHtmlPreviewDocument(source: string): string {
+  return htmlArtifactDocuments.buildDocument(source, buildHtmlPreviewDocumentOptions(source))
 }
 
 export function buildHtmlPreviewFrameShell(source: string): string {
@@ -107,55 +94,11 @@ export function buildHtmlPreviewFrameShell(source: string): string {
 }
 
 // —— 纯净导出文档(查看源码/复制/下载共用) ——
-// 只含页面自身需要的东西:meta、基础视觉 CSS(设计 CSS+品牌 token 快照)、模型内容与已应用
-// 的补丁;不带桥接/测量/补丁运行时等宿主内部逻辑,双击即可独立运行(用户裁定:三个导出面
+// 只含页面自身需要的东西:meta、基础视觉 CSS(设计 CSS+品牌 token 快照)与模型内容;
+// 不带桥接/测量/渲染运行时等宿主内部逻辑,双击即可独立运行(用户裁定:三个导出面
 // 一致且纯净)。渲染 iframe 仍走内部壳(buildHtmlPreviewFrameShell),两者职责分离。
 
-function applyExportPatch(doc: Document, patch: HtmlArtifactRenderPatch): void {
-  if (patch.type === 'style') {
-    const styleId = patch.styleId || 'default'
-    const existing = doc.head.querySelector(`style[data-artifact-style="${CSS.escape(styleId)}"]`)
-    const style = existing ?? doc.createElement('style')
-    style.setAttribute('data-artifact-style', styleId)
-    style.textContent = patch.css
-    if (!existing) doc.head.appendChild(style)
-    return
-  }
-  if (patch.type === 'script') {
-    const scriptId = patch.scriptId || 'default'
-    doc.body
-      .querySelectorAll(`script[data-artifact-script="${CSS.escape(scriptId)}"]`)
-      .forEach((node) => node.remove())
-    const script = doc.createElement('script')
-    script.setAttribute('data-artifact-script', scriptId)
-    script.textContent = patch.code
-    doc.body.appendChild(script)
-    return
-  }
-
-  // replace/append:与运行时 findPatchTarget 同语义(无 target 即根容器)。离线文档惰性
-  // (脚本不执行),这里直接落最终 DOM 状态——运行时的 dom-diff 只是为了平滑更新,终态等价。
-  let target: Nullable<Element> = doc.body
-  if (patch.target) {
-    try {
-      target = doc.body.querySelector(patch.target)
-    } catch {
-      // arch-guard:silent-catch-ok 非法选择器只让当前 patch 无目标，不得中断其余文档更新。
-      target = null
-    }
-  }
-  if (!target) return
-  if (patch.type === 'append') {
-    target.insertAdjacentHTML('beforeend', patch.html)
-    return
-  }
-  target.innerHTML = patch.html
-}
-
-export function buildPortableHtmlDocument(
-  sourceHtml: string,
-  patches: readonly HtmlArtifactRenderPatch[] = []
-): string {
+export function buildPortableHtmlDocument(sourceHtml: string): string {
   const source = htmlArtifactDocuments.normalizeSource(sourceHtml)
   const contentKind = htmlArtifactDocuments.inferContentKind(source)
   const svgCss = contentKind === 'svg' ? HTML_PREVIEW_SVG_FIT_CSS : ''
@@ -171,9 +114,6 @@ export function buildPortableHtmlDocument(
   doc.head.append(charset, viewport, baseStyle)
 
   doc.body.innerHTML = source
-  for (const patch of patches) {
-    applyExportPatch(doc, patch)
-  }
 
   return `<!doctype html>${doc.documentElement.outerHTML}`
 }

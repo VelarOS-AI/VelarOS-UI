@@ -1,95 +1,57 @@
 # HTML 工件（`@velaros-ai/ui/html-artifacts`）
 
-**把模型的增量文本流，直接变成一个实时、隔离的 HTML 界面。**
+**给自己托管沙箱 iframe 的宿主造 HTML 文档。**
 
-零运行时依赖的浏览器库：统一负责协议解析、iframe 生命周期、补丁传输、受限高度协商、链接校验和资源清理——
-接入方不用自己拼 `postMessage` 和流式渲染那一摊。不依赖 React、Electron、Agent Loop，也不绑定任何一家模型 API。
-它原来是独立包 `@velaros-ai/html-artifacts`，2026-09-18 并进 `@velaros-ai/ui` 成为一个单元（ADR 0014），名字与行为不变。
+零运行时依赖的浏览器库：把一段模型写的 HTML 或 SVG 变成一份能直接放进沙箱 iframe 的完整文档——桥接脚本、受限高度协商、
+渲染运行时都装好；外加宿主侧的 frame 缩放与外链校验。不依赖 React、Electron、Agent Loop，也不绑定任何一家模型 API。
+它原来是独立包 `@velaros-ai/html-artifacts`，2026-09-18 并进 `@velaros-ai/ui` 成为一个单元（ADR 0014）；
+2026-09-26 流式 HTML 渲染下线，增量协议 `htmlArtifactProtocol` 与浏览器宿主 `mountHtmlArtifact()` 一并删掉。
 模块卡片见 [`html-artifacts/MODULE.md`](../html-artifacts/MODULE.md)，对外承诺见 [`html-artifacts/spec/invariants.md`](../html-artifacts/spec/invariants.md)。
 
 | 入口 | 内容 |
 | --- | --- |
-| `@velaros-ai/ui/html-artifacts` | 三件能力：增量协议 `htmlArtifactProtocol`、沙箱文档 `htmlArtifactDocuments`、浏览器宿主 `mountHtmlArtifact()` |
+| `@velaros-ai/ui/html-artifacts` | 沙箱文档 `htmlArtifactDocuments`，外加约定常量与数据类型 |
 | `@velaros-ai/ui/html-artifacts/contracts` | 它的子集，只有约定常量与可移植数据类型；只要数据不要能力时用它 |
 
 ## 快速开始
 
 ```ts
-import { mountHtmlArtifact } from '@velaros-ai/ui/html-artifacts'
+import { HtmlArtifactBridgeMessageTypes, htmlArtifactDocuments } from '@velaros-ai/ui/html-artifacts'
 
-const container = document.querySelector<HTMLElement>('#preview')
-if (!container) throw new Error('Missing #preview')
-
-const artifact = mountHtmlArtifact(container, {
-  maxHeight: 720,
-  onPrompt: (prompt) => sendToModel(prompt),
-  onLink: (url) => window.open(url, '_blank', 'noopener,noreferrer'),
-  onError: (error) => console.error(error.phase, error.message),
+const source = '<main><h1>Hello</h1></main>'
+const iframe = document.createElement('iframe')
+iframe.setAttribute('sandbox', 'allow-scripts')
+iframe.srcdoc = htmlArtifactDocuments.buildShellDocument({ maxReportedHeight: 720 })
+iframe.addEventListener('load', () => {
+  iframe.contentWindow?.postMessage(
+    { type: HtmlArtifactBridgeMessageTypes.defaults.render, html: source },
+    '*'
+  )
 })
-
-await artifact.consume(modelTextStream)
-
-// 外层视图销毁时：
-artifact.dispose()
+document.querySelector('#preview')?.append(iframe)
 ```
 
-`modelTextStream` 可以是任意模型服务给的 `AsyncIterable<string>`。
-
-挂载会在目标元素内创建**一个 `sandbox="allow-scripts"` 的 iframe**。生成的代码只能在沙箱里跑；
-打开链接、继续提问这类能力是**宿主显式授权的回调**，不是沙箱自己的权力。
+`buildShellDocument` 造的是外壳：内容随后经 `render` 消息整份送进去，内容变了再发一次，运行时对比着更新根元素。
+内容已经齐了、只想要一份独立文档（下载、存档）时用 `buildDocument(source)`。
 
 ## 三件必须理解的机制
 
-### 1. 流边界：chunk 可以停在任何地方
+### 1. 高度：绝对值，单向
 
-Chunk 可以断在半个 HTML 标签、CSS 规则、脚本或 Base64 载荷中间。**只有完整、安全的协议边界才会被送进 iframe。**
-应用已有自己的流循环时，用 `write()` + `finish()` 代替 `consume()`：
+iframe 运行时上报的是**去重后的绝对内容高度**（`resize` 消息），宿主直接应用——不加 padding，也不把 viewport 增长反馈回测量过程（那正是无限撑高的来源）。
+`maxReportedHeight` 是 iframe 内侧的硬上限：超高内容或 `100vh` 这类 viewport 耦合页面会留在沙箱里滚动，不会把外层页面顶穿。
+宿主侧拿 `resolveFrameFit` 按宿主宽度算缩放比，过宽的内容缩进来，极端宽度停止缩放。
 
-```ts
-for await (const chunk of modelTextStream) artifact.write(chunk)
-artifact.finish()
+### 2. 链接：默认只放行 http / https
 
-artifact.reset()    // 复用同一个 iframe 接下一次回答
-artifact.dispose()  // 移除 iframe 与全部宿主监听器
-```
+沙箱里调用 `openLink(url)` 只会发一条 `openLink` 消息；宿主先过 `normalizeExternalUrl`，无效或主动执行型 URL（`javascript:` 一类）拿到的是 null。
 
-### 2. 高度：绝对值，单向
+### 3. 桥接消息只是请求
 
-iframe 运行时上报的是**去重后的绝对内容高度**，宿主直接应用——不加 padding，也不把 viewport 增长反馈回测量过程（那正是无限撑高的来源）。
-`maxHeight` 在 iframe 内部和浏览器宿主层**两侧都生效**：超高内容或 `100vh` 这类 viewport 耦合页面会留在沙箱里滚动，不会把外层页面顶穿。
+`sendPrompt()`、`openLink()`、`artifactBridge.send()`、脚本出错和滚轮转发都只是发给宿主的消息——**没有隐式能力**，
+宿主决定理不理。消息名缺省见 `HtmlArtifactBridgeMessageTypes`，造文档时可以经 `bridgeMessages` 换掉。
 
-```ts
-mountHtmlArtifact(container, { initialHeight: 360, minHeight: 1, maxHeight: 720 })
-```
-
-### 3. 链接：默认只放行 http / https
-
-无效或主动执行型 URL（`javascript:` 一类）通过 `onError` 上报，**永远不会到达 `onLink`**。
-
-## 宿主回调
-
-`onMarkdown` / `onPrompt` / `onLink` / `onMessage` / `onEvent` / `onError`。这六个是沙箱与外界之间的全部通道——**没有隐式能力**。
-
-## Artifact 协议
-
-v1 线格式刻意保持很小：
-
-```html
-<artifact version="1" id="profile-card" title="Profile card">
-  <patch type="replace"><main id="app"></main></patch>
-  <patch type="append" target="#app"><h1>Hello</h1></patch>
-  <patch type="style" id="base">#app { padding: 24px; }</patch>
-  <patch type="script" id="boot">console.log('ready')</patch>
-</artifact>
-```
-
-patch 载荷本身含有协议闭合标签时，用 `encoding="base64"`。
-
-协议这件能力提供两种形态：自己管状态的 `htmlArtifactProtocol.createParser()`，以及宿主自己持久化状态的
-`htmlArtifactProtocol.createState()` / `.applyChunk(state, chunk)` / `.finalize(state)`。`HtmlArtifactProtocolLimits` 用于给不可信或异常超长的流设资源上限。
-
-自己托管 iframe（不用 `mountHtmlArtifact`）的宿主拿 `htmlArtifactDocuments`：
-`buildDocument` / `buildShellDocument` / `normalizeSource` / `inferContentKind` / `resolveFrameFit` / `normalizeExternalUrl`。
+`htmlArtifactDocuments` 的全部方法：`buildDocument` / `buildShellDocument` / `normalizeSource` / `inferContentKind` / `resolveFrameFit` / `normalizeExternalUrl`。
 
 ## 宿主的安全责任
 
@@ -107,4 +69,4 @@ patch 载荷本身含有协议闭合标签时，用 `encoding="base64"`。
 
 ## 边界：它不负责什么
 
-只维护**可复用的流式协议与沙箱机制**。不含模型提示词、聊天状态、Agent 调度、Electron IPC、产品 UI、权限、Widget、记忆或 Kernel 内部实现。
+只维护**可复用的沙箱文档机制**。不含 iframe 托管、流式解析、模型提示词、聊天状态、Agent 调度、Electron IPC、产品 UI、权限、记忆或 Kernel 内部实现。
