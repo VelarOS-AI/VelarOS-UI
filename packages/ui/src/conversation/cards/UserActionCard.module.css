@@ -556,6 +556,15 @@
   background: color-mix(in srgb, var(--background-muted) 40%, transparent);
 }
 
+.wizardIntro {
+  margin: 0;
+  color: var(--foreground-secondary);
+  font-size: 12.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 .wizardQuestionBlock {
   @apply grid;
   gap: 8px;
@@ -576,6 +585,7 @@
 .wizardQuestion {
   min-width: 0;
   overflow-wrap: anywhere;
+  white-space: pre-wrap;
   color: var(--foreground);
   font-size: 13px;
   font-weight: 600;
@@ -715,6 +725,10 @@
 
 .wizardNavSpacer {
   flex: 1 1 auto;
+}
+
+.wizardNav .skipTextButton:global(.velar-button) {
+  color: var(--foreground-secondary);
 }
 
 .timeoutTrack {

@@ -2,7 +2,7 @@
  * 执行步骤卡的外框：一行标题（图标 + 一句话 + 标签 + 行尾状态）本身就是展开按钮，点开看详情。
  * 状态不画图标，看整张卡的底色：进行中与已取消是很淡的灰，成功淡绿，失败淡红。给了源码预览时，收起
  * 状态下悬停标题行弹出可追进去滚动、选中复制的气泡（HoverCard），Escape 关闭；展开后详情里就有源码，
- * 不再弹气泡。脚本执行卡与旧工具调用卡共用这副外框，聊天流里的每一步都长同一个样子。
+ * 不再弹气泡。脚本执行卡、旧工具调用卡与回答过的交互卡共用这副外框，聊天流里的每一步都长同一个样子。
  */
 import {
   Fragment,
@@ -27,7 +27,7 @@ import {
   highlightedTokenStyle,
   useHighlightedCode,
 } from './executionStepHighlight'
-import { type ExecutionStepTone, isLongExecutionPayload } from './executionStepPresentation'
+import { type ExecutionFrameTone, isLongExecutionPayload } from './executionStepPresentation'
 
 import styles from './ExecutionStep.module.css'
 
@@ -37,9 +37,9 @@ const cx = StyleUtils.bindCx(styles)
 
 export interface ExecutionStepFrameProps {
   /** 写在根节点 `data-slot` 上，宿主与测试据此认出是哪种步骤卡。 */
-  slot: 'script-execution' | 'tool-call-step'
+  slot: 'script-execution' | 'tool-call-step' | 'interaction'
   /** 整张卡的底色跟着它走。 */
-  tone: ExecutionStepTone
+  tone: ExecutionFrameTone
   /** 状态的读屏文字；卡片上的状态只看底色。 */
   statusLabel: string
   /** 标题行最左边的图标：执行是命令、观察是搜索，旧工具调用是工具自己的图标。 */
@@ -49,6 +49,8 @@ export interface ExecutionStepFrameProps {
   monospaceTitle?: boolean
   /** 标题下那行灰红小字：不点开也看得到为什么失败。 */
   reason?: LooseOptional<string>
+  /** 标题下那行中性小字：交互卡收起后写明答了什么。 */
+  summary?: LooseOptional<string>
   /** 标题右边的标签（用到的模块、工具名），用 `ExecutionStep.module.css` 的 `tags` / `tag` 排。 */
   tags?: ReactNode
   /** 行尾的状态文字（耗时、执行中）。 */
@@ -67,6 +69,7 @@ export function ExecutionStepFrame({
   title,
   monospaceTitle = false,
   reason,
+  summary,
   tags,
   meta,
   sourcePreview,
@@ -96,6 +99,7 @@ export function ExecutionStepFrame({
       <span className={styles.text}>
         <span className={cx('title', monospaceTitle && 'titleMono')}>{title}</span>
         {!!reason && <span className={styles.reason}>{reason}</span>}
+        {!!summary && <span className={styles.summary}>{summary}</span>}
       </span>
       {tags}
       {!!meta && <span className={styles.meta}>{meta}</span>}

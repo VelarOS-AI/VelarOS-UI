@@ -23,7 +23,7 @@ import type { GoalDockViewModel } from '#internal/goalLifecycle'
 export type ConversationCardContent =
   | {
       /**
-       * 宿主自有的会话转交建议卡。与 `user-action-card` 分开的理由是**身份与回传**：
+       * 宿主自有的会话转交建议卡。它单独成一种的理由是**身份与回传**：
        * 它不是模型产出，批准会去建一个新会话，所以走 typed kind + `onResolve` 正路——
        * 而不是"坞项 id 前缀嗅探 + window CustomEvent"那条旁路（谁都能冒充、谁都能派发）。
        */
@@ -92,7 +92,7 @@ export interface ConversationCodeBlockSlotProps {
  * 会话渲染 render-slot 契约（§12.9 封闭）：**有限具名集合**，非任意 children 洞。
  *
  * 管线组件（`MessageContentBlock` / `AssistantMessageBubble`）不硬 import 宿主专属的黑名单卡件
- * （浏览器截图组 / worker 线程面板 / 用户动作卡 / 提问卡），而是经此注入面消费——每个 slot
+ * （浏览器截图组 / worker 线程面板 / 消息文件变更汇总），而是经此注入面消费——每个 slot
  * 是一个具名、带类型 props 的渲染函数。宿主在装配点提供实现（`desktopConversationRenderSlots`）。
  * 缺注入时各 slot 默认渲染 `null`（这些卡是渲染增强，缺失即不显示，不影响正文），宿主装配后即生效。
  *
@@ -114,28 +114,6 @@ export interface ConversationRenderSlots {
     variant?: ConversationWorkerThreadVariant
     selectedThreadId?: LooseOptional<string>
     onOpenThread?: (threadId: string) => void
-  }) => Nullable<ReactElement>
-  /**
-   * 提问卡（wizard，宿主 `AskUserCarousel` 薄容器，**永久** slot）——有状态 viewmodel（表单/超时/localStorage）
-   * 留宿主。dispatch 决策（wizard 判定 + onActionComplete 构造）在包内 MessageContentBlock，本 slot 只渲染容器。
-   */
-  askUser: (props: {
-    block: Extract<ContentBlock, { type: 'user-action-card' }>
-    sessionId: string
-    disabled: boolean
-    onActionComplete?: (resolution: UserActionResolution) => void | Promise<void>
-  }) => Nullable<ReactElement>
-  /**
-   * 用户动作卡（非 wizard，宿主 `UserActionCard` 薄容器，**永久** slot）——有状态 viewmodel 留宿主；
-   * 可见性谓词 `shouldRenderUserActionCard`（localStorage 已消费/超时判定）在宿主 slot 实现内应用（不可见回 null）。
-   */
-  userActionCard: (props: {
-    block: Extract<ContentBlock, { type: 'user-action-card' }>
-    sessionId: string
-    disabled: boolean
-    activeUserActionCardIds?: readonly string[]
-    onActionComplete?: (resolution: UserActionResolution) => void | Promise<void>
-    onOpenArtifact?: (path: string) => unknown
   }) => Nullable<ReactElement>
   /**
    * 消息文件变更汇总（宿主 `MessageFileChangeSummary`，**永久** slot）——viewmodel 触达 rendererIpc
@@ -207,8 +185,6 @@ export type ConversationWorkerThreadVariant = 'default' | 'side'
 const defaultConversationRenderSlots: ConversationRenderSlots = {
   browserScreenshotGroup: () => null,
   workerThreadPanel: () => null,
-  askUser: () => null,
-  userActionCard: () => null,
   messageFileChangeSummary: () => null,
   conversationCardContent: () => null,
   stickyDockItemContent: () => null,

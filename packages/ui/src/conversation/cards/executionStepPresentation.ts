@@ -21,6 +21,9 @@ import { asRecord, readString } from '#internal/unknownJsonRecord'
 /** 步骤卡的四种外观：进行中、成功、失败、已取消。 */
 export type ExecutionStepTone = 'running' | 'success' | 'error' | 'cancelled'
 
+/** 外框的底色：步骤卡的四种，加上交互卡等用户回答时的一种。 */
+export type ExecutionFrameTone = ExecutionStepTone | 'waiting'
+
 /** 参数、返回值超过这么多行或这么多字符就先折起来，点「展开全部」再看。 */
 const FoldedPayloadMaxLines = 8
 const FoldedPayloadMaxChars = 600

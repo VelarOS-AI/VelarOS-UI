@@ -19,9 +19,8 @@ import { Stack } from '@velaros-ai/ui/primitives/layout/Stack'
 
 import { useChatThinkingVisibility } from '../blocks/chatThinkingVisibility'
 import { MessageBubble } from '../blocks/MessageBubble'
-import { ChatAwaitingInputCard } from '../cards/ChatAwaitingInputCard'
-import { ChatConfirmationCard } from '../cards/ChatConfirmationCard'
 import type { FileChangeSummaryListEntry } from '../cards/FileChangeSummaryList'
+import { type AnswerInteraction, InteractionAnswerProvider } from '../cards/interactionAnswerContext'
 import { useConversationI18n, useConversationTranslatorRuntime } from '../i18n'
 import type { ConversationView, ConversationWorkerThread } from '../projection'
 import type { ConversationRewindPlan } from '../projection'
@@ -43,11 +42,11 @@ import {
   resolveConversationRefreshGeneration,
 } from './conversationRefreshGeneration'
 import { getGoalLifecycleRefreshKey, getLatestCurrentTurnToolBlock } from './currentTurnToolBlocks'
-import { useAwaitingConfirmationUserActionCards } from './useAwaitingConfirmationUserActionCards'
 import { useChatConversationScroll } from './useChatConversationScroll'
 import { useChatConversationTranscriptModel } from './useChatConversationTranscriptModel'
 import { useChatTranscriptWindow } from './useChatTranscriptWindow'
 import { useQueuedLiveStatusText } from './useQueuedLiveStatusText'
+import { useStableHostCallback } from './useStableHostCallback'
 import {
   groupWorkerThreadsByTranscriptAnchor,
   isSameWorkerThreadPlacement,
@@ -104,12 +103,8 @@ export interface ChatConversationPaneProps {
   onOpenWorkerThread?: (threadId: string) => void
   onOpenProjectPath?: (path: string) => unknown
   onReviewFileChanges?: (entries: FileChangeSummaryListEntry[]) => void | Promise<void>
-  onResolveConfirmation?: (
-    approved: boolean,
-    rejectionMessage?: LooseOptional<string>,
-    options?: { confirmationId?: string; userActionCardResults?: UserActionCardResult[] }
-  ) => void
-  onSubmitInput?: (answer: string) => void | Promise<void>
+  /** 交互卡上的回答（提问、表单、确认、危险命令、登录墙、能力申请）；不给时交互卡只读。 */
+  onAnswerInteraction?: AnswerInteraction
   onContinueGoal?: (input: string) => unknown | Promise<unknown>
   onRewindToMessage?: (messageId: string, options?: { restoreFiles?: boolean }) => Promise<void>
   /**
@@ -145,8 +140,7 @@ export function ChatConversationPane({
   onOpenWorkerThread,
   onOpenProjectPath,
   onReviewFileChanges,
-  onResolveConfirmation,
-  onSubmitInput,
+  onAnswerInteraction,
   onContinueGoal,
   onRewindToMessage,
   getRewindPlan,
@@ -240,22 +234,10 @@ export function ChatConversationPane({
   const visibleLiveTraceSummary = showThinkingProcess ? displayedLiveTraceSummary : null
   const visibleRuntimeSummary = visibleLiveTraceSummary
 
-  const isAwaitingInput = interactionState === 'awaiting-input'
-  const isAwaitingConfirmation = interactionState === 'awaiting-confirmation'
-  const shouldRenderAwaitingInputCard = isAwaitingInput && !!onSubmitInput
-  const { activeUserActionCards, activeUserActionCardIds, resolveUserActionCard } =
-    useAwaitingConfirmationUserActionCards({
-      runtime,
-      isAwaitingConfirmation,
-      onResolveConfirmation,
-    })
-  const shouldRenderAwaitingConfirmationCard =
-    isAwaitingConfirmation && !!onResolveConfirmation && isEmpty(activeUserActionCards)
+  // 等回答的请求是消息里的一张交互卡，运行提示不再重复说一遍。
   const shouldHideInlineNoticeForAwaitingInteraction =
-    shouldRenderAwaitingInputCard ||
-    shouldRenderAwaitingConfirmationCard ||
-    !isEmpty(activeUserActionCardIds)
-  const transcriptActiveUserActionCardIds = activeUserActionCardIds
+    interactionState === 'awaiting-input' || interactionState === 'awaiting-confirmation'
+  const answerInteraction = useStableHostCallback(onAnswerInteraction)
 
   const refreshGoalLifecycle = useCallback(async (): Promise<void> => {
     try {
@@ -372,7 +354,6 @@ export function ChatConversationPane({
     runtime,
     billingModel,
     pricingCatalog,
-    shouldRenderAwaitingInputCard,
   })
   const isTranscriptRunActive = isRunActive
   const activeAssistantMessageId = resolveActiveTranscriptAssistantMessageId({
@@ -614,145 +595,128 @@ export function ChatConversationPane({
   // 跟随状态按 scrollRef 从宿主的 useScrollToBottom 取：两端宿主不用多传参数，消息组件的
   // 自动收起就只在读者跟随底部时发生。
   return (
-    <ConversationScrollFollowProvider scrollRef={scrollRef}>
-      <section
-        className={cx('chatPane', variant === 'side' && 'chatPaneSide')}
-        data-tour-id="chat-conversation"
-        style={{ '--chat-input-dock-height': `${inputDockHeight}px` } as CSSProperties}
-      >
-        <div
-          key={stableConversationRefreshKey}
-          className={styles.conversationBody}
-          data-scroll-navigator-hidden={!!scrollNavigatorHidden}
+    <InteractionAnswerProvider value={toNullable(answerInteraction)}>
+      <ConversationScrollFollowProvider scrollRef={scrollRef}>
+        <section
+          className={cx('chatPane', variant === 'side' && 'chatPaneSide')}
+          data-tour-id="chat-conversation"
+          style={{ '--chat-input-dock-height': `${inputDockHeight}px` } as CSSProperties}
         >
-          <ScrollArea
-            ref={scrollRef}
-            className={styles.messageList}
-            data-tour-id="chat-output"
-            aria-label={t('chat.messagesRegionAriaLabel')}
+          <div
+            key={stableConversationRefreshKey}
+            className={styles.conversationBody}
+            data-scroll-navigator-hidden={!!scrollNavigatorHidden}
           >
-            <Stack
-              className={cx('messageListInner', variant === 'side' && 'messageListInnerSide')}
-              gap="lg"
+            <ScrollArea
+              ref={scrollRef}
+              className={styles.messageList}
+              data-tour-id="chat-output"
+              aria-label={t('chat.messagesRegionAriaLabel')}
             >
-              {/* 向上翻页哨兵：窗口已在已加载顶端时，满屏前即触发从磁盘加载更旧消息 */}
-              {hasOlderMessages && isWindowAtLoadedTop && (
-                <div ref={loadMoreSentinelRef} className={styles.loadMoreSentinel}>
-                  {isLoadingOlderMessages ? '...' : null}
-                </div>
-              )}
-              <SessionStickyDock
-                variant={variant}
-                items={stickyDockItems}
-                barLabel={t('sessionStickyDock.barLabel')}
-                autoRevealKey={goalLifecycleRevealKey ?? activeDockPlanRevealKey}
-                autoCollapseKey={goalLifecycleCollapseKey}
-                spotlightItemIds={activeDockStatusSpotlightItemIds}
-              />
-              {!isEmpty(workerThreadPlacement.beforeTranscript)
-                ? renderWorkerThreadPanel(workerThreadPlacement.beforeTranscript)
-                : null}
-              <ChatTranscript
-                messages={windowMessages}
-                browserScreenshotDisplayMode={browserScreenshotDisplayMode}
-                sessionId={sessionId}
-                className={styles.messageSequence}
-                getQuestionMessage={getTranscriptQuestionMessage}
-                getIsStreaming={getTranscriptIsStreaming}
-                getRunMarker={getTranscriptRunMarker}
-                getInlineNotice={getTranscriptInlineNotice}
-                inlineNoticeRuntimeSource={inlineNoticeRuntimeSource}
-                showToolDetails
-                activeProjectRoot={activeProjectRoot}
-                projectRoots={projectRoots}
-                canShowFileChangeSummary={supportsProjectFiles}
-                getRunCostEstimate={getTranscriptRunCostEstimate}
-                getGoalCompletionSummary={getTranscriptGoalCompletionSummary}
-                renderAfterMessage={renderWorkerThreadsAfterMessage}
-                renderAfterStep={renderWorkerThreadsAfterStep}
-                onOpenBrowserLink={onOpenBrowserLink}
-                onOpenFileChange={onOpenFileChange}
-                onOpenProjectPath={onOpenProjectPath}
-                onReviewFileChanges={onReviewFileChanges}
-                activeUserActionCardIds={transcriptActiveUserActionCardIds}
-                onResolveUserActionCard={resolveUserActionCard}
-                onRewindToMessage={onRewindToMessage}
-                onTranslateThinkingBlock={onTranslateThinkingBlock}
-                canRewindToMessage={canRewindToMessage}
-                getRewindPlan={getRewindPlan}
-              />
-              {inlineConversationCards}
-              {!!streamSlot && <div className={styles.streamSlot}>{streamSlot}</div>}
-              {!inlineNoticeMessageId && inlineNotice && (
-                <MessageBubble
-                  message={RuntimeInlineNoticeMessage}
-                  sessionId={sessionId}
+              <Stack
+                className={cx('messageListInner', variant === 'side' && 'messageListInnerSide')}
+                gap="lg"
+              >
+                {/* 向上翻页哨兵：窗口已在已加载顶端时，满屏前即触发从磁盘加载更旧消息 */}
+                {hasOlderMessages && isWindowAtLoadedTop && (
+                  <div ref={loadMoreSentinelRef} className={styles.loadMoreSentinel}>
+                    {isLoadingOlderMessages ? '...' : null}
+                  </div>
+                )}
+                <SessionStickyDock
+                  variant={variant}
+                  items={stickyDockItems}
+                  barLabel={t('sessionStickyDock.barLabel')}
+                  autoRevealKey={goalLifecycleRevealKey ?? activeDockPlanRevealKey}
+                  autoCollapseKey={goalLifecycleCollapseKey}
+                  spotlightItemIds={activeDockStatusSpotlightItemIds}
+                />
+                {!isEmpty(workerThreadPlacement.beforeTranscript)
+                  ? renderWorkerThreadPanel(workerThreadPlacement.beforeTranscript)
+                  : null}
+                <ChatTranscript
+                  messages={windowMessages}
                   browserScreenshotDisplayMode={browserScreenshotDisplayMode}
-                  inlineNotice={inlineNotice}
+                  sessionId={sessionId}
+                  className={styles.messageSequence}
+                  getQuestionMessage={getTranscriptQuestionMessage}
+                  getIsStreaming={getTranscriptIsStreaming}
+                  getRunMarker={getTranscriptRunMarker}
+                  getInlineNotice={getTranscriptInlineNotice}
                   inlineNoticeRuntimeSource={inlineNoticeRuntimeSource}
                   showToolDetails
                   activeProjectRoot={activeProjectRoot}
                   projectRoots={projectRoots}
                   canShowFileChangeSummary={supportsProjectFiles}
+                  getRunCostEstimate={getTranscriptRunCostEstimate}
+                  getGoalCompletionSummary={getTranscriptGoalCompletionSummary}
+                  renderAfterMessage={renderWorkerThreadsAfterMessage}
+                  renderAfterStep={renderWorkerThreadsAfterStep}
                   onOpenBrowserLink={onOpenBrowserLink}
                   onOpenFileChange={onOpenFileChange}
                   onOpenProjectPath={onOpenProjectPath}
                   onReviewFileChanges={onReviewFileChanges}
-                  activeUserActionCardIds={transcriptActiveUserActionCardIds}
-                  onResolveUserActionCard={resolveUserActionCard}
+                  onRewindToMessage={onRewindToMessage}
                   onTranslateThinkingBlock={onTranslateThinkingBlock}
+                  canRewindToMessage={canRewindToMessage}
+                  getRewindPlan={getRewindPlan}
                 />
-              )}
-              {shouldRenderAwaitingInputCard && (
-                <ChatAwaitingInputCard
-                  question={runtime.awaitingInputQuestion}
-                  onSubmit={onSubmitInput}
-                />
-              )}
-              {shouldRenderAwaitingConfirmationCard && (
-                <ChatConfirmationCard
-                  key={runtime.awaitingConfirmationId}
-                  message={runtime.awaitingConfirmationMessage}
-                  detail={runtime.awaitingConfirmationDetail}
-                  onApprove={() => onResolveConfirmation(true, undefined, { confirmationId: toOptional(runtime.awaitingConfirmationId) })}
-                  onReject={(rejectionMessage) => onResolveConfirmation(false, rejectionMessage, { confirmationId: toOptional(runtime.awaitingConfirmationId) })}
-                />
-              )}
-              {isStreaming &&
-                (!showThinkingProcess || !hasStreamingThinkingBlock) &&
-                !inlineNotice && (
-                  <div className={styles.thinkingRow}>
-                    <div className={styles.thinkingText}>
-                      <span className={styles.thinkingDot} />
-                      <Paragraph spacing="none">{visibleRuntimeSummary ?? runningLabel}</Paragraph>
-                    </div>
-                  </div>
+                {inlineConversationCards}
+                {!!streamSlot && <div className={styles.streamSlot}>{streamSlot}</div>}
+                {!inlineNoticeMessageId && inlineNotice && (
+                  <MessageBubble
+                    message={RuntimeInlineNoticeMessage}
+                    sessionId={sessionId}
+                    browserScreenshotDisplayMode={browserScreenshotDisplayMode}
+                    inlineNotice={inlineNotice}
+                    inlineNoticeRuntimeSource={inlineNoticeRuntimeSource}
+                    showToolDetails
+                    activeProjectRoot={activeProjectRoot}
+                    projectRoots={projectRoots}
+                    canShowFileChangeSummary={supportsProjectFiles}
+                    onOpenBrowserLink={onOpenBrowserLink}
+                    onOpenFileChange={onOpenFileChange}
+                    onOpenProjectPath={onOpenProjectPath}
+                    onReviewFileChanges={onReviewFileChanges}
+                    onTranslateThinkingBlock={onTranslateThinkingBlock}
+                  />
                 )}
-            </Stack>
-            {/* 夹底守卫占位：必须是滚动内容的最后一个元素，且在被 ResizeObserver 观测的内容栈之外，
-                改高度不会再触发一轮尺寸回调。平时高度为 0。 */}
-            <div aria-hidden="true" className={styles.scrollClampGuard} />
-          </ScrollArea>
+                {isStreaming &&
+                  (!showThinkingProcess || !hasStreamingThinkingBlock) &&
+                  !inlineNotice && (
+                    <div className={styles.thinkingRow}>
+                      <div className={styles.thinkingText}>
+                        <span className={styles.thinkingDot} />
+                        <Paragraph spacing="none">{visibleRuntimeSummary ?? runningLabel}</Paragraph>
+                      </div>
+                    </div>
+                  )}
+              </Stack>
+              {/* 夹底守卫占位：必须是滚动内容的最后一个元素，且在被 ResizeObserver 观测的内容栈之外，
+                  改高度不会再触发一轮尺寸回调。平时高度为 0。 */}
+              <div aria-hidden="true" className={styles.scrollClampGuard} />
+            </ScrollArea>
 
-          <ChatScrollNavigator
-            hidden={scrollNavigatorHidden}
-            followLocked={followLocked}
-            onFollowLockedChange={onFollowLockedChange}
-            scrollRef={scrollRef}
-            transcriptNavigationRef={transcriptNavigationRef}
-          />
-        </div>
-
-        <section
-          ref={inputDockRef}
-          className={styles.inputDock}
-          aria-label={t('chat.composerRegionAriaLabel')}
-        >
-          <div className={cx('inputDockInner', variant === 'side' && 'inputDockInnerSide')}>
-            <div className={styles.inputDockSurface}>{composer}</div>
+            <ChatScrollNavigator
+              hidden={scrollNavigatorHidden}
+              followLocked={followLocked}
+              onFollowLockedChange={onFollowLockedChange}
+              scrollRef={scrollRef}
+              transcriptNavigationRef={transcriptNavigationRef}
+            />
           </div>
+
+          <section
+            ref={inputDockRef}
+            className={styles.inputDock}
+            aria-label={t('chat.composerRegionAriaLabel')}
+          >
+            <div className={cx('inputDockInner', variant === 'side' && 'inputDockInnerSide')}>
+              <div className={styles.inputDockSurface}>{composer}</div>
+            </div>
+          </section>
         </section>
-      </section>
-    </ConversationScrollFollowProvider>
+      </ConversationScrollFollowProvider>
+    </InteractionAnswerProvider>
   )
 }

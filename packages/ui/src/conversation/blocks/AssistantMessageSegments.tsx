@@ -35,7 +35,6 @@ import type {
   ContentBlock,
   ConversationStepBlock,
   ToolCallBlock as ToolCallBlockType,
-  UserActionCardResult,
 } from '#contracts'
 import { isBlank, isEmpty, isPresent } from '#internal/runtime'
 
@@ -209,8 +208,6 @@ function AssistantMessageSegmentsInner({
   formatPathForDisplay,
   onOpenBrowserLink,
   onOpenProjectPath,
-  activeUserActionCardIds,
-  onResolveUserActionCard,
   onTranslateThinkingBlock,
   activityLeadingElement = null,
   activityTrailingElement = null,
@@ -232,8 +229,6 @@ function AssistantMessageSegmentsInner({
   formatPathForDisplay?: (path: string) => string
   onOpenBrowserLink?: (url: string) => void | Promise<void>
   onOpenProjectPath?: (path: string) => unknown
-  activeUserActionCardIds?: readonly string[]
-  onResolveUserActionCard?: (request: UserActionCardResult) => void | Promise<void>
   onTranslateThinkingBlock?: (request: {
     messageId: string
     blockIndex: number
@@ -387,8 +382,6 @@ function AssistantMessageSegmentsInner({
       formatPathForDisplay={formatPathForDisplay}
       onOpenBrowserLink={onOpenBrowserLink}
       onOpenProjectPath={onOpenProjectPath}
-      activeUserActionCardIds={activeUserActionCardIds}
-      onResolveUserActionCard={onResolveUserActionCard}
       onTranslateThinkingBlock={onTranslateThinkingBlock}
     />
   )

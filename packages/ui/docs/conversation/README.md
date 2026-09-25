@@ -32,7 +32,7 @@
 | --- | --- | --- |
 | 是否必填 | **必填** | **可选** |
 | 缺注入时 | 那张卡**不显示**(正文不受影响) | 回落**官方内置件的原行为** |
-| 举例 | 浏览器截图组 / worker 线程面板 / `askUser` / `userActionCard` / `messageFileChangeSummary` | `messageMarkdown` / `messageCodeBlock` |
+| 举例 | 浏览器截图组 / worker 线程面板 / `messageFileChangeSummary` / `conversationCardContent` | `messageMarkdown` / `messageCodeBlock` |
 
 替换槽的 props 由官方件的**真实入参收窄**(`ConversationMarkdownSlotProps` = `{ text, isStreaming }`;
 `ConversationCodeBlockSlotProps` = `{ language, code, isStreaming }`),

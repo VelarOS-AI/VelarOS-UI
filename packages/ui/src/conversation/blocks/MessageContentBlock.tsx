@@ -9,10 +9,11 @@ import {
   useState,
 } from "react";
 
+import { InteractionCard } from "../cards/InteractionCard";
 import { ScriptExecutionCard } from "../cards/ScriptExecutionCard";
 import { ToolCallStepCard } from "../cards/ToolCallStepCard";
+import { WidgetCard } from "../cards/WidgetCard";
 import { prepareStreamdownMarkdownText } from "../markdown/streamdownMarkdownSource.utils";
-import type { UserActionResolution } from "../projection";
 import { useTimerScope } from "../react-hooks/useTimerScope";
 import {
   type ConversationRenderSlots,
@@ -33,8 +34,8 @@ import {
 
 import styles from "./MessageBubble.module.css";
 
-import type { ContentBlock, TextBlock, UserActionCardResult } from "#contracts";
-import { isBlank, optionalWhenLazy, toNullable } from "#internal/runtime";
+import type { ContentBlock, TextBlock } from "#contracts";
+import { isBlank, toNullable } from "#internal/runtime";
 
 const LazyMessageMarkdownBlock = lazy(async () =>
   import("./MessageMarkdownBlocks").then((module) => ({
@@ -66,10 +67,6 @@ type MessageContentBlockRenderContext = {
   formatPathForDisplay?: (path: string) => string;
   onOpenBrowserLink?: (url: string) => void | Promise<void>;
   onOpenProjectPath?: (path: string) => unknown;
-  activeUserActionCardIds?: readonly string[];
-  onResolveUserActionCard?: (
-    request: UserActionCardResult,
-  ) => void | Promise<void>;
   onTranslateThinkingBlock?: (request: {
     messageId: string;
     blockIndex: number;
@@ -100,10 +97,6 @@ interface MessageContentBlockProps {
   formatPathForDisplay?: (path: string) => string;
   onOpenBrowserLink?: (url: string) => void | Promise<void>;
   onOpenProjectPath?: (path: string) => unknown;
-  activeUserActionCardIds?: readonly string[];
-  onResolveUserActionCard?: (
-    request: UserActionCardResult,
-  ) => void | Promise<void>;
   onTranslateThinkingBlock?: (request: {
     messageId: string;
     blockIndex: number;
@@ -159,48 +152,12 @@ const STRUCTURED_BLOCK_RENDERERS = {
       />
     </Suspense>
   ),
-  "user-action-card": (block, ctx) => {
-    const userActionBlock = block as Extract<
-      ContentBlock,
-      { type: "user-action-card" }
-    >;
-    const card = userActionBlock.card;
-    const isActiveBlockingCard =
-      card.blocking && !!ctx.activeUserActionCardIds?.includes(card.id);
-    // 提问卡（wizard）作答后不消失、只禁用：跳过"已消费即隐藏"的全局规则，保持挂载并展示用户所选。
-    // 非 wizard 的可见性（已消费/超时）谓词在宿主 userActionCard slot 实现内应用（不可见回 null）。
-    const isWizardCard = card.form?.presentation === "wizard";
-
-    const onActionComplete = optionalWhenLazy(
-      isActiveBlockingCard,
-      () => (resolution: UserActionResolution) =>
-        ctx.onResolveUserActionCard?.({
-          cardId: card.id,
-          approved: resolution.approved,
-          actionKind: resolution.actionKind,
-          message: resolution.message,
-          values: resolution.values,
-          timedOut: resolution.timedOut,
-        }),
-    );
-
-    if (isWizardCard)
-      return ctx.slots.askUser({
-        block: userActionBlock,
-        sessionId: ctx.sessionId,
-        disabled: card.blocking && !isActiveBlockingCard,
-        onActionComplete,
-      });
-
-    return ctx.slots.userActionCard({
-      block: userActionBlock,
-      sessionId: ctx.sessionId,
-      disabled: card.blocking && !isActiveBlockingCard,
-      activeUserActionCardIds: ctx.activeUserActionCardIds,
-      onActionComplete,
-      onOpenArtifact: ctx.onOpenProjectPath,
-    });
-  },
+  interaction: (block) => (
+    <InteractionCard block={block as Extract<ContentBlock, { type: "interaction" }>} />
+  ),
+  widget: (block) => (
+    <WidgetCard block={block as Extract<ContentBlock, { type: "widget" }>} />
+  ),
   "assistant-generated-file": () => null,
   "assistant-source": () => null,
 } satisfies Record<
@@ -336,8 +293,6 @@ function MessageContentBlockInner({
   formatPathForDisplay,
   onOpenBrowserLink,
   onOpenProjectPath,
-  activeUserActionCardIds,
-  onResolveUserActionCard,
   onTranslateThinkingBlock,
 }: MessageContentBlockProps): Nullable<ReactElement> {
   const hasRenderedLiveTextRef = useRef(false);
@@ -377,8 +332,6 @@ function MessageContentBlockInner({
       formatPathForDisplay,
       onOpenBrowserLink,
       onOpenProjectPath,
-      activeUserActionCardIds,
-      onResolveUserActionCard,
       onTranslateThinkingBlock,
       slots,
     });
@@ -465,17 +418,6 @@ function areStepBlockPropsEqual(
   );
 }
 
-function areUserActionCardBlockPropsEqual(
-  prev: Readonly<MessageContentBlockProps>,
-  next: Readonly<MessageContentBlockProps>,
-): boolean {
-  return (
-    prev.sessionId === next.sessionId &&
-    prev.activeUserActionCardIds === next.activeUserActionCardIds &&
-    prev.onResolveUserActionCard === next.onResolveUserActionCard
-  );
-}
-
 function areMessageContentBlockPropsEqual(
   prev: Readonly<MessageContentBlockProps>,
   next: Readonly<MessageContentBlockProps>,
@@ -490,8 +432,8 @@ function areMessageContentBlockPropsEqual(
     case "tool-call":
     case "script-execution":
       return areStepBlockPropsEqual(prev, next);
-    case "user-action-card":
-      return areUserActionCardBlockPropsEqual(prev, next);
+    case "interaction":
+    case "widget":
     case "assistant-generated-file":
     case "assistant-source":
       return true;

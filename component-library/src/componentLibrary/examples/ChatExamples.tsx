@@ -4,12 +4,12 @@ import type { I18nContextValue } from '@catalog/i18n'
 import { useI18n } from '@catalog/i18n'
 
 import {
-  ChatAwaitingInputCard,
-  ChatConfirmationCard,
   ChatConversationSkeleton,
   ChatNoticeCard,
   type ChatStatusRuntime,
   type ConversationMessageRunMarker,
+  InteractionAnswerProvider,
+  InteractionCard,
   MessageBubble,
 } from '@velaros-ai/ui/conversation'
 import {
@@ -329,17 +329,44 @@ export function ChatInteractionCardsExample(): ReactElement {
   const { t } = useI18n()
 
   return (
-    <Stack gap="sm">
-      <ChatAwaitingInputCard
-        question={t('componentLibrary.chatExample.awaitingGenEntriesQuestion')}
-        onSubmit={() => undefined}
-      />
-      <ChatConfirmationCard
-        message={t('componentLibrary.chatExample.confirmationCardMessage')}
-        onApprove={() => undefined}
-        onReject={() => undefined}
-      />
-    </Stack>
+    <InteractionAnswerProvider value={() => undefined}>
+      <Stack gap="sm">
+        <InteractionCard
+          block={{
+            type: 'interaction',
+            id: 'library-choice',
+            kind: 'choice',
+            message: t('componentLibrary.chatExample.awaitingGenEntriesQuestion'),
+            options: [
+              { id: 'yes', label: t('componentLibrary.chatExample.interactionContinue'), recommended: true },
+              { id: 'no', label: t('componentLibrary.chatExample.interactionStop') },
+            ],
+            status: 'pending',
+          }}
+        />
+        <InteractionCard
+          block={{
+            type: 'interaction',
+            id: 'library-danger',
+            kind: 'danger',
+            message: t('componentLibrary.chatExample.confirmationCardMessage'),
+            operation: { label: 'rm -rf dist', target: '~/projects/velaros' },
+            status: 'pending',
+          }}
+        />
+        <InteractionCard
+          block={{
+            type: 'interaction',
+            id: 'library-answered',
+            kind: 'choice',
+            message: t('componentLibrary.chatExample.awaitingGenEntriesQuestion'),
+            options: [{ id: 'yes', label: t('componentLibrary.chatExample.interactionContinue') }],
+            status: 'answered',
+            answer: { choices: ['yes'] },
+          }}
+        />
+      </Stack>
+    </InteractionAnswerProvider>
   )
 }
 

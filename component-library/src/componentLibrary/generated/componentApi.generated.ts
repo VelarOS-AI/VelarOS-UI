@@ -1112,20 +1112,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "defaultValue": "false"
     }
   ],
-  ChatAwaitingInputCard: [
-    {
-      "name": "ChatAwaitingInputCard.question",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "Nullable<string>",
-      "recommended": "Required"
-    },
-    {
-      "name": "ChatAwaitingInputCard.onSubmit",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "(answer: string) => void | Promise<void>",
-      "recommended": "Required"
-    }
-  ],
   ChatComposer: [
     {
       "name": "ChatComposer.control",
@@ -1138,31 +1124,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "description": "Auto-generated from TypeScript props.",
       "type": "ChatComposerDensity",
       "defaultValue": "'default'"
-    }
-  ],
-  ChatConfirmationCard: [
-    {
-      "name": "ChatConfirmationCard.message",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "Nullable<string>",
-      "recommended": "Required"
-    },
-    {
-      "name": "ChatConfirmationCard.detail",
-      "description": "结构化信封；缺席时按 `message` 散文渲染。",
-      "type": "LooseOptional<ConfirmationRequestDetail>"
-    },
-    {
-      "name": "ChatConfirmationCard.onApprove",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "() => void",
-      "recommended": "Required"
-    },
-    {
-      "name": "ChatConfirmationCard.onReject",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "(rejectionMessage?: LooseOptional<string>) => void",
-      "recommended": "Required"
     }
   ],
   ChatContextUsageGauge: [
@@ -1292,14 +1253,9 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "((entries: FileChangeSummaryListEntry[]) => void | Promise<void>)"
     },
     {
-      "name": "ChatConversationPane.onResolveConfirmation",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "((approved: boolean, rejectionMessage?: LooseOptional<string>, options?: { confirmationId?: string; userActionCardResults?: UserActionCardResult[]; }) => void)"
-    },
-    {
-      "name": "ChatConversationPane.onSubmitInput",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "((answer: string) => void | Promise<void>)"
+      "name": "ChatConversationPane.onAnswerInteraction",
+      "description": "交互卡上的回答（提问、表单、确认、危险命令、登录墙、能力申请）；不给时交互卡只读。",
+      "type": "AnswerInteraction"
     },
     {
       "name": "ChatConversationPane.onContinueGoal",
@@ -1863,16 +1819,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "name": "ChatTranscript.onReviewFileChanges",
       "description": "Auto-generated from TypeScript props.",
       "type": "((entries: FileChangeSummaryListEntry[]) => void | Promise<void>)"
-    },
-    {
-      "name": "ChatTranscript.activeUserActionCardIds",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "readonly string[]"
-    },
-    {
-      "name": "ChatTranscript.onResolveUserActionCard",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "((request: UserActionCardResult) => void | Promise<void>)"
     },
     {
       "name": "ChatTranscript.onRewindToMessage",
@@ -3513,13 +3459,13 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
     {
       "name": "ExecutionStepFrame.slot",
       "description": "写在根节点 `data-slot` 上，宿主与测试据此认出是哪种步骤卡。",
-      "type": "\"script-execution\" | \"tool-call-step\"",
+      "type": "\"script-execution\" | \"tool-call-step\" | \"interaction\"",
       "recommended": "Required"
     },
     {
       "name": "ExecutionStepFrame.tone",
       "description": "整张卡的底色跟着它走。",
-      "type": "ExecutionStepTone",
+      "type": "ExecutionFrameTone",
       "recommended": "Required"
     },
     {
@@ -3548,6 +3494,11 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
     {
       "name": "ExecutionStepFrame.reason",
       "description": "标题下那行灰红小字：不点开也看得到为什么失败。",
+      "type": "LooseOptional<string>"
+    },
+    {
+      "name": "ExecutionStepFrame.summary",
+      "description": "标题下那行中性小字：交互卡收起后写明答了什么。",
       "type": "LooseOptional<string>"
     },
     {
@@ -3846,11 +3797,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "recommended": "Required"
     },
     {
-      "name": "HtmlPreviewFrame.artifactId",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "string"
-    },
-    {
       "name": "HtmlPreviewFrame.fillHost",
       "description": "Auto-generated from TypeScript props.",
       "type": "boolean",
@@ -4080,6 +4026,14 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "description": "Auto-generated from TypeScript props.",
       "type": "\"default\" | \"sm\" | null",
       "defaultValue": "'default'"
+    }
+  ],
+  InteractionCard: [
+    {
+      "name": "InteractionCard.block",
+      "description": "Auto-generated from TypeScript props.",
+      "type": "InteractionBlock",
+      "recommended": "Required"
     }
   ],
   InteractionSuggestionCard: [
@@ -4408,16 +4362,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "((entries: FileChangeSummaryListEntry[]) => void | Promise<void>)"
     },
     {
-      "name": "MessageBubble.activeUserActionCardIds",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "readonly string[]"
-    },
-    {
-      "name": "MessageBubble.onResolveUserActionCard",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "((request: UserActionCardResult) => void | Promise<void>)"
-    },
-    {
       "name": "MessageBubble.onRewindToMessage",
       "description": "Auto-generated from TypeScript props.",
       "type": "((messageId: string, options?: { restoreFiles?: boolean; }) => Promise<void>)"
@@ -4515,16 +4459,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "((path: string) => unknown)"
     },
     {
-      "name": "MessageContentBlock.activeUserActionCardIds",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "readonly string[]"
-    },
-    {
-      "name": "MessageContentBlock.onResolveUserActionCard",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "((request: UserActionCardResult) => void | Promise<void>)"
-    },
-    {
       "name": "MessageContentBlock.onTranslateThinkingBlock",
       "description": "Auto-generated from TypeScript props.",
       "type": "((request: { messageId: string; blockIndex: number; text: string; }) => Promise<void>)"
@@ -4618,6 +4552,20 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "description": "Auto-generated from TypeScript props.",
       "type": "\"default\" | \"secondary\" | \"muted\" | null",
       "defaultValue": "'default'"
+    }
+  ],
+  Pending: [
+    {
+      "name": "Pending.block",
+      "description": "Auto-generated from TypeScript props.",
+      "type": "InteractionBlock",
+      "recommended": "Required"
+    },
+    {
+      "name": "Pending.onAnswer",
+      "description": "Auto-generated from TypeScript props.",
+      "type": "(answer: InteractionAnswer) => Promise<void> | void",
+      "recommended": "Required"
     }
   ],
   Picker: [
@@ -5939,22 +5887,12 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "defaultValue": "'animated'"
     }
   ],
-  WidgetToolShell: [
+  WidgetCard: [
     {
-      "name": "WidgetToolShell.title",
+      "name": "WidgetCard.block",
       "description": "Auto-generated from TypeScript props.",
-      "type": "string",
+      "type": "WidgetBlock",
       "recommended": "Required"
-    },
-    {
-      "name": "WidgetToolShell.actions",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "React.ReactNode"
-    },
-    {
-      "name": "WidgetToolShell.rootRef",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "React.Ref<HTMLDivElement>"
     }
   ],
   WorkspaceGitCommitControl: [

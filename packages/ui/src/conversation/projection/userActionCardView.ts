@@ -1,5 +1,5 @@
 import type {
-  ContentBlock,
+  UserActionCard,
   UserActionCardAction,
   UserActionFormField,
   UserActionFormValue,
@@ -37,7 +37,7 @@ export interface UserActionCardTimeoutHandlers {
   onDismiss?: () => void
 }
 
-type UserActionCardData = Extract<ContentBlock, { type: 'user-action-card' }>['card']
+type UserActionCardData = UserActionCard
 
 export interface UserActionCardView {
   card: UserActionCardData

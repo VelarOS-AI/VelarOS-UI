@@ -487,6 +487,8 @@ export const enUSMessages = {
       lastErrorValidation: 'Renderer fixture validation failed',
       awaitingGenEntriesQuestion: 'Continue generating component entries?',
       confirmationCardMessage: 'Model requests confirmation.',
+      interactionContinue: 'Keep going',
+      interactionStop: 'Stop here',
     },
     businessSurfaceExample: {
       defaultBody: 'default: Skill editor and other read-only or form blocks.',

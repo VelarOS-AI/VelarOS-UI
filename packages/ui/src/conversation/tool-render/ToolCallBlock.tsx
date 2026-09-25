@@ -7,7 +7,6 @@ import planRegistration from './registrations/plan.tool-render'
 import projectSourceRegistration from './registrations/project-source.tool-render'
 import richOutputRegistrations from './registrations/rich-output.tool-render'
 import systemToolInstallRegistration from './registrations/system-tool-install.tool-render'
-import widgetRegistration from './registrations/widget.tool-render'
 import { DefaultToolRender } from './DefaultToolRender.section'
 import {
   type ToolRendererRegistry,
@@ -32,8 +31,7 @@ export interface ToolCallBlockProps {
 // 显式静态注册表——替代 Vite `import.meta.glob`（本包由 tsc 构建，glob 不可用）。行为保序：
 // 与原 glob 扫描 `./registrations/*.tool-render.tsx` 等价，每个工具名唯一，注册顺序不影响路由。
 // PERF GUARD:registration 内的实际 renderer 仍在 React.lazy 之后——静态导入注册元数据不会
-// 预加载 command/artifact/widget 等 renderer 本体，任意 tool-call 消息只在命中对应工具时才拉取实现。
-// （widget 随 pass-2 htmlPreview/artifacts 入包后并入本静态表，宿主追加注册链路退役。）
+// 预加载 command/artifact 等 renderer 本体，任意 tool-call 消息只在命中对应工具时才拉取实现。
 const bundledToolRenderRegistrations: Array<ToolRenderRegistration | ToolRenderRegistration[]> = [
   commandRegistration,
   fileChangeRegistration,
@@ -42,7 +40,6 @@ const bundledToolRenderRegistrations: Array<ToolRenderRegistration | ToolRenderR
   richOutputRegistrations,
   projectSourceRegistration,
   systemToolInstallRegistration,
-  widgetRegistration,
 ]
 
 bundledToolRenderRegistrations

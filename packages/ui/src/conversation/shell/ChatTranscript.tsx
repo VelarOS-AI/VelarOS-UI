@@ -1,5 +1,4 @@
 import { Fragment, memo, type ReactElement, type ReactNode, useLayoutEffect, useMemo } from 'react'
-import { useMemoizedFn } from 'ahooks'
 
 import { MessageBubble } from '../blocks/MessageBubble'
 import { type GoalCompletionActivitySummary } from '../blocks/messageBubbleRenderModel'
@@ -22,6 +21,7 @@ import {
   buildChatTranscriptMessagePresentations,
   type ChatTranscriptMessagePresentation,
 } from './chatTranscriptActivityGrouping'
+import { useStableHostCallback } from './useStableHostCallback'
 
 import type {
   ChatMessage,
@@ -29,21 +29,8 @@ import type {
   ConversationStepBlock,
   ModelPricingCatalog,
   ProjectRootEntry,
-  UserActionCardResult,
 } from '#contracts'
 import { isEmpty, toNullable } from '#internal/runtime'
-
-/**
- * 宿主回调固定成稳定引用再交给消息气泡。气泡按引用判等，宿主每次渲染新建一个回调（内联箭头、
- * 组件里的普通函数）就会让整段对话随每个 token 重画；这里只保留「传没传」的变化（没传时气泡
- * 不画对应入口），调用时总是转给宿主最新的那一个。
- */
-function useStableHostCallback<Args extends unknown[], Result>(
-  callback?: (...args: Args) => Result
-): Optional<(...args: Args) => Result> {
-  const stable = useMemoizedFn((...args: Args): Result => callback!(...args))
-  return callback ? stable : undefined
-}
 
 function markFirstChatTranscriptCommit(): void {
   const performance = globalThis.performance
@@ -139,8 +126,6 @@ export interface ChatTranscriptProps {
   onOpenFileChange?: (entry: FileChangeSummaryListEntry) => void | Promise<void>
   onOpenProjectPath?: (path: string) => unknown
   onReviewFileChanges?: (entries: FileChangeSummaryListEntry[]) => void | Promise<void>
-  activeUserActionCardIds?: readonly string[]
-  onResolveUserActionCard?: (request: UserActionCardResult) => void | Promise<void>
   onRewindToMessage?: (messageId: string, options?: { restoreFiles?: boolean }) => Promise<void>
   onTranslateThinkingBlock?: (request: {
     messageId: string
@@ -176,8 +161,6 @@ function ChatTranscriptInner({
   onOpenFileChange: onOpenFileChangeProp,
   onOpenProjectPath: onOpenProjectPathProp,
   onReviewFileChanges: onReviewFileChangesProp,
-  activeUserActionCardIds,
-  onResolveUserActionCard: onResolveUserActionCardProp,
   onRewindToMessage: onRewindToMessageProp,
   onTranslateThinkingBlock: onTranslateThinkingBlockProp,
   canRewindToMessage,
@@ -187,7 +170,6 @@ function ChatTranscriptInner({
   const onOpenFileChange = useStableHostCallback(onOpenFileChangeProp)
   const onOpenProjectPath = useStableHostCallback(onOpenProjectPathProp)
   const onReviewFileChanges = useStableHostCallback(onReviewFileChangesProp)
-  const onResolveUserActionCard = useStableHostCallback(onResolveUserActionCardProp)
   const onRewindToMessage = useStableHostCallback(onRewindToMessageProp)
   const onTranslateThinkingBlock = useStableHostCallback(onTranslateThinkingBlockProp)
   const getRewindPlan = useStableHostCallback(getRewindPlanProp)
@@ -329,8 +311,6 @@ function ChatTranscriptInner({
           onOpenFileChange={onOpenFileChange}
           onOpenProjectPath={onOpenProjectPath}
           onReviewFileChanges={onReviewFileChanges}
-          activeUserActionCardIds={activeUserActionCardIds}
-          onResolveUserActionCard={onResolveUserActionCard}
           onRewindToMessage={onRewindToMessage}
           onTranslateThinkingBlock={onTranslateThinkingBlock}
           canRewindToMessage={canRewindToMessage}

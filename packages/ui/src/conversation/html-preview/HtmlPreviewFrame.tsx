@@ -67,8 +67,6 @@ function readHostWidth(host: Nullable<HTMLDivElement>): Nullable<number> {
 
 export interface HtmlPreviewFrameProps {
   html: string
-  /** @deprecated 预览已不读它；保留只为还在传它的 Widget。 */
-  artifactId?: string
   fillHost?: boolean
   fitViewportWidth?: boolean
   initialHeight: number

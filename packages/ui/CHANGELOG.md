@@ -8,6 +8,15 @@
 
 ### Removed
 
+- 旧的交互卡：会话末尾的 `ChatConfirmationCard` / `ChatAwaitingInputCard`（连同 `chatConfirmationPresentation` 与
+  `ConfirmationRequestDetail`）、消息里的 `user-action-card` 块（`UserActionCardBlock`；会话坞与预检用的 `UserActionCard`
+  不变）、render slot `askUser` / `userActionCard`、`ChatConversationPane.onResolveConfirmation` / `onSubmitInput`、
+  消息组件的 `activeUserActionCardIds` / `onResolveUserActionCard`，`ConversationRuntimeView` 的
+  `awaitingConfirmationUserActionCards` / `awaitingConfirmationDetail`；文案目录删掉 `confirmation` 一组与等待输入卡的
+  5 条。`AskUserCarousel` 改成按题目驱动（`questions` / `drafts` / `onChange` / `onSend` / `onSkip`），不再吃
+  `UserActionCardView`。
+- 旧 `ui:show_widget` 工具调用的渲染（`WidgetToolRender` / `WidgetToolShell` 与它的注册）与 `HtmlPreviewFrame.artifactId`；
+  文案目录删掉 `chat.widgetLoading`。
 - 流式 HTML 渲染（HTML 实时预览）整条下线，Widget 不受影响：会话块 `html-artifact`（`ContentBlock` 去掉
   `HtmlArtifactBlock`）、`HtmlArtifactBlock` 组件与 `htmlArtifactPresentation`，`./conversation/artifacts` 只剩
   `HtmlArtifactSourceCode` 与 `tokenizeHtmlArtifactSource`；markdown 里 `html` 围栏代码块的「预览」切换（代码块只显示代码）；
@@ -51,6 +60,16 @@
 
 ### Added
 
+- 交互卡：`InteractionBlock`（连同 `InteractionKind` / `InteractionStatus` / `InteractionOption` / `InteractionField` /
+  `InteractionValue` / `InteractionAnswer`）并入 `ContentBlock`，每个与用户的交互请求——带选项的提问、表单、一句话的提问、
+  确认、危险命令、登录墙、能力申请——是运行消息里的一张卡。`InteractionCard` 等回答时展开：选择题与表单题是轮播提问卡
+  （`AskUserCarousel`，逐题作答、最后一页发送，可跳过；表单里的真假题是「是 / 否」两个选项），一句话的提问与能力申请是
+  输入框，确认一类是说明加「拒绝 / 批准」，危险命令单独列出命令与目录，登录墙是「取消 / 继续」；回答、跳过或失效后收成
+  一行写明答了什么，点开回看。回答经 `ChatConversationPane.onAnswerInteraction(requestId, answer)` 交给宿主
+  （`InteractionAnswerProvider` / `useInteractionAnswer` 供别的外壳自己挂）。执行步骤卡的外框多一种等回答的淡蓝底色
+  （`ExecutionFrameTone`）与标题下一行中性小字（`ExecutionStepFrame.summary`）。
+- 小部件块：`WidgetBlock` 并入 `ContentBlock`，`WidgetCard` 在沙箱里显示模型交来的 HTML 片段或 SVG，工具栏能看源码、
+  复制、下载、重新加载与全屏预览。
 - `ScriptExecutionBlock` / `ScriptExecutionCall`（`@velaros-ai/ui/conversation/contracts`）并入 `ContentBlock`：
   一次 ScriptAct 的 execute 声明，带宿主取好的一句话标题、有界源码、用到的模块与每次能力调用。
 - `ScriptExecutionCard`：一行里是状态、标题（为空时按首个调用的「模块 · 操作」兜底，再没有就是「执行脚本」）与
@@ -79,6 +98,9 @@
 
 ### Changed
 
+- 交互卡与小部件不收进运行完成后的「已处理」折叠，排在它下面：问了什么、答了什么、给用户看的小部件都留在外面。
+- 输入框新增 `ChatInputQueueControl.answering`：运行停在等一句话的回答时，输入框里写的就是回答——有字时主按钮是
+  「回答」（`chat.answerQuestion`），不出现「当前任务结束后发送」。
 - 子 Agent 面板能挂在 ScriptAct 脚本卡后面：`ConversationWorkerThread` 新增可选的 `anchorId`（派发它的那张脚本卡的
   id），写了而且那张卡在对话里，面板就直接画在它后面；没写的照旧按 `agent:dispatch` 调用与时间落位。
   `ChatTranscript` / `MessageBubble` / `AssistantMessageBubble` 的 `renderAfterToolCall` 改名 `renderAfterStep`，
@@ -109,6 +131,9 @@
   不再出现在会话里，计划序号不参与渲染，传了也被忽略。
 
 ### Fixed
+
+- 沙箱里的 SVG：默认的中性底色与描边只给没写 `fill` / `stroke` 的图形，模型自己写的颜色不再被盖掉（以前三个
+  红绿蓝的圆会显示成三个灰圈）；条件包在 `:where()` 里，`.t` / `.ts` / `.c-*` 这些类名配色照旧生效。
 
 - 运行还没结束时，执行中途的助手消息不再提前露出复制与时间、文件改动汇总和动作行：这些消息既不流式也没有运行标记，
   原判据把它们当作已结束。现在同一轮里上一次执行停下之后、到正在流式或等待作答的那条为止都算没停。

@@ -337,35 +337,6 @@ export interface ConversationCardResolution {
   settledAt: number
 }
 
-/**
- * 确认请求的结构化信封（镜像 agent 协议 `ConfirmationRequestDetail`）。
- * 渲染层按 `kind` 分发；缺席或未知 kind 一律回落到确认信封里的散文 `message`。
- */
-export type ConfirmationRequestDetail = {
-  authorization?: { label: string; target?: string; requester?: string; scope: 'call' | 'task-operation' }
-} & (
-  | { kind: 'operation-authorization' }
-  | {
-      kind: 'tool-category-authorization'
-      categoryId: string
-      categoryLabel: string
-      toolName: string
-    }
-  | {
-      kind: 'mcp-tool-call'
-      serverName: string
-      toolName: string
-      argumentsPreview?: string
-      approvalScope?: 'call' | 'session-tool' | 'task-operation'
-    }
-  | {
-      kind: 'skill-load'
-      skillId: string
-      label: string
-      description?: LooseOptional<string>
-    }
-)
-
 export interface UserActionCard {
   id: string
   title: string
@@ -384,13 +355,6 @@ export interface UserActionCard {
   }
   timeoutMs?: number
   createdAt: number
-}
-
-export interface UserActionCardBlock {
-  type: 'user-action-card'
-  card: UserActionCard
-  /** 结算记录（单源）：有值即「已作答」，渲染层只读它。 */
-  resolution?: ConversationCardResolution
 }
 
 /** 命令因缺系统工具失败时，宿主随命令结果附上的安装建议（`ProjectCommandResult.systemToolSuggestion`）。 */
@@ -453,6 +417,85 @@ export interface ScriptExecutionBlock {
   durationMs: Nullable<number>
 }
 
+/** 交互卡的种类：带选项的提问、表单、一句话的提问、确认、危险命令、登录墙、能力申请。 */
+export type InteractionKind =
+  | 'choice'
+  | 'form'
+  | 'input'
+  | 'confirm'
+  | 'danger'
+  | 'login'
+  | 'capability'
+
+/** pending 等回答；answered 已回答或已批准；declined 跳过或拒绝；expired 运行结束前没答，不再有效。 */
+export type InteractionStatus = 'pending' | 'answered' | 'declined' | 'expired'
+
+export interface InteractionOption {
+  id: string
+  label: string
+  description?: string
+  recommended?: boolean
+}
+
+export interface InteractionField {
+  id: string
+  label: string
+  kind: 'text' | 'number' | 'boolean' | 'choice'
+  options?: InteractionOption[]
+  multiple?: boolean
+  required?: boolean
+  placeholder?: string
+}
+
+/** 表单里一项的值：文字、数、真假，或选项 id（多选时是 id 列表）。 */
+export type InteractionValue = string | number | boolean | string[]
+
+/**
+ * 用户给的回答：选项题是选中的 id 与另写的话，表单是各项的值，提问与能力申请是一段话，确认是批准；
+ * 拒绝确认、跳过提问都是 declined，可以带理由。
+ */
+export interface InteractionAnswer {
+  choices?: string[]
+  text?: string
+  values?: Record<string, InteractionValue>
+  approved?: boolean
+  declined?: boolean
+  reason?: string
+}
+
+/**
+ * 与用户的一次交互：模型的提问、表单、确认与能力申请，宿主的危险命令确认与登录墙。说明保留原文与换行；
+ * 回答后原位写上回答，运行收尾时没答的标成失效。
+ */
+export interface InteractionBlock {
+  type: 'interaction'
+  /** 请求身份，同一张卡的更新原位替换。 */
+  id: string
+  kind: InteractionKind
+  message: string
+  options?: InteractionOption[]
+  multiple?: boolean
+  allowText?: boolean
+  fields?: InteractionField[]
+  /** 危险命令的操作：命令与它的工作目录。 */
+  operation?: { label: string; target?: string }
+  /** 能力申请附带的补充（JSON 文本）。 */
+  detail?: string
+  status: InteractionStatus
+  answer?: InteractionAnswer
+}
+
+/** 模型交来的小部件：一段 HTML 片段或 SVG，界面在沙箱里显示。 */
+export interface WidgetBlock {
+  type: 'widget'
+  /** 交来它的那次调用的身份，同一个小部件的重放原位替换。 */
+  id: string
+  title: string
+  code: string
+  /** 初始高度，像素。 */
+  height: number
+}
+
 /** 对话里的一步：旧的工具调用，或 ScriptAct 的脚本卡；子 Agent 面板挂在派发它的那一步后面。 */
 export type ConversationStepBlock = ToolCallBlock | ScriptExecutionBlock
 
@@ -461,9 +504,10 @@ export type ContentBlock =
   | ThinkingBlock
   | ToolCallBlock
   | ScriptExecutionBlock
+  | InteractionBlock
+  | WidgetBlock
   | AssistantGeneratedFileBlock
   | AssistantSourceBlock
-  | UserActionCardBlock
 
 export interface ChatAttachmentMeta {
   id: string

@@ -466,6 +466,8 @@ export const zhCNMessages = {
       lastErrorValidation: 'Renderer 样例校验失败',
       awaitingGenEntriesQuestion: '是否继续生成组件库条目？',
       confirmationCardMessage: '模型请求确认组件库改动。',
+      interactionContinue: '继续生成',
+      interactionStop: '先停下',
     },
     businessSurfaceExample: {
       defaultBody: 'default：Skill 编辑器等只读/表单块。',

@@ -55,8 +55,10 @@ function getBlockSegmentKey(block: ContentBlock, index: number): string {
       return `script:${block.id}`
     case 'thinking':
       return `thinking:${index}`
-    case 'user-action-card':
-      return `user-action-card:${block.card.id}`
+    case 'interaction':
+      return `interaction:${block.id}`
+    case 'widget':
+      return `widget:${block.id}`
     default:
       return `text:${index}`
   }

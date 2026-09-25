@@ -181,7 +181,7 @@ export const disclosureRecommendations = [
     id: 'widget-debug-frame',
     title: 'Widget debug frame',
     description:
-      'WidgetToolRender uses a shell header with a muted background, larger title, and copy/download/reload/source actions.',
+      'WidgetCard uses a shell header with a muted background, larger title, and copy/download/reload/source actions.',
     preview: (
       <div className="overflow-hidden rounded-[var(--ui-radius-panel)] border border-border/60 bg-background">
         <div className="flex items-center justify-between gap-2 border-b border-border/50 bg-[var(--background-panel)] px-3 py-2">
@@ -193,20 +193,19 @@ export const disclosureRecommendations = [
         </div>
       </div>
     ),
-    code: `// packages/ui/src/conversation/tool-render/widget/WidgetToolRender.tsx
-<WidgetToolShell title={title} actions={<HtmlPreviewToolbar ... />}>
-  <div className={styles.frameShell}>
-    <HtmlPreviewFrame ... />
-  </div>
-</WidgetToolShell>
-
-// packages/ui/src/conversation/tool-render/widget/WidgetToolShell.tsx
+    code: `// packages/ui/src/conversation/cards/WidgetCard.tsx
 <div className={styles.shell}>
   <header className={styles.header}>
     <div className={styles.title}>{title}</div>
-    <div className={styles.actions}>{actions}</div>
+    <div className={styles.actions}>
+      <HtmlPreviewToolbar ... />
+    </div>
   </header>
-  <div className={styles.body}>{children}</div>
+  <div className={styles.body}>
+    <div className={styles.frameShell}>
+      <HtmlPreviewFrame ... />
+    </div>
+  </div>
 </div>`,
   },
 ]

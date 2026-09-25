@@ -1,0 +1,94 @@
+/*
+ * 交互卡：外框与底色沿用执行步骤卡（ExecutionStep.module.css），这里只排等回答时的正文与作答区。
+ * 正文缩进到标题文字下面，和标题左对齐；说明保留原来的换行。
+ */
+
+.question {
+  width: 100%;
+  min-width: 0;
+}
+
+.pendingHeader {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-2) var(--ui-space-3) 0;
+}
+
+.pendingTitle {
+  min-width: 0;
+  flex: 1 1 auto;
+  color: var(--foreground);
+  font-size: var(--ui-font-body);
+  font-weight: var(--font-weight-medium);
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.pendingBody {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-1) var(--ui-space-3) var(--ui-space-2)
+    calc(var(--ui-space-3) + 14px + var(--ui-space-2));
+}
+
+.message,
+.reply {
+  margin: 0;
+  color: var(--foreground-secondary);
+  font-size: 12px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+/* 回看时用户写下的回答或拒绝理由：左边一道竖线，和说明分开。 */
+.reply {
+  padding-left: var(--ui-space-2);
+  border-left: 2px solid color-mix(in srgb, var(--border) 80%, transparent);
+  color: var(--foreground);
+}
+
+/* 危险命令：命令等宽单独一块，下面一行小字说在哪个目录里跑。 */
+.operation {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px var(--ui-space-2);
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  border-radius: var(--ui-radius-control-sm);
+  background: var(--card);
+}
+
+.operationCommand {
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 17px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.operationTarget {
+  color: var(--foreground-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+}
+
+.answer {
+  width: 100%;
+  min-height: 32px;
+  background: var(--card);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}

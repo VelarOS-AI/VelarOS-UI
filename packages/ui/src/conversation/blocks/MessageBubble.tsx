@@ -25,7 +25,6 @@ import type {
   ConversationStepBlock,
   ModelPricingCatalog,
   ProjectRootEntry,
-  UserActionCardResult,
 } from '#contracts'
 import { isSystemNoticeMessage } from '#contracts'
 import { isPresent } from '#internal/runtime'
@@ -68,8 +67,6 @@ interface MessageBubbleProps {
   onOpenFileChange?: (entry: FileChangeSummaryListEntry) => void | Promise<void>
   onOpenProjectPath?: (path: string) => unknown
   onReviewFileChanges?: (entries: FileChangeSummaryListEntry[]) => void | Promise<void>
-  activeUserActionCardIds?: readonly string[]
-  onResolveUserActionCard?: (request: UserActionCardResult) => void | Promise<void>
   onRewindToMessage?: (messageId: string, options?: { restoreFiles?: boolean }) => Promise<void>
   onTranslateThinkingBlock?: (request: {
     messageId: string
@@ -80,23 +77,7 @@ interface MessageBubbleProps {
   getRewindPlan?: (messageId: string) => Nullable<ConversationRewindPlan>
 }
 
-const UserActionCardPresenceByMessage = new WeakMap<ChatMessage, boolean>()
 const WorkerThreadAnchorPresenceByMessage = new WeakMap<ChatMessage, boolean>()
-
-function hasUserActionCardBlock(message: ChatMessage): boolean {
-  const cached = UserActionCardPresenceByMessage.get(message)
-  if (isPresent(cached)) return cached
-
-  for (const block of message.blocks) {
-    if (block.type === 'user-action-card') {
-      UserActionCardPresenceByMessage.set(message, true)
-      return true
-    }
-  }
-
-  UserActionCardPresenceByMessage.set(message, false)
-  return false
-}
 
 /** 消息里有没有能挂子 Agent 面板的一步：旧的派发工具调用，或脚本卡。 */
 function hasWorkerThreadAnchorBlock(message: ChatMessage): boolean {
@@ -115,18 +96,6 @@ function hasWorkerThreadAnchorBlock(message: ChatMessage): boolean {
 
   WorkerThreadAnchorPresenceByMessage.set(message, false)
   return false
-}
-
-function areUserActionCardRenderPropsEqual(
-  prev: Readonly<MessageBubbleProps>,
-  next: Readonly<MessageBubbleProps>
-): boolean {
-  if (!hasUserActionCardBlock(prev.message) && !hasUserActionCardBlock(next.message)) return true
-
-  return (
-    prev.activeUserActionCardIds === next.activeUserActionCardIds &&
-    prev.onResolveUserActionCard === next.onResolveUserActionCard
-  )
 }
 
 function areToolSlotRenderPropsEqual(
@@ -189,8 +158,6 @@ function renderMessageBubbleContent(props: MessageBubbleProps): ReactElement {
       onOpenFileChange={props.onOpenFileChange}
       onOpenProjectPath={props.onOpenProjectPath}
       onReviewFileChanges={props.onReviewFileChanges}
-      activeUserActionCardIds={props.activeUserActionCardIds}
-      onResolveUserActionCard={props.onResolveUserActionCard}
       onTranslateThinkingBlock={props.onTranslateThinkingBlock}
     />
   )
@@ -226,7 +193,6 @@ function areMessageBubblePropsEqual(
     prev.onTranslateThinkingBlock === next.onTranslateThinkingBlock &&
     prev.canRewindToMessage === next.canRewindToMessage &&
     prev.getRewindPlan === next.getRewindPlan &&
-    areUserActionCardRenderPropsEqual(prev, next) &&
     areRunMarkersEqual(prev.runMarker, next.runMarker) &&
     areInlineNoticesEqual(prev.inlineNotice, next.inlineNotice)
   )

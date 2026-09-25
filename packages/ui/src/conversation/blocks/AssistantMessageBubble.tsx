@@ -53,7 +53,6 @@ import type {
   ContentBlock,
   ConversationStepBlock,
   ProjectRootEntry,
-  UserActionCardResult,
 } from '#contracts'
 import { isEmpty, toNullable } from '#internal/runtime'
 
@@ -99,8 +98,6 @@ export function AssistantMessageBubble({
   onOpenFileChange,
   onOpenProjectPath,
   onReviewFileChanges,
-  activeUserActionCardIds,
-  onResolveUserActionCard,
   onTranslateThinkingBlock,
 }: {
   browserScreenshotDisplayMode?: BrowserScreenshotDisplayMode
@@ -129,8 +126,6 @@ export function AssistantMessageBubble({
   onOpenFileChange?: (entry: FileChangeSummaryListEntry) => void | Promise<void>
   onOpenProjectPath?: (path: string) => unknown
   onReviewFileChanges?: (entries: FileChangeSummaryListEntry[]) => void | Promise<void>
-  activeUserActionCardIds?: readonly string[]
-  onResolveUserActionCard?: (request: UserActionCardResult) => void | Promise<void>
   onTranslateThinkingBlock?: (request: {
     messageId: string
     blockIndex: number
@@ -175,7 +170,6 @@ export function AssistantMessageBubble({
     streamingTextSegmentKey,
   } = useMemo(() => {
     const visibleBlocks = getVisibleMessageBlocks(message, showToolDetails, {
-      activeUserActionCardIds,
       showThinkingProcess,
     })
     const isPlanAwareToolActivityExcluded = createPlanAwareToolActivityExclusionPredicate(
@@ -196,7 +190,6 @@ export function AssistantMessageBubble({
       streamingTextSegmentKey: getStreamingTextSegmentKey(nextRenderableSegments),
     }
   }, [
-    activeUserActionCardIds,
     message,
     showThinkingProcess,
     showToolDetails,
@@ -301,8 +294,6 @@ export function AssistantMessageBubble({
             formatPathForDisplay={formatMessagePathForDisplay}
             onOpenBrowserLink={onOpenBrowserLink}
             onOpenProjectPath={openPathInLight}
-            activeUserActionCardIds={activeUserActionCardIds}
-            onResolveUserActionCard={onResolveUserActionCard}
             onTranslateThinkingBlock={onTranslateThinkingBlock}
             goalCompletionSummary={goalCompletionSummary}
             questionMessage={questionMessage}

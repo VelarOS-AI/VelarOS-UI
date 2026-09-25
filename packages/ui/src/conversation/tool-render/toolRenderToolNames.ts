@@ -31,10 +31,6 @@ export const SystemToolInstallToolNames = getToolNamesByRenderKind('install').fi
   hasDedicatedToolRender
 )
 
-export const WidgetRenderToolNames = getToolNamesByRenderKind('widget').filter(
-  hasDedicatedToolRender
-)
-
 /**
  * Plan / Goal 的完整状态卡归会话 sticky dock 独占；transcript 只保留它们真实发生过的工具调用行。
  * 这里是两种展示形态的单一边界，避免会话壳和 ToolCallBlock 各维护一份名字清单。

@@ -51,14 +51,24 @@ body {
 body > * {
   max-width: 100%;
 }
-svg text {
+/*
+ * 没写颜色的图形与文字给一套中性的默认色；模型自己写了 fill / stroke 属性的照它的来。条件包在
+ * :where() 里不加优先级，.t / .ts / .c-* 这些类名配色照旧盖过默认色。
+ */
+svg text:where(:not([fill])) {
   fill: var(--p);
+}
+svg text {
   font-family: var(--font-sans);
 }
-svg rect,
-svg circle,
-svg ellipse {
+svg rect:where(:not([fill])),
+svg circle:where(:not([fill])),
+svg ellipse:where(:not([fill])) {
   fill: var(--bg2);
+}
+svg rect:where(:not([fill], [stroke])),
+svg circle:where(:not([fill], [stroke])),
+svg ellipse:where(:not([fill], [stroke])) {
   stroke: var(--b);
 }
 svg .t {
@@ -95,9 +105,9 @@ svg .leader {
   stroke-dasharray: 4 3;
   fill: none;
 }
-svg line,
-svg path,
-svg polyline {
+svg line:where(:not([fill])),
+svg path:where(:not([fill])),
+svg polyline:where(:not([fill])) {
   fill: none;
 }
 svg .c-purple > rect,

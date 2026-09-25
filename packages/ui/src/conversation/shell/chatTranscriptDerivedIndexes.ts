@@ -7,8 +7,6 @@ import { toNullable } from '#internal/runtime'
 export interface ChatTranscriptDerivedIndexesInput {
   messages: readonly ChatMessage[]
   messageRunMarkerMap: ReadonlyMap<string, ConversationMessageRunMarker>
-  shouldRenderAwaitingInputCard: boolean
-  awaitingInputQuestion?: LooseOptional<string>
 }
 
 export interface ChatTranscriptDerivedIndexes {
@@ -21,7 +19,6 @@ export interface ChatTranscriptDerivedIndexes {
   latestCompletedAssistantMessage: Nullable<ChatMessage>
   latestCompletedAssistantMessageId: Nullable<string>
   assistantQuestionMap: Map<string, ChatMessage>
-  activeAwaitingInputMessageId: Nullable<string>
 }
 
 export function resolveActiveTranscriptAssistantMessageId({
@@ -50,15 +47,11 @@ export function resolveActiveTranscriptAssistantMessageId({
 export function buildChatTranscriptDerivedIndexes({
   messages,
   messageRunMarkerMap,
-  shouldRenderAwaitingInputCard,
-  awaitingInputQuestion,
 }: ChatTranscriptDerivedIndexesInput): ChatTranscriptDerivedIndexes {
   const assistantQuestionMap = new Map<string, ChatMessage>()
-  const expectedQuestion = awaitingInputQuestion?.trim() || null
 
   let latestAssistantMessage: Nullable<ChatMessage> = null
   let latestCompletedAssistantMessage: Nullable<ChatMessage> = null
-  let activeAwaitingInputMessageId: Nullable<string> = null
   let latestUserMessage: Nullable<ChatMessage> = null
   let hasTurnInputAfterLatestAssistant = false
 
@@ -83,15 +76,6 @@ export function buildChatTranscriptDerivedIndexes({
     if (marker?.status === 'completed') {
       latestCompletedAssistantMessage = message
     }
-
-    if (shouldRenderAwaitingInputCard && marker?.status === 'awaiting-input') {
-      const markerQuestion = marker.detail?.trim() || null
-
-      if (!expectedQuestion || markerQuestion === expectedQuestion) {
-        activeAwaitingInputMessageId = message.id
-      }
-    }
-
   }
 
   return {
@@ -100,6 +84,5 @@ export function buildChatTranscriptDerivedIndexes({
     latestCompletedAssistantMessage,
     latestCompletedAssistantMessageId: toNullable(latestCompletedAssistantMessage?.id),
     assistantQuestionMap,
-    activeAwaitingInputMessageId,
   }
 }

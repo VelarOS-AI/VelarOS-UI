@@ -109,14 +109,13 @@ interface UseChatConversationTranscriptModelOptions {
   messageRunMarkers: ConversationMessageRunMarker[]
   runtime: Pick<
     ConversationRuntimeView,
-    'awaitingInputQuestion' | 'lastRunStartedAt' | 'lastRunFinishedAt' | 'usageTelemetry'
+    'lastRunStartedAt' | 'lastRunFinishedAt' | 'usageTelemetry'
   >
   billingModel: LooseOptional<{
     provider: ChatProviderId
     model: string
   }>
   pricingCatalog?: LooseOptional<ModelPricingCatalog>
-  shouldRenderAwaitingInputCard: boolean
 }
 
 export interface UseChatConversationTranscriptModelReturn {
@@ -128,7 +127,6 @@ export interface UseChatConversationTranscriptModelReturn {
   runCostEstimateByMessageId: ReadonlyMap<string, RunCostEstimate>
   assistantQuestionMap: Map<string, ChatMessage>
   goalCompletionSummaryByMessageId: Map<string, GoalCompletionActivitySummary>
-  activeAwaitingInputMessageId: Nullable<string>
   visibleMessages: ChatMessage[]
 }
 
@@ -140,7 +138,6 @@ export function useChatConversationTranscriptModel({
   runtime,
   billingModel,
   pricingCatalog,
-  shouldRenderAwaitingInputCard,
 }: UseChatConversationTranscriptModelOptions): UseChatConversationTranscriptModelReturn {
   const messageRunMarkerMap = useMemo(() => {
     const nextMessageRunMarkerMap = new Map<string, ConversationMessageRunMarker>()
@@ -156,16 +153,13 @@ export function useChatConversationTranscriptModel({
     hasTurnInputAfterLatestAssistant,
     latestCompletedAssistantMessageId,
     assistantQuestionMap,
-    activeAwaitingInputMessageId,
   } = useMemo(
     () =>
       buildChatTranscriptDerivedIndexes({
         messages,
         messageRunMarkerMap,
-        shouldRenderAwaitingInputCard,
-        awaitingInputQuestion: runtime.awaitingInputQuestion,
       }),
-    [messageRunMarkerMap, messages, runtime.awaitingInputQuestion, shouldRenderAwaitingInputCard]
+    [messageRunMarkerMap, messages]
   )
   const previousRunCostEstimatesRef = useRef<Nullable<ReadonlyMap<string, RunCostEstimate>>>(null)
   const runCostEstimateByMessageId = useMemo(() => {
@@ -222,13 +216,10 @@ export function useChatConversationTranscriptModel({
     runtime.lastRunStartedAt,
     runtime.usageTelemetry,
   ])
-  const visibleMessages = useMemo(() => {
-    const baseMessages = activeAwaitingInputMessageId
-      ? messages.filter((message) => message.id !== activeAwaitingInputMessageId)
-      : messages
-
-    return queuedMessages.length ? [...baseMessages, ...queuedMessages] : baseMessages
-  }, [activeAwaitingInputMessageId, messages, queuedMessages])
+  const visibleMessages = useMemo(
+    () => (queuedMessages.length ? [...messages, ...queuedMessages] : messages),
+    [messages, queuedMessages]
+  )
 
   return {
     messageRunMarkerMap,
@@ -238,7 +229,6 @@ export function useChatConversationTranscriptModel({
     runCostEstimateByMessageId,
     assistantQuestionMap,
     goalCompletionSummaryByMessageId,
-    activeAwaitingInputMessageId,
     visibleMessages,
   }
 }

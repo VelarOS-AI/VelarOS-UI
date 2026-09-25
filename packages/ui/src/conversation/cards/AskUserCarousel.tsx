@@ -1,129 +1,123 @@
-import { type ReactElement, useMemo, useState } from 'react'
-import { CaretLeftIcon, CaretRightIcon, PaperPlaneTiltIcon, XIcon } from '@phosphor-icons/react'
+import { type ReactElement, useState } from 'react'
+import { CaretLeftIcon, CaretRightIcon, PaperPlaneTiltIcon } from '@phosphor-icons/react'
 
 import { StyleUtils } from '@velaros-ai/ui'
 import { Button } from '@velaros-ai/ui/primitives/buttons/Button'
 import { Input } from '@velaros-ai/ui/primitives/forms/Input'
 
 import { useConversationI18n } from '../i18n'
-import type { UserActionCardView } from '../projection'
 
 import styles from './UserActionCard.module.css'
 
-import type { UserActionFormField } from '#contracts'
-import { isArray, isBlank,isEmpty, isString,toNullable } from '#internal/runtime'
+import type { InteractionOption } from '#contracts'
+import { isBlank, isEmpty } from '#internal/runtime'
 
 const cx = StyleUtils.bindCx(styles)
 
-/** 一"页"=一道问题：主字段（radio/checkboxes）+ 可选的自由输入字段（id 以 _other 结尾）。 */
-function groupFieldsIntoPages(fields: readonly UserActionFormField[]): UserActionFormField[][] {
-  const pages: UserActionFormField[][] = []
-  for (const field of fields) {
-    if (field.id.endsWith('_other') && !isEmpty(pages)) {
-      pages[pages.length - 1]!.push(field)
-    } else {
-      pages.push([field])
-    }
-  }
-  return pages
+/** 轮播里的一道题：给了选项就是选择题，没给就是一道填空题。 */
+export interface AskUserQuestion {
+  id: string
+  /** 题面，多行照原样换行。 */
+  label: string
+  options?: readonly InteractionOption[]
+  multiple?: boolean
+  /** 选择题下面可以另写一句；填空题本身就是这一行。 */
+  allowText?: boolean
+  placeholder?: string
+  /** 填空题要的是一个数。 */
+  numeric?: boolean
+  /** 没答这道题就不能发送。 */
+  required?: boolean
 }
 
-function isFieldAnswered(field: Nullable<UserActionFormField>, value: unknown): boolean {
-  if (!field) return false
-  if (isArray(value)) return !isEmpty(value)
-  if (isString(value)) return !isBlank(value.trim())
-  return false
+/** 一道题的作答：选中的选项 id，加上写下的话。 */
+export interface AskUserDraft {
+  choices: string[]
+  text: string
 }
 
-/** ask_user 提问卡：把多道问题放进一个左右切换的轮播，逐题作答，全部填完后在最后一页统一发送。 */
+export const EmptyAskUserDraft: AskUserDraft = Object.freeze({ choices: [], text: '' })
+
+/** 选了至少一项，或者写了字，就算答过这道题。 */
+export function isAskUserDraftAnswered(draft: LooseOptional<AskUserDraft>): boolean {
+  return !!draft && (!isEmpty(draft.choices) || !isBlank(draft.text.trim()))
+}
+
+/** 必答的题都答了才能发送。 */
+export function canSendAskUserDrafts(
+  questions: readonly AskUserQuestion[],
+  drafts: Readonly<Record<string, AskUserDraft>>
+): boolean {
+  return questions.every((question) => !question.required || isAskUserDraftAnswered(drafts[question.id]))
+}
+
+/**
+ * 提问卡：多道题放进一个左右切换的轮播，逐题作答，最后一页统一发送；只有一道题时不显示页码与翻页。
+ * 锁住（答过、失效或正在交）后选择与发送都停用，仍能翻页回看每道题的答案。
+ */
 export function AskUserCarousel({
-  view: viewModel,
-  onDismiss,
+  intro,
+  questions,
+  drafts,
+  locked,
+  onChange,
+  onSend,
+  onSkip,
 }: {
-  /** 宿主 hook `useUserActionCardViewModel` 的输出投影（有状态半壁注入进来）。 */
-  view: UserActionCardView
-  onDismiss?: () => void
-}): Nullable<ReactElement> {
+  /** 整组题前面的一段说明，多行照原样换行。 */
+  intro?: LooseOptional<string>
+  questions: readonly AskUserQuestion[]
+  drafts: Readonly<Record<string, AskUserDraft>>
+  locked: boolean
+  onChange?: (questionId: string, draft: AskUserDraft) => void
+  onSend?: () => void
+  /** 给了才有「跳过」：不答这一组题，让模型自己往下走。 */
+  onSkip?: () => void
+}): ReactElement {
   const { t } = useConversationI18n()
-
-  const pages = useMemo(() => groupFieldsIntoPages(viewModel.formFields), [viewModel.formFields])
   const [pageIndex, setPageIndex] = useState(0)
-  const safeIndex = Math.min(pageIndex, Math.max(0, pages.length - 1))
-  const currentPage = pages[safeIndex] ?? []
-  const isLast = safeIndex >= pages.length - 1
+  const safeIndex = Math.min(pageIndex, Math.max(0, questions.length - 1))
+  const question = questions[safeIndex]
+  const isLast = safeIndex >= questions.length - 1
+  const paged = questions.length > 1
+  const draft = (question && drafts[question.id]) ?? EmptyAskUserDraft
+  const sendDisabled = locked || !canSendAskUserDrafts(questions, drafts)
 
-  const isPageAnswered = (page: readonly UserActionFormField[]): boolean =>
-    page.some((field) => isFieldAnswered(field, viewModel.formValues[field.id]))
-  const allAnswered = pages.every(isPageAnswered)
-
-  // 作答后（settled / 已消费 / 被禁用）锁定选择与发送，但仍允许左右翻页回看各题答案——面板不消失，只禁用。
-  const locked =
-    viewModel.interactionDisabled ||
-    viewModel.settled ||
-    !!viewModel.pendingActionKey ||
-    viewModel.isFormDisabled
-  const formDisabled = locked
-  const sendDisabled = locked || !allAnswered
-  const submitEntry = viewModel.actionEntries.find((entry) => entry.action.kind === 'submit_form')
-
-  const primaryField =
-    toNullable(currentPage.find(
-      (field) => field.type === 'radio' || field.type === 'checkboxes' || field.type === 'select'
-    ))
-  const otherField =
-    toNullable(currentPage.find(
-      (field) => field.type === 'text' || field.type === 'textarea' || field.type === 'number'
-    ))
-  const isMulti = primaryField?.type === 'checkboxes'
-
-  const rawSelected = primaryField ? viewModel.formValues[primaryField.id] : undefined
-  const selectedValues: string[] = isArray(rawSelected)
-    ? rawSelected.map(String)
-    : isString(rawSelected) && !isBlank(rawSelected)
-      ? [rawSelected]
-      : []
-  const isSelected = (value: string): boolean => selectedValues.includes(value)
-  const toggleOption = (value: string): void => {
-    if (!primaryField || formDisabled) return
-    if (isMulti) {
-      const next = isSelected(value)
-        ? selectedValues.filter((item) => item !== value)
-        : [...selectedValues, value]
-      viewModel.handleFormFieldChange(primaryField.id, next)
-    } else {
-      viewModel.handleFormFieldChange(primaryField.id, isSelected(value) ? '' : value)
-    }
+  const update = (next: Partial<AskUserDraft>): void => {
+    if (!question || locked) return
+    onChange?.(question.id, { ...draft, ...next })
+  }
+  const toggleOption = (id: string): void => {
+    const selected = draft.choices.includes(id)
+    if (question?.multiple)
+      update({ choices: selected ? draft.choices.filter((item) => item !== id) : [...draft.choices, id] })
+    else update({ choices: selected ? [] : [id] })
   }
 
-  const otherValue = otherField ? viewModel.formValues[otherField.id] : undefined
-
-  const goPrev = (): void =>
-    setPageIndex((current) => Math.max(0, Math.min(current, pages.length - 1) - 1))
-  const goNext = (): void => setPageIndex((current) => Math.min(pages.length - 1, current + 1))
-  const send = (): void => {
-    if (!submitEntry || sendDisabled) return
-    viewModel.submitAction(submitEntry)
-  }
+  const goPrev = (): void => setPageIndex(Math.max(0, safeIndex - 1))
+  const goNext = (): void => setPageIndex(Math.min(questions.length - 1, safeIndex + 1))
 
   return (
-    <div className={cx('cardFrame')}>
+    <div className={styles.cardFrame}>
       <div className={styles.wizardPanel}>
-        {pages.length > 1 && (
+        {!!intro && <p className={styles.wizardIntro}>{intro}</p>}
+
+        {paged && (
           <div className={styles.wizardStepRow}>
             <span className={styles.wizardStepLabel}>
               {t('userActionForm.wizardStep', {
                 current: String(safeIndex + 1),
-                total: String(pages.length),
+                total: String(questions.length),
               })}
             </span>
             <div className={styles.wizardDots} aria-hidden="true">
-              {pages.map((page, index) => (
+              {questions.map((item, index) => (
                 <span
-                  key={index}
+                  key={item.id}
                   className={cx(
                     'wizardDot',
                     index === safeIndex && 'wizardDotActive',
-                    isPageAnswered(page) && 'wizardDotDone'
+                    isAskUserDraftAnswered(drafts[item.id]) && 'wizardDotDone'
                   )}
                 />
               ))}
@@ -131,114 +125,121 @@ export function AskUserCarousel({
           </div>
         )}
 
-        {!!primaryField && (
+        {!!question && (
           <div className={styles.wizardQuestionBlock}>
             <div className={styles.wizardQuestionRow}>
               <span className={styles.wizardQuestionNo}>{safeIndex + 1}.</span>
-              <span className={styles.wizardQuestion}>{primaryField.label}</span>
-              <span className={styles.wizardQuestionTag}>
-                {isMulti ? t('userActionForm.wizardMulti') : t('userActionForm.wizardSingle')}
-              </span>
+              <span className={styles.wizardQuestion}>{question.label}</span>
+              {!!question.options && (
+                <span className={styles.wizardQuestionTag}>
+                  {question.multiple ? t('userActionForm.wizardMulti') : t('userActionForm.wizardSingle')}
+                </span>
+              )}
+              {/* 多道题里才分必答与选答；只有一道题时它就是要答的那道 */}
+              {paged && !!question.required && (
+                <span className={styles.wizardQuestionTag}>{t('interaction.required')}</span>
+              )}
             </div>
-            <div className={styles.optionButtons}>
-              {(primaryField.options ?? []).map((option, optionIndex) => {
-                const selected = isSelected(option.value)
-                const letter = String.fromCharCode(65 + optionIndex)
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={cx('optionButton', selected && 'optionButtonSelected')}
-                    disabled={formDisabled}
-                    aria-pressed={selected}
-                    onClick={() => toggleOption(option.value)}
-                  >
-                    <span className={styles.optionLetter}>{letter}</span>
-                    <span className={styles.optionBody}>
-                      <span className={styles.optionButtonHeader}>
-                        <span className={styles.optionButtonLabel}>{option.label}</span>
-                        {!!option.recommended && (
-                          <span className={styles.formOptionRecommended}>
-                            {t('userActionForm.recommended')}
-                          </span>
+            {!!question.options && (
+              <div className={styles.optionButtons}>
+                {question.options.map((option, optionIndex) => {
+                  const selected = draft.choices.includes(option.id)
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={cx('optionButton', selected && 'optionButtonSelected')}
+                      disabled={locked}
+                      aria-pressed={selected}
+                      onClick={() => toggleOption(option.id)}
+                    >
+                      <span className={styles.optionLetter}>{String.fromCharCode(65 + optionIndex)}</span>
+                      <span className={styles.optionBody}>
+                        <span className={styles.optionButtonHeader}>
+                          <span className={styles.optionButtonLabel}>{option.label}</span>
+                          {!!option.recommended && (
+                            <span className={styles.formOptionRecommended}>
+                              {t('userActionForm.recommended')}
+                            </span>
+                          )}
+                        </span>
+                        {!!option.description && (
+                          <span className={styles.optionButtonDesc}>{option.description}</span>
                         )}
                       </span>
-                      {!!option.description && (
-                        <span className={styles.optionButtonDesc}>{option.description}</span>
-                      )}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 
-        {!!otherField && (
+        {/* 回看时没写字的输入行不再占位置 */}
+        {!!question && (!question.options || question.allowText) && !(locked && !draft.text) && (
           <Input
             size="sm"
+            type={question.numeric ? 'number' : 'text'}
             className={styles.inputLine}
-            disabled={formDisabled}
-            value={isString(otherValue) ? otherValue : ''}
-            maxLength={otherField.maxLength}
-            placeholder={otherField.placeholder}
-            onChange={(event) =>
-              viewModel.handleFormFieldChange(otherField.id, event.currentTarget.value)
-            }
+            disabled={locked}
+            value={draft.text}
+            placeholder={question.placeholder}
+            onChange={(event) => update({ text: event.currentTarget.value })}
           />
         )}
 
-        <div className={styles.wizardNav}>
-          <Button
-            size="sm"
-            variant="ghost"
-            className={styles.actionTextButton}
-            disabled={safeIndex === 0}
-            onClick={goPrev}
-          >
-            <span className={styles.actionTextButtonIcon} aria-hidden="true">
-              <CaretLeftIcon size={15} weight="bold" />
-            </span>
-            {t('userActionForm.wizardPrev')}
-          </Button>
+        {(paged || !locked) && (
+          <div className={styles.wizardNav}>
+            {paged && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className={styles.actionTextButton}
+                disabled={safeIndex === 0}
+                onClick={goPrev}
+              >
+                <span className={styles.actionTextButtonIcon} aria-hidden="true">
+                  <CaretLeftIcon size={15} weight="bold" />
+                </span>
+                {t('userActionForm.wizardPrev')}
+              </Button>
+            )}
 
-          <span className={styles.wizardNavSpacer} />
+            <span className={styles.wizardNavSpacer} />
 
-          {isLast ? (
-            <Button
-              size="sm"
-              variant="ghost"
-              className={styles.actionTextButton}
-              disabled={sendDisabled}
-              title={allAnswered ? undefined : t('userActionForm.wizardIncomplete')}
-              onClick={send}
-            >
-              <span className={styles.actionTextButtonIcon} aria-hidden="true">
-                <PaperPlaneTiltIcon size={15} weight="bold" />
-              </span>
-              {t('userActionForm.wizardSend')}
-            </Button>
-          ) : (
-            <Button size="sm" variant="ghost" className={styles.actionTextButton} onClick={goNext}>
-              {t('userActionForm.wizardNext')}
-              <span className={styles.actionTextButtonIcon} aria-hidden="true">
-                <CaretRightIcon size={15} weight="bold" />
-              </span>
-            </Button>
-          )}
-        </div>
+            {!!onSkip && !locked && (
+              <Button size="sm" variant="ghost" className={styles.skipTextButton} onClick={onSkip}>
+                {t('common.skip')}
+              </Button>
+            )}
+
+            {!isLast ? (
+              <Button size="sm" variant="ghost" className={styles.actionTextButton} onClick={goNext}>
+                {t('userActionForm.wizardNext')}
+                <span className={styles.actionTextButtonIcon} aria-hidden="true">
+                  <CaretRightIcon size={15} weight="bold" />
+                </span>
+              </Button>
+            ) : (
+              !locked && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className={styles.actionTextButton}
+                  disabled={sendDisabled}
+                  title={sendDisabled ? t('userActionForm.wizardIncomplete') : undefined}
+                  onClick={onSend}
+                >
+                  <span className={styles.actionTextButtonIcon} aria-hidden="true">
+                    <PaperPlaneTiltIcon size={15} weight="bold" />
+                  </span>
+                  {t('userActionForm.wizardSend')}
+                </Button>
+              )
+            )}
+          </div>
+        )}
       </div>
-      {!!onDismiss && (
-        <button
-          type="button"
-          className={styles.dismissButton}
-          aria-label={t('sessionStickyDock.dismissAria')}
-          title={t('sessionStickyDock.dismissAria')}
-          onClick={onDismiss}
-        >
-          <XIcon size={11} weight="bold" />
-        </button>
-      )}
     </div>
   )
 }

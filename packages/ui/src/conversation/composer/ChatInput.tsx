@@ -130,6 +130,8 @@ export interface ChatInputQueueControl {
   errorMessage?: LooseOptional<string>
   canEnqueue?: boolean
   canGuideCurrentTask?: boolean
+  /** 运行停在等一句话的回答：有字时主按钮是「回答」，发出去的就是那句回答，不排队也不算引导。 */
+  answering?: boolean
   isPaused?: boolean
   onResume?: () => void | Promise<void>
   queuedDrafts?: ChatInputQueuedDraft[]
@@ -340,6 +342,7 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
     queuedDrafts = EmptyQueuedDrafts,
     canEnqueue = false,
     canGuideCurrentTask = false,
+    answering = false,
     isPaused: isQueuePaused = false,
     errorMessage: queueErrorMessage,
     onResume: onQueueResume,
@@ -509,7 +512,7 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
     timers,
   })
   const interactionState = resolveChatInputInteractionState({
-    canSendDuringRun: canEnqueue,
+    canSendDuringRun: canEnqueue || answering,
     disabled,
     fileCount: files.length,
     hideSubmit,
@@ -765,7 +768,7 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
       : null
   const visibleLimitMessage = draftLimitError ?? inputLimitHelp
   const primaryActionState = resolveChatInputPrimaryActionState({
-    canSendDuringRun: canEnqueue,
+    canSendDuringRun: canEnqueue || answering,
     disabled,
     fileCount: files.length,
     hideSubmit,
@@ -880,7 +883,7 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
   )
   const toolbarRightPrimaryAction = useMemo(
     () => ({
-      deferredAction: canEnqueue && canGuideCurrentTask && primaryActionState.kind === 'send'
+      deferredAction: canEnqueue && canGuideCurrentTask && !answering && primaryActionState.kind === 'send'
         ? { title: t('chat.sendAfterCurrent'), disabled: primaryActionState.disabled, onClick: handleEnqueueClick }
         : undefined,
       secondaryStop: isStreaming && canStop && primaryActionState.kind !== 'stop'
@@ -893,7 +896,9 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
           ? t('chat.stopStreaming')
           : primaryActionState.kind === 'sending'
             ? t('chat.sendingMessage')
-            : canEnqueue ? t(canGuideCurrentTask ? 'chat.guideCurrentTask' : 'chat.sendAfterCurrent') : sendButtonTitle,
+            : answering
+              ? t('chat.answerQuestion')
+              : canEnqueue ? t(canGuideCurrentTask ? 'chat.guideCurrentTask' : 'chat.sendAfterCurrent') : sendButtonTitle,
       disabled: primaryActionState.disabled,
       pending: primaryActionState.pending,
       buttonClassName:
@@ -912,6 +917,7 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
     [
       canEnqueue,
       canGuideCurrentTask,
+      answering,
       isStreaming,
       canStop,
       isStopPending,

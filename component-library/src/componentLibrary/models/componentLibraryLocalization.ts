@@ -139,7 +139,7 @@ const zhRecommendationPatches: Record<string, LocalizedRecommendationPatch> = {
   'disclosure-surfaces:widget-debug-frame': {
     title: 'Widget 调试外框',
     description:
-      'WidgetToolRender 使用独立 shell 包裹内联预览，头部有弱背景，左侧标题更醒目，右侧保留复制、下载、重跑与源码 action。',
+      'WidgetCard 使用独立 shell 包裹内联预览，头部有弱背景，左侧标题更醒目，右侧保留复制、下载、重跑与源码 action。',
   },
   'data-table:settings-business-data-table': {
     title: '设置列表基于 BusinessDataTable',
@@ -203,7 +203,7 @@ const zhEntryPatches: Record<string, LocalizedEntryPatch> = {
   'disclosure-surfaces': {
     domain: '调试 / 工具结果',
     usage:
-      'Disclosure 用于设置或目录式分组（ToolCatalogPanel）；ToolDisclosureCard 用于对话工具块（ToolCallBlock）；WidgetToolRender 作为带头部背景的默认展开 shell；CompactToolRow 用于单行摘要。',
+      'Disclosure 用于设置或目录式分组（ToolCatalogPanel）；ToolDisclosureCard 用于对话工具块（ToolCallBlock）；WidgetCard 作为带头部背景的默认展开 shell；CompactToolRow 用于单行摘要。',
     avoid: '不要在调试渲染里手写 `<details>` 样式；状态点不要重复套在 ToolDisclosureCard 外。',
   },
   'data-table': {

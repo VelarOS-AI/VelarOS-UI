@@ -18,7 +18,7 @@ export default defineComponentLibraryEntry({
     source:
       '@velaros-ai/ui/primitives/layout/Disclosure, CollapsibleBlockFrame; @velaros-ai/ui/product (ToolDisclosureCard, CompactToolRow)',
     usage:
-      'Disclosure: grouped settings or catalog sections (ToolCatalogPanel). ToolDisclosureCard: chat tool headers with expandable detail (ToolCallBlock). WidgetToolRender uses an always-expanded shell with a muted header. CompactToolRow: single-line tool summary rows inside cards or compact lists.',
+      'Disclosure: grouped settings or catalog sections (ToolCatalogPanel). ToolDisclosureCard: chat tool headers with expandable detail (ToolCallBlock). WidgetCard uses an always-expanded shell with a muted header. CompactToolRow: single-line tool summary rows inside cards or compact lists.',
     avoid:
       'Do not hand-roll `<details>` chrome in debug renderers when these primitives exist; avoid duplicating status dots outside ToolDisclosureCard.',
     recommendations: disclosureRecommendations,

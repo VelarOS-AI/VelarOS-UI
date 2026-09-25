@@ -47,8 +47,6 @@ export interface MessageRenderSegmentOptions {
 export interface VisibleMessageBlockOptions {
   /** 纯展示过滤：false 时保留消息数据，只从当前渲染树移除 thinking block。 */
   showThinkingProcess?: boolean
-  /** 当前仍在等待作答的阻塞式动作卡 id；用于判断卡片是「待答」还是「已答」，据此决定是否隐藏同消息内的叙述文本。 */
-  activeUserActionCardIds?: readonly string[]
 }
 
 export interface GoalCompletionActivitySummary {
@@ -238,23 +236,9 @@ export function getVisibleMessageBlocks(
   showToolDetails: boolean,
   options: VisibleMessageBlockOptions = {}
 ): ContentBlock[] {
-  // 阻塞式动作卡（含 ask_user 提问卡）「等待作答期间」，把同一条消息里的 text 叙述隐藏、让卡片成为焦点。
-  // 一旦卡片被作答/解除（不再出现在 activeUserActionCardIds 里），模型在同一条消息追加的最终答复必须照常渲染，
-  // 否则 ask_user 作答后的结论会被吞掉。仅凭 block.card.blocking 无法区分「待答/已答」——它始终为 true。
-  const activeUserActionCardIds = options.activeUserActionCardIds
-  const hasPendingBlockingUserActionCard =
-    !!activeUserActionCardIds &&
-    message.blocks.some(
-      (block) =>
-        block.type === 'user-action-card' &&
-        block.card.blocking &&
-        activeUserActionCardIds.includes(block.card.id)
-    )
-
   const visibleBlocks: ContentBlock[] = []
   message.blocks.forEach((block) => {
     if (isFalse(options.showThinkingProcess) && block.type === 'thinking') return
-    if (hasPendingBlockingUserActionCard && block.type === 'text') return
     // 工具调用与脚本执行都是执行过程的细节，跟随同一个开关。
     if (block.type !== 'tool-call' && block.type !== 'script-execution') {
       visibleBlocks.push(block)
@@ -271,7 +255,8 @@ export function hasVisibleSegmentContent(segment: ToolRenderSegment): boolean {
   switch (segment.block.type) {
     case 'tool-call':
     case 'script-execution':
-    case 'user-action-card':
+    case 'interaction':
+    case 'widget':
       return true
     case 'text':
       return !isBlank(segment.block.text)
@@ -280,6 +265,7 @@ export function hasVisibleSegmentContent(segment: ToolRenderSegment): boolean {
   }
 }
 
+/** 给用户看的成品不收进「已处理」：交互卡（问了什么、答了什么）、小部件，以及摘出来单独展示的工具调用。 */
 export function shouldRenderSegmentOutsideProcessedActivityDisclosure(
   segment: MessageRenderSegment
 ): boolean {
@@ -289,6 +275,9 @@ export function shouldRenderSegmentOutsideProcessedActivityDisclosure(
   switch (block.type) {
     case 'tool-call':
       return isToolActivitySummaryExcludedToolCall(block)
+    case 'interaction':
+    case 'widget':
+      return true
     default:
       return false
   }
