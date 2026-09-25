@@ -1,11 +1,5 @@
 import { memo, type ReactElement, useEffect, useMemo, useState } from 'react'
-import {
-  ArrowCounterClockwiseIcon,
-  CursorClickIcon,
-  PulseIcon,
-  SignpostIcon,
-  UsersThreeIcon,
-} from '@phosphor-icons/react'
+import { CursorClickIcon, PulseIcon, SignpostIcon, UsersThreeIcon } from '@phosphor-icons/react'
 
 import { StyleUtils } from '@velaros-ai/ui'
 import { Paragraph } from '@velaros-ai/ui/primitives/display/Paragraph'
@@ -127,18 +121,9 @@ function UserMessageBubbleInner({
   const peerLabel = peerOrigin
     ? t('chat.peerMessageFrom', { name: peerOrigin.title ?? peerOrigin.sessionId })
     : null
-  // 撤回标签：这条消息作废了此前的几轮，记录保留；它仍是用户起的一轮，所以排在同伴署名之后。
-  const revertOf = message.revertOf
-  const revertLabel = revertOf
-    ? t(revertOf.turnCount === 1 ? 'chat.revertedTurnsOne' : 'chat.revertedTurnsMany', {
-        turns: revertOf.turnCount,
-      })
-    : null
-  const statusLabel = peerLabel ?? revertLabel ?? guidanceLabel
+  const statusLabel = peerLabel ?? guidanceLabel
   const statusIcon = peerLabel ? (
     <UsersThreeIcon size={11} weight="fill" className={styles.guidedInputLabelIcon} />
-  ) : revertLabel ? (
-    <ArrowCounterClockwiseIcon size={11} className={styles.guidedInputLabelIcon} />
   ) : (
     !!guidanceLabel && (
       <SignpostIcon
