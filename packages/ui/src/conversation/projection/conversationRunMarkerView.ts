@@ -21,14 +21,7 @@ export type ConversationRunMarkerStatus =
 
 export type ConversationRunMarkerTurnKind = 'turn' | 'totalTurns'
 
-export interface ConversationVerificationSummary {
-  status: 'not-run' | 'stale' | 'passed' | 'failed' | 'timed-out' | 'aborted' | 'unknown'
-  command?: string
-  issues?: string[]
-}
-
 export interface ConversationRunMarkerView {
-  verification?: ConversationVerificationSummary
   status: ConversationRunMarkerStatus
   detail: Nullable<string>
   turnCount: Nullable<number>

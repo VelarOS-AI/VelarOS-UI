@@ -340,15 +340,6 @@ export const conversationZhCNMessages = {
     stoppedRun: '已停止本次运行',
     totalTurns: '共 {count} 轮',
     turn: '第 {count} 轮',
-    verification: {
-      aborted: '验证已中止',
-      failed: '验证失败',
-      'not-run': '尚未验证',
-      passed: '验证通过',
-      stale: '最新变更尚未验证',
-      'timed-out': '验证超时',
-      unknown: '验证结果未知',
-    },
   },
   toolSummary: {
     activityAskedUserCountMany: '询问用户 {count} 次',
@@ -753,15 +744,6 @@ export const conversationEnUSMessages = {
     stoppedRun: 'This run was stopped',
     totalTurns: '{count} turns',
     turn: 'Turn {count}',
-    verification: {
-      aborted: 'Verification aborted',
-      failed: 'Verification failed',
-      'not-run': 'Not verified',
-      passed: 'Verification passed',
-      stale: 'Latest changes not verified',
-      'timed-out': 'Verification timed out',
-      unknown: 'Verification result unknown',
-    },
   },
   toolSummary: {
     activityAskedUserCountMany: 'asked user {count} times',

@@ -554,9 +554,6 @@ export function areRunMarkersEqual(
     prev.turnKind === next.turnKind &&
     prev.goalMode === next.goalMode &&
     prev.goalStatus === next.goalStatus &&
-    prev.verification?.status === next.verification?.status &&
-    prev.verification?.command === next.verification?.command &&
-    prev.verification?.issues === next.verification?.issues &&
     prev.workspaceCheckpointDiff?.capturedAt === next.workspaceCheckpointDiff?.capturedAt &&
     prev.workspaceCheckpointDiff?.error === next.workspaceCheckpointDiff?.error &&
     prev.workspaceCheckpointDiff?.changes === next.workspaceCheckpointDiff?.changes &&
