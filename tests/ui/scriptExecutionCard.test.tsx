@@ -16,6 +16,7 @@ import { HighlightedLines } from '../../packages/ui/src/conversation/cards/Execu
 import {
   type HighlightedCode,
   highlightedTokenStyle,
+  requestHighlight,
 } from '../../packages/ui/src/conversation/cards/executionStepHighlight'
 import {
   formatScriptModuleLabel,
@@ -333,6 +334,27 @@ void describe('ScriptExecutionCard', () => {
 })
 
 void describe('语法着色', () => {
+  void test('高亮器已经算好的（命中缓存）当场交回，不只等回调；还没算好的等算好再交；取消之后不再交', async () => {
+    const text = 'const warm = 1'
+    const first = await new Promise<HighlightedCode>((resolve) => {
+      requestHighlight(text, 'typescript', resolve)
+    })
+    // 热起来以后同一段文字命中缓存：高亮器直接返回结果、不再调回调，只等回调就永远等不到。
+    const delivered: HighlightedCode[] = []
+    requestHighlight(text, 'typescript', (code) => delivered.push(code))
+    assert.equal(delivered.length, 1)
+    assert.deepEqual(delivered[0]?.tokens, first.tokens)
+
+    const cancelled: HighlightedCode[] = []
+    const cancel = requestHighlight('const cold = 2', 'json', (code) => cancelled.push(code))
+    cancel()
+    // 同一段文字的回调一起交：等到另一个订阅者拿到结果，被取消的那个要是还会收到也已经收到了。
+    await new Promise<HighlightedCode>((resolve) => {
+      requestHighlight('const cold = 2', 'json', resolve)
+    })
+    assert.deepEqual(cancelled, [])
+  })
+
   void test('浅色主题的颜色放进 --sdm-c，暗色主题的变量原样带上，底色不要', () => {
     assert.deepEqual(
       highlightedTokenStyle({

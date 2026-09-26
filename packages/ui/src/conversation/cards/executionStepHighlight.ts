@@ -24,6 +24,26 @@ function highlight(
   )
 }
 
+/**
+ * 要一段文字的着色结果：高亮器已经算好的当场交给 onReady，还没算好的等它算好再交；交回取消函数，取消之后不再交。
+ * 高亮器命中缓存时直接返回结果、不登记回调，只靠回调就会把这种情况漏掉——高亮器热起来以后，
+ * 渲染时发起的那次计算在副作用登记回调之前就算完了，卡片会一直停在纯文本。
+ */
+export function requestHighlight(
+  text: string,
+  language: ExecutionStepCodeLanguage,
+  onReady: (code: HighlightedCode) => void
+): () => void {
+  let live = true
+  const cached = highlight(text, language, (code) => {
+    if (live) onReady(code)
+  })
+  if (cached) onReady(cached)
+  return () => {
+    live = false
+  }
+}
+
 /** 这段文字按语言着色后的分词；不给语言、或高亮器还在加载这种语言时返回 null。 */
 export function useHighlightedCode(
   text: string,
@@ -36,13 +56,7 @@ export function useHighlightedCode(
 
   useEffect(() => {
     if (ready || !language) return
-    let live = true
-    highlight(text, language, (code) => {
-      if (live) setLoaded({ text, language, code })
-    })
-    return () => {
-      live = false
-    }
+    return requestHighlight(text, language, (code) => setLoaded({ text, language, code }))
   }, [ready, text, language])
 
   if (ready) return ready
