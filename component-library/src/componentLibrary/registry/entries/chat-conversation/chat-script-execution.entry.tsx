@@ -16,7 +16,7 @@ export default defineComponentLibraryEntry({
     status: 'ready',
     domain: 'Chat Conversation',
     source: '@velaros-ai/ui/conversation',
-    origin: 'packages/ui/src/conversation/cards',
+    origin: 'src/conversation/cards',
     exampleMode: 'fixture',
     usage:
       'script-execution 块的呈现:左侧命令图标(execute)或搜索图标(observe,标题前标出方法名),一句话说明这一步做什么并列出用到的模块,状态看整张卡的底色;收起时悬停标题行看源码,点开看执行的代码与每次调用的结果,都按语法着色。旧会话的 tool-call 块用同一副外框的通用卡。',

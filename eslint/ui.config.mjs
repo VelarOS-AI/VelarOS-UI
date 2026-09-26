@@ -1,4 +1,4 @@
-// UI 域的 React/Web lint 配置。组件形态与颜色约束由 scripts/ui/check/ 的专用门负责。
+// UI 域的 React/Web lint 配置。组件形态与颜色约束由 scripts/check/ 的专用门负责。
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -234,7 +234,7 @@ export default [
       // exhaustive-deps 处在 warn + 基线棘轮阶段：规则能发现真实的陈旧闭包问题，
       // 但对 ref 与稳定函数仍有假阳性，直接升为 error 会诱导无效依赖。
       // 硬门不在 `bun run lint`(该命令 --quiet 只收 error),而在 `check:ui-hook-deps` 基线探针:
-      // 存量违规逐文件记在 baselines/ui/react-hook-deps.json,只准缩小不准增长;该探针同时静态核对
+      // 存量违规逐文件记在 baselines/react-hook-deps.json,只准缩小不准增长;该探针同时静态核对
       // 根 eslint 配置里不存在未登记的 warn 规则,防止 --quiet 静默吞掉新加的 warn。
       'react-hooks/exhaustive-deps': 'warn',
       'no-undef': 'off',

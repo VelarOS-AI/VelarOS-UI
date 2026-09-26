@@ -22,7 +22,7 @@ export default defineComponentLibraryEntry({
     status: 'ready',
     domain: 'Interaction cards',
     source: '@velaros-ai/ui/product/layout/ActionCard',
-    origin: 'packages/ui/product/layout',
+    origin: 'src/product/layout',
     exampleMode: 'fixture',
     usage:
       '交互卡的零件盒:ActionCard(row/stack 布局 + 五 tone)承壳,CardKit 零件(StatusPill/Meta/Disclosure/Footer/TextButton/ResultBlock)拼装。新卡=纯 JSX 组合,零新 module.css,tone 统一走 --action-card-accent 变量。',

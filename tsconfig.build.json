@@ -1,0 +1,28 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": false,
+    "noEmit": false,
+    "outDir": "dist",
+    "paths": {
+      "#contracts": [
+        "./src/conversation/contracts/index.ts"
+      ],
+      "#internal/*": [
+        "./src/conversation/internal/*"
+      ]
+    },
+    "rootDir": "src",
+    "sourceMap": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "exclude": [
+    "src/html-artifacts/spec/**",
+    "src/html-artifacts/test/**"
+  ]
+}

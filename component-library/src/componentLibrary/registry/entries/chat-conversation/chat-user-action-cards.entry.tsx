@@ -18,7 +18,7 @@ export default defineComponentLibraryEntry({
     status: 'ready',
     domain: 'Chat Conversation',
     source: '@velaros-ai/ui/conversation',
-    origin: 'packages/ui/src/conversation/cards',
+    origin: 'src/conversation/cards',
     exampleMode: 'fixture',
     usage:
       'user-action-card 块的两种呈现:UserActionCard(批准 / 确认 / 表单)与 AskUserCarousel(wizard 逐题分页)。tone 与 icon 均从 card 字段派生的封闭枚举。',

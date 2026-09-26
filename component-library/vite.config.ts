@@ -6,24 +6,14 @@ import { defineConfig } from 'vite'
 
 const componentLibraryRoot = fileURLToPath(new URL('.', import.meta.url))
 const catalogSourceRoot = fileURLToPath(new URL('./src/componentLibrary', import.meta.url))
-const conversationSourceRoot = fileURLToPath(
-  new URL('../packages/ui/src/conversation', import.meta.url)
-)
-const uiSourceRoot = fileURLToPath(new URL('../packages/ui/src', import.meta.url))
+const conversationSourceRoot = fileURLToPath(new URL('../src/conversation', import.meta.url))
+const uiSourceRoot = fileURLToPath(new URL('../src', import.meta.url))
 
 export default defineConfig({
   root: componentLibraryRoot,
   plugins: [tailwindcss(), react()],
   resolve: {
     alias: [
-      {
-        find: /^@velaros-ai\/ui\/html-artifacts\/contracts$/,
-        replacement: fileURLToPath(new URL('../packages/ui/html-artifacts/contracts.ts', import.meta.url)),
-      },
-      {
-        find: /^@velaros-ai\/ui\/html-artifacts$/,
-        replacement: fileURLToPath(new URL('../packages/ui/html-artifacts/index.ts', import.meta.url)),
-      },
       {
         find: '@catalog',
         replacement: catalogSourceRoot,
@@ -42,6 +32,7 @@ export default defineConfig({
         find: /^@velaros-ai\/ui$/,
         replacement: `${uiSourceRoot}/index.ts`,
       },
+      // 其余子路径（含 html-artifacts 单元）都在 src 下，同名落到源码。
       {
         find: /^@velaros-ai\/ui\/(.+)$/,
         replacement: `${uiSourceRoot}/$1`,

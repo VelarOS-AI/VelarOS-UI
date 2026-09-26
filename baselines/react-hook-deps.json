@@ -1,0 +1,10 @@
+{
+  "src/conversation/cards/FileChangeSummaryList.tsx": 1,
+  "src/conversation/cards/UserActionCard.tsx": 1,
+  "src/conversation/html-preview/HtmlPreviewFrame.tsx": 1,
+  "src/conversation/react-hooks/useIntersectionObserver.ts": 1,
+  "src/conversation/shell/useQueuedLiveStatusText.ts": 2,
+  "src/lib/useIntersectionObserver.ts": 1,
+  "src/primitives/overlays/CascadingMenu.tsx": 4,
+  "src/primitives/overlays/ImagePreviewDialog.tsx": 1
+}

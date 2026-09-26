@@ -32,22 +32,22 @@ const platformCodeStyle = definePlugin({
   defaults: createCodeStyleDefaults({
     helpers: { module: '@velaros-ai/core' },
     scope: {
-      scanRoots: ['packages'],
-      // 全部包的 src 都算运行时业务代码；非 src 目录已被下面的 excludePatterns 挡掉。
-      runtimeRoots: ['packages/'],
+      scanRoots: ['src'],
+      // src 全是运行时业务代码；测试与验收目录已被下面的 excludePatterns 挡掉。
+      runtimeRoots: ['src/'],
       // React 面：JSX 类规则只扫这里。
-      frontendRoots: ['packages/ui/src/', 'packages/ui/html-artifacts/'],
+      frontendRoots: ['src/'],
       skipPatterns: [],
     },
     perCheck: {
       // 零依赖的浏览器库 html-artifacts 自带一份守卫实现（不能 import core），
       // 守卫本体只能用 typeof 判定，不能套用「改用 isFunction」的自身 autofix。
       'code-style/forbid-raw-runtime-type-guards': {
-        allowFiles: ['packages/ui/html-artifacts/utils/runtime-guards.ts'],
+        allowFiles: ['src/html-artifacts/utils/runtime-guards.ts'],
       },
       'code-style/forbid-console': {
         allowFiles: [
-          'packages/ui/src/conversation/internal/runtime.ts',
+          'src/conversation/internal/runtime.ts',
         ],
       },
     },
@@ -62,8 +62,8 @@ export default defineConfig({
     'code-style/require-chinese-comments': { severity: 'error' },
   },
   files: {
-    // 只覆盖各包源码；dist / test / docs / scripts 由各自的门负责。
-    roots: ['packages'],
+    // 只覆盖包源码；dist / test / docs / scripts 由各自的门负责。
+    roots: ['src'],
     extensions: ['.ts', '.tsx'],
     excludePatterns: [
       '**/node_modules/**',

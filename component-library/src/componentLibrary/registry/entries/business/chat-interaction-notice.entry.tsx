@@ -13,7 +13,7 @@ export default defineComponentLibraryEntry({
     status: 'ready',
     domain: 'Chat Conversation',
     source: '@velaros-ai/ui',
-    origin: 'packages/ui/src/product/display/ChatInteractionNotice',
+    origin: 'src/product/display/ChatInteractionNotice',
     exampleMode: 'fixture',
     usage: '用于对话内轻量通知条（运行中、警告、错误），不含 runtime 推导逻辑。',
     avoid: '不要在此组件内绑定 ChatRuntimeState；由上层传入 title / description / tone。',

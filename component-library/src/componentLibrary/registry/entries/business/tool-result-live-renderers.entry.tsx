@@ -13,7 +13,7 @@ export default defineComponentLibraryEntry({
     status: 'candidate',
     domain: 'Tool result',
     source: '@velaros-ai/ui/conversation',
-    origin: 'packages/ui/src/conversation/tool-render',
+    origin: 'src/conversation/tool-render',
     exampleMode: 'fixture',
     usage: 'Promote stable renderers that are user-facing outside debug panes.',
     avoid: 'Do not leak debug-only event shapes into normal conversation UI.',

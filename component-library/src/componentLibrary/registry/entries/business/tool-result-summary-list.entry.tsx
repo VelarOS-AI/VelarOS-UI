@@ -13,7 +13,7 @@ export default defineComponentLibraryEntry({
     status: 'ready',
     domain: 'Tool result',
     source: '@velaros-ai/ui/conversation',
-    origin: 'packages/ui/src/conversation/blocks',
+    origin: 'src/conversation/blocks',
     exampleMode: 'fixture',
     usage:
       'Use for compact, grouped summaries of tool activity in chat, debug or workbench surfaces.',

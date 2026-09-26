@@ -24,7 +24,7 @@
 //      package.json 的 exports 里有对应子路径）；依赖只许写在文件头，不许用内联 import 类型；
 //      动态 import 只放行登记表 lazyImports 里登记过的目标（谁加载、加载什么、为什么）。
 //      可执行入口放包根 bin/：package.json 的 bin 指 ./bin/<命令>.mjs，文件在、带 #!/usr/bin/env node、files 里有 bin。
-//      能力单元（登记了 unit 的模块，几个模块按目录放在一个包里）：源码根是包里的单元目录（不是 src/），入口是 ./<单元> 与 ./<单元>/…，
+//      能力单元（登记了 unit 的模块，几个模块按目录放在一个包里）：源码根是包里的单元目录（登记了 root 时是 root，比如 src/html-artifacts），入口是 ./<单元> 与 ./<单元>/…，
 //      编译到 dist/<单元>/；单元目录下另有 spec/ 与 test/，不算源码。登记的名字写成「包名/单元」。
 //  10. 模块卡片十节齐全；「提供什么」列出全部入口、导出的每个值和每个公开接口；「骨干链路」点到每个工具；「结构」写明目录树。
 //  11. 不变量登记表每行编号唯一、检验方式合法、检验器真的存在；卡片里的条数如实。包的 test 脚本跑验收测试。
@@ -38,7 +38,6 @@ import { builtinModules } from 'node:module'
 import { basename, dirname, extname, join, relative, resolve } from 'node:path'
 
 import ts from 'typescript'
-import { checkInterfaceModule } from './check-interface-module.mjs'
 
 import {
   GovernedModules,
@@ -49,7 +48,6 @@ import {
 const RepoRoot = resolve(import.meta.dir, '../..')
 /** 生成的 contract/surface.ts 的第一行；手写的文件冒充不了。 */
 const GeneratedSurfaceHeader = '// 本文件由 scripts/script/generate-declarations.mjs 从能力包源码生成，不要手改。'
-const PackagesRoot = join(RepoRoot, 'packages')
 const RootManifest = JSON.parse(readFileSync(join(RepoRoot, 'package.json'), 'utf8'))
 /** 本仓自己定义的环境变量一律用这个前缀；别人定义的前缀由登记表的 environmentPrefixes 补充。 */
 const DefaultEnvironmentPrefix = 'VELAROS_'
@@ -268,27 +266,23 @@ function membersDeep(members) {
   return result
 }
 
-// 命令行：--only <包目录> 只查这一个包；--list 把迁移中的包的每一条问题都列出来（默认只报条数）。
+// 命令行：--only <单元> 只查这一个单元；--list 把迁移中的模块的每一条问题都列出来（默认只报条数）。
 const cliArgs = process.argv.slice(2)
 const onlyIndex = cliArgs.indexOf('--only')
-const onlyDirectory = onlyIndex >= 0 ? cliArgs[onlyIndex + 1] : null
-const listMigrating = cliArgs.includes('--list') || !!onlyDirectory
-const selectedModules = onlyDirectory ? GovernedModules.filter((module) => module.directory === onlyDirectory) : GovernedModules
-if (onlyDirectory && selectedModules.length === 0) {
-  console.error(`--only ${onlyDirectory}：登记表里没有这个包目录`)
+const onlyUnit = onlyIndex >= 0 ? cliArgs[onlyIndex + 1] : null
+const listMigrating = cliArgs.includes('--list') || !!onlyUnit
+const selectedModules = onlyUnit ? GovernedModules.filter((module) => module.unit === onlyUnit) : GovernedModules
+if (onlyUnit && selectedModules.length === 0) {
+  console.error(`--only ${onlyUnit}：登记表里没有这个单元`)
   process.exit(2)
 }
 const migratingReports = []
 
 for (const module of selectedModules) {
-  if (module.layout === 'interface') { checkInterfaceModule(RepoRoot, module, fail); continue }
   const failuresBefore = failures.length
-  const packageRoot = join(PackagesRoot, module.directory)
+  // 仓根就是包根：本仓只有 @velaros-ai/ui 一个包。
+  const packageRoot = RepoRoot
   const label = module.name
-  if (!existsSync(packageRoot)) {
-    fail(`${label}: 登记的包目录 packages/${module.directory} 不存在`)
-    continue
-  }
   const manifest = JSON.parse(readFileSync(join(packageRoot, 'package.json'), 'utf8'))
   // 能力单元登记的名字是「包名/单元」，引用时就这么写（@velaros-ai/velaros/files）。
   const packageName = module.unit ? module.name.slice(0, -(module.unit.length + 1)) : module.name
@@ -298,7 +292,9 @@ for (const module of selectedModules) {
   // 入口是 ./<单元> 与 ./<单元>/…，spec/ 与 test/ 跟着单元走、不算源码。普通模块的源码根是 src/。
   const unit = module.unit ?? null
   const unitSubpath = unit && !module.packageEntry ? `./${unit}` : null
-  const srcRoot = unit ? join(packageRoot, unit) : join(packageRoot, 'src')
+  // 单元目录一般在包根；住在 src/ 下的单元（html-artifacts）登记 root 指明源码根
+  const unitRoot = unit ? (module.root ?? unit) : null
+  const srcRoot = unitRoot ? join(packageRoot, unitRoot) : join(packageRoot, 'src')
   const toolsFilePath = module.toolsFile ? join(packageRoot, module.toolsFile) : null
   // 端口可达性从「模型面的入口」出发。工具时代那个入口是工具文件，代码面时代是操作表。
   // 模型面入口可以是几个文件（一个单元出两件能力、各有自己的操作类时）；没登记就是工具文件。
@@ -328,7 +324,7 @@ for (const module of selectedModules) {
   const publicInterfacePaths = [providesPath, requiresPath].filter((path) => existsSync(path))
   const inside = (file, root) => file === root || file.startsWith(`${root}/`)
   // 同一包内的已治理单元共用纯工具和数据，仍按目标的登记层验证。
-  const inPeerLayer = (file, layer) => GovernedModules.some(peer => peer.directory === module.directory && peer.unit && peer.unit !== module.unit && peer[layer] && inside(file, join(packageRoot, peer[layer])))
+  const inPeerLayer = (file, layer) => GovernedModules.some(peer => peer.unit && peer.unit !== module.unit && peer[layer] && inside(file, join(packageRoot, peer[layer])))
   const isPublicInterfaceFile = (file) => publicInterfacePaths.includes(file)
   const shortPath = (file) => relative(packageRoot, file)
   // 分包：types、impl、utils 可以按域开子目录，每个子目录至少直接放 MinFilesPerSubdirectory 个源文件。
@@ -344,8 +340,8 @@ for (const module of selectedModules) {
   const UnitCompanions = ['spec', 'test', ...(module.assets ?? [])]
   for (const asset of module.assets ?? []) {
     if (!unit) fail(`${label}: 只有能力单元登记 assets；普通模块的资产放包根，不在 src 里`)
-    else if (!existsSync(join(srcRoot, asset))) fail(`${label}: 登记的资产目录 ${unit}/${asset}/ 不存在`)
-    else if (!(manifest.files ?? []).includes(`${unit}/${asset}`)) fail(`${label}: 资产目录 ${unit}/${asset}/ 没写进 package.json 的 files；装出来的包里没有它`)
+    else if (!existsSync(join(srcRoot, asset))) fail(`${label}: 登记的资产目录 ${unitRoot}/${asset}/ 不存在`)
+    else if (!(manifest.files ?? []).includes(`${unitRoot}/${asset}`)) fail(`${label}: 资产目录 ${unitRoot}/${asset}/ 没写进 package.json 的 files；装出来的包里没有它`)
   }
   const sourceFiles = walkSources(srcRoot).filter((file) => !unit || !UnitCompanions.includes(relative(srcRoot, file).split('/')[0]))
 
@@ -1223,7 +1219,7 @@ for (const module of selectedModules) {
   const governedDirectories = [module.contract, module.types, module.impl, module.utils].filter((path) => extname(path) !== '.ts' && existsSync(join(packageRoot, path))).map((path) => basename(path))
   for (const directory of childDirectories(srcRoot)) {
     if (governedDirectories.includes(directory) || entryDirectories.has(directory) || (unit && UnitCompanions.includes(directory))) continue
-    fail(`${label}: src/${directory}/ 不是登记的目录；src 下只有 ${governedDirectories.join('、')} 四个目录，外加嵌套子路径入口自己的目录（package.json 的 exports 里有 ./${directory}/… 才算）`)
+    fail(`${label}: ${relative(packageRoot, srcRoot)}/${directory}/ 不是登记的目录；src 下只有 ${governedDirectories.join('、')} 四个目录，外加嵌套子路径入口自己的目录（package.json 的 exports 里有 ./${directory}/… 才算）`)
   }
 
   // ── 9b. 可执行入口放包根 bin/，只当壳 ───────────────────────────────────

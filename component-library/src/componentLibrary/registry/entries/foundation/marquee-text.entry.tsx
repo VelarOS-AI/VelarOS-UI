@@ -11,7 +11,7 @@ export default defineComponentLibraryEntry({
     status: 'ready',
     domain: 'Main window',
     source: '@velaros-ai/ui',
-    origin: 'packages/ui/src/primitives/display/MarqueeText',
+    origin: 'src/primitives/display/MarqueeText',
     usage:
       '溢出自动横向滚动的单行文本（跑马灯）：不溢出时静态省略号，溢出且 active 时循环滚动；字色 / 字号从父级继承。',
     avoid:

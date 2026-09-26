@@ -1,10 +1,11 @@
-// 模块结构登记：哪些包已进入治理，工具、契约、类型、实现、工具函数各放在哪。
+// 模块结构登记：哪些模块已进入治理，工具、契约、类型、实现、工具函数各放在哪。
 // 方案正文见 docs/architecture/module-ownership.md；本文件是门禁的单一来源。
+// 本仓只有一个包（仓根就是 @velaros-ai/ui），下面的路径字段都相对仓根写。
 //
 // 字段：
-//   directory       相对 packages/ 的目录
 //   unit            能力单元的目录名（不填就是普通模块）：几件能力按目录放在同一个包里，共用一份清单与许可；
-//                   源码根是 packages/<directory>/<unit>/（不是 src/），其余路径字段仍相对包根写；name 写成「包名/单元」
+//                   源码根默认是包根下的 <unit>/，其余路径字段仍相对包根写；name 写成「包名/单元」
+//   root            单元源码根不在包根下时登记（相对包根，例如 src/html-artifacts）
 //   packageEntry    能力单元承载包的根入口；仍按该单元源码目录执行完整治理
 //   name            包名
 //   toolsFile       工具文件（相对包根，没有工具的包不填）：全部工具定义都在这一个文件里，外加它们的分组与挂载。人最先看的地方，改了要在差量报告里点名；
@@ -42,16 +43,17 @@
 //   acceptance      验收测试文件；每条「测试」档不变量都要在这里有以编号开头的用例
 export const GovernedModules = [
   {
-    // ui 的单元：HTML 工件（原独立包 @velaros-ai/html-artifacts，ADR 0014）；ui 自己的组件在 src/，不在这张登记表里
-    directory: 'ui',
+    // ui 的单元：HTML 工件（原独立包 @velaros-ai/html-artifacts，ADR 0014）；单元目录住在 src/ 下，与 ui 自己的组件同在 src，
+    // 组件不在这张登记表里
     unit: 'html-artifacts',
+    root: 'src/html-artifacts',
     name: '@velaros-ai/ui/html-artifacts',
     // 没有工具：这是一个浏览器库，不向模型交工具，不登记 toolsFile、toolDefiner、hostPort
-    contract: 'html-artifacts/contract',
-    types: 'html-artifacts/types',
+    contract: 'src/html-artifacts/contract',
+    types: 'src/html-artifacts/types',
     portable: 'html-artifacts.ts',
-    impl: 'html-artifacts/impl',
-    utils: 'html-artifacts/utils',
+    impl: 'src/html-artifacts/impl',
+    utils: 'src/html-artifacts/utils',
     tuning: 'tuning.ts',
     // 零运行时依赖的浏览器库：两个入口渲染进程与浏览器扩展都能加载
     browserSafeEntries: ['index.ts', 'contracts.ts'],
@@ -59,9 +61,9 @@ export const GovernedModules = [
       // 沙箱文档这件能力的唯一出口
       ['HtmlArtifactDocuments.ts'],
     ],
-    card: 'html-artifacts/MODULE.md',
-    invariants: 'html-artifacts/spec/invariants.md',
-    acceptance: 'html-artifacts/spec/acceptance.test.ts',
+    card: 'src/html-artifacts/MODULE.md',
+    invariants: 'src/html-artifacts/spec/invariants.md',
+    acceptance: 'src/html-artifacts/spec/acceptance.test.ts',
   },
 ]
 

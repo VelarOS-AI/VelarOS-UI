@@ -16,7 +16,7 @@ export default defineComponentLibraryEntry({
     status: 'ready',
     domain: 'Chat Conversation',
     source: '@velaros-ai/ui/conversation',
-    origin: 'packages/ui/src/conversation/cards',
+    origin: 'src/conversation/cards',
     exampleMode: 'fixture',
     usage:
       '助手消息尾部的文件变更汇总:多文件行 + 点开显示行级 diff。纯 props 驱动(entries / expandedKeys / onToggleEntry),diff 由 buildFileDiffSummary 生成。',

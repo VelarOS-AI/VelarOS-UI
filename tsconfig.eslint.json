@@ -1,5 +1,5 @@
 {
-  "//": "eslint 类型感知解析用的全仓 program。并仓时由各退役源仓 tsconfig.eslint.json 取并集而来;源仓原件的取证路径见 README「源仓考古指引」。",
+  "//": "eslint 类型感知解析用的全仓 program：包源码、测试与组件图鉴。",
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "allowJs": false,
@@ -17,15 +17,12 @@
     "types": ["node", "bun"]
   },
   "include": [
-    "types/velaros-globals.d.ts",
-    "packages/**/*.ts",
-    "packages/**/*.tsx",
-    "packages/**/*.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
     "component-library/**/*.ts",
     "component-library/**/*.tsx",
-    "products/**/*.ts",
-    "tests/**/*.ts",
-    "tests/**/*.tsx"
+    "test/**/*.ts",
+    "test/**/*.tsx"
   ],
   "exclude": ["node_modules", "**/node_modules", "**/dist"]
 }

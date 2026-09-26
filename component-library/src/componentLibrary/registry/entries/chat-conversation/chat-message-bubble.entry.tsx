@@ -13,7 +13,7 @@ export default defineComponentLibraryEntry({
     status: 'ready',
     domain: 'Chat Conversation',
     source: '@velaros-ai/ui/conversation',
-    origin: 'packages/ui/src/conversation/blocks',
+    origin: 'src/conversation/blocks',
     exampleMode: 'fixture',
     usage:
       'Use as the visible contract for user and assistant message states: attachments, tool activity, streaming and inline status.',

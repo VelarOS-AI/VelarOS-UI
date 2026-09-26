@@ -193,7 +193,7 @@ export const disclosureRecommendations = [
         </div>
       </div>
     ),
-    code: `// packages/ui/src/conversation/cards/WidgetCard.tsx
+    code: `// src/conversation/cards/WidgetCard.tsx
 <div className={styles.shell}>
   <header className={styles.header}>
     <div className={styles.title}>{title}</div>

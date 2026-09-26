@@ -13,7 +13,7 @@ export default defineComponentLibraryEntry({
     status: 'ready',
     domain: 'Chat Composer',
     source: '@velaros-ai/ui/conversation/composer',
-    origin: 'packages/ui/src/conversation/composer',
+    origin: 'src/conversation/composer',
     exampleMode: 'fixture',
     usage: 'Use as the shared composer input surface for chat and dev console panes.',
     avoid:

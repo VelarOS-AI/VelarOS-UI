@@ -1,6 +1,6 @@
-@import '../../packages/ui/src/styles/tokens/design-tokens.css';
-@import '../../packages/ui/src/styles/components/index.css';
-@import '../../packages/ui/src/styles/components/product.css';
+@import '../../src/styles/tokens/design-tokens.css';
+@import '../../src/styles/components/index.css';
+@import '../../src/styles/components/product.css';
 @import 'tailwindcss';
 @plugin '@tailwindcss/typography';
 @source '../../node_modules/streamdown/dist/*.js';

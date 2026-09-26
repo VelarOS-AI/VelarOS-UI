@@ -13,7 +13,7 @@ export default defineComponentLibraryEntry({
     status: 'ready',
     domain: 'Tasks',
     source: '@velaros-ai/ui/product/layout/TaskWorkspace',
-    origin: 'packages/ui/src/product/layout/TaskWorkspace',
+    origin: 'src/product/layout/TaskWorkspace',
     exampleMode: 'interactive',
     usage:
       'Use for task-management surfaces that pair a selectable task list with a detail or replay pane.',

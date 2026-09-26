@@ -1,29 +1,43 @@
 {
+  "//": "包的类型检查：src 下全部源码（html-artifacts 单元的 spec/test 除外）。#contracts 与 #internal/* 是 conversation 切片的包内私有入口，@velaros-ai/ui 自引用与组件图鉴的 @catalog 都映射到源码。",
   "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
     "baseUrl": ".",
+    "noEmit": true,
     "paths": {
-      "@catalog/*": [
-        "./component-library/src/componentLibrary/*"
+      "#contracts": [
+        "./src/conversation/contracts/index.ts"
       ],
-      "@velaros-ai/ui/conversation": [
-        "./packages/ui/src/conversation/index.ts"
-      ],
-      "@velaros-ai/ui/conversation/*": [
-        "./packages/ui/src/conversation/*"
+      "#internal/*": [
+        "./src/conversation/internal/*"
       ],
       "@velaros-ai/ui": [
-        "./packages/ui/src/index.ts"
-      ],
-      "@velaros-ai/ui/html-artifacts": [
-        "./packages/ui/html-artifacts/index.ts"
-      ],
-      "@velaros-ai/ui/html-artifacts/contracts": [
-        "./packages/ui/html-artifacts/contracts.ts"
+        "./src/index.ts"
       ],
       "@velaros-ai/ui/*": [
-        "./packages/ui/src/*"
+        "./src/*"
+      ],
+      "@catalog/*": [
+        "./component-library/src/componentLibrary/*"
       ]
     }
   },
-  "files": []
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "exclude": [
+    "src/html-artifacts/spec/**",
+    "src/html-artifacts/test/**"
+  ]
 }

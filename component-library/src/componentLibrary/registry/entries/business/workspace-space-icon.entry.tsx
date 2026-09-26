@@ -11,7 +11,7 @@ export default defineComponentLibraryEntry({
     status: 'ready',
     domain: 'Workspace',
     source: '@velaros-ai/ui',
-    origin: 'packages/ui/src/product/display/WorkspaceSpaceIcon',
+    origin: 'src/product/display/WorkspaceSpaceIcon',
     usage:
       '把空间 descriptor 声明的 desktop / folder-open / browser / agent 图标语义名映射为具体图标资产，跨会话切换器 / 侧边栏 / 定时任务 / 归档页等复用。',
     avoid:

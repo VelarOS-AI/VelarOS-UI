@@ -1,5 +1,8 @@
 # 模块结构：合同、类型、实现、工具函数、入口（仓库标准）
 
+> 本仓只有一个包：仓根就是 `@velaros-ai/ui`。组件与会话件不在这套治理里；进入治理的只有 HTML 工件单元 `src/html-artifacts/`
+> （登记 `root`，见下文「能力单元」）。下文是与 VelarOS-Platform 共用的标准原文，其中的 `packages/<包>/` 在本仓就是仓根。
+
 这是全仓库的包结构标准：`packages/system` 最先按它改完，是样板；其余包按同一套逐个纳入（ui 暂不纳入）。每个已治理的包，源码只有四个目录，加上直接放在 `src` 根上的入口文件：
 
 ```text
@@ -114,7 +117,9 @@ packages/velaros/
 ```
 
 - 单元目录就是源码根（没有 `src/`），编译到 `dist/<单元>/`；`package.json` 的 exports 每个单元两条：`./<单元>` 与 `./<单元>/contracts`。
-- 登记表一个单元一行：`directory: 'velaros'`、`unit: '<单元>'`、名字写成 `@velaros-ai/velaros/<单元>`，其余路径相对包根写（`files/contract`、`files/MODULE.md`）。门禁按单元逐个查，和普通模块同一套规矩。
+- 单元也可以住在 `src/` 下、和包自己的源码同在一次编译里：登记 `root` 指明源码根。本仓的 HTML 工件就是这样：`root: 'src/html-artifacts'`，
+  入口仍是 `./html-artifacts` 与 `./html-artifacts/contracts`，编译到 `dist/html-artifacts/`。
+- 登记表一个单元一行：`unit: '<单元>'`、名字写成 `<包名>/<单元>`，其余路径相对包根写（`files/contract`、`files/MODULE.md`；本仓是 `src/html-artifacts/contract` 这样）。门禁按单元逐个查，和普通模块同一套规矩。
 - 单元之间只经对方的入口引用（`@velaros-ai/velaros/shell`），不伸进别的单元的目录。
 - 空间（system、project）是装配表：挂哪几个单元、给每个单元装什么端口，由空间决定；单元自己不知道挂在哪个空间里。
 
@@ -178,7 +183,7 @@ packages/velaros/
 4. 入口文件放在 `src` 根上，按子路径命名（根入口是 `index.ts`），只转发产品面、注入面和它们用到的数据；`package.json` 的 exports 指向 `dist/<名>.js` 与 `dist/<名>.d.ts`。
 5. 写卡片 `MODULE.md`：「提供什么」列出每个入口、每个导出的值和每个公开接口，「骨干链路」列出每个工具的链路，「结构」写明目录树、分层和每个类的接口。
 6. 登记表加一行：工具文件、每个实现文件（或子目录）的层、可调参数文件、会被渲染进程加载的入口、环境变量表。跑 `check:module-ownership` 到绿。
-   改造一个大包时可以先登记、标 `status: 'migrating'`：门禁照查照报剩下多少条，不计入失败；`bun scripts/ownership/check-module-ownership.mjs --only <包目录>` 列出这个包的每一条。改造完删掉这一项。
+   改造一个大包时可以先登记、标 `status: 'migrating'`：门禁照查照报剩下多少条，不计入失败；`bun scripts/ownership/check-module-ownership.mjs --only <单元>` 列出这个单元的每一条。改造完删掉这一项。
 
 
 Act 按 runtime、system、search、agents 四个职责组组织，模型自管理操作集中在 system。类型或纯配置只有一份时，可登记为组内的 `types.ts`、`tuning.ts` 文件，仍接受相同的数据边界和配置检查；目录按实际内容建立。runtime 承载包根入口，其他三组提供各自的能力装配入口。

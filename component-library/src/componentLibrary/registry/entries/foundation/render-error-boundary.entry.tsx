@@ -11,7 +11,7 @@ export default defineComponentLibraryEntry({
     status: 'ready',
     domain: 'Main window',
     source: '@velaros-ai/ui',
-    origin: 'packages/ui/src/primitives/display/RenderErrorBoundary',
+    origin: 'src/primitives/display/RenderErrorBoundary',
     usage:
       '通用 React 渲染错误边界：捕获子树异常降级为宿主 fallback；resetKeys 变化自动重试；scope 用于日志。',
     avoid:

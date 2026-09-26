@@ -13,7 +13,7 @@ export default defineComponentLibraryEntry({
     status: 'ready',
     domain: 'Git',
     source: '@velaros-ai/ui',
-    origin: 'packages/ui/src/product/git/WorkspaceGitCommitControl',
+    origin: 'src/product/git/WorkspaceGitCommitControl',
     exampleMode: 'fixture',
     usage:
       'Use when a chat or workbench surface needs Git branch, commit and sync controls. This business component owns branch filtering, actions and list layout; Button, TopBarControlFrame, SearchField and Popover own their shared appearance and interaction. Hosts provide Git data and action ports.',

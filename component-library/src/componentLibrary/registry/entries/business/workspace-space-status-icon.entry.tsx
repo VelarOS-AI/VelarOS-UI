@@ -11,7 +11,7 @@ export default defineComponentLibraryEntry({
     status: 'ready',
     domain: 'Workspace',
     source: '@velaros-ai/ui',
-    origin: 'packages/ui/src/product/display/WorkspaceSpaceStatusIcon',
+    origin: 'src/product/display/WorkspaceSpaceStatusIcon',
     usage:
       '在 WorkspaceSpaceIcon 外裹执行态色调（default / running / paused），侧边栏会话行 / 定时任务列表复用。',
     avoid:
