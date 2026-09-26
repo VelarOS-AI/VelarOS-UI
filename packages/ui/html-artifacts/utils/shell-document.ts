@@ -130,14 +130,26 @@ function bridgeHeadScript(messages: HtmlArtifactBridgeMessages): string {
     + `window.addEventListener('error',function(event){window.__htmlArtifactReportRuntimeError(event&&event.error||event&&event.message||'制品脚本执行出错',{phase:'window'});});`
     + `window.addEventListener('unhandledrejection',function(event){window.__htmlArtifactReportRuntimeError(event&&event.reason||'制品脚本里有 Promise 出错没人接',{phase:'script'});});`
     // 平铺后 iframe 根文档无可滚区域,wheel 事件却被 iframe 文档吞掉(跨文档不冒泡到宿主),
-    // 鼠标悬停在制品上时聊天页会滚不动——把 wheel 转发给宿主代滚。转发发生时必须取消
-    // iframe 内部默认滚动,否则制品里的 overflow 窗口和聊天页会被同一次滚轮同时推动。
+    // 鼠标悬停在制品上时聊天页会滚不动——把 wheel 转发给宿主代滚。先让制品自己的滚动容器接:
+    // 鼠标下面有顺着这个方向还滚得动的容器(横向滚动的图表、可滚的表格),就照浏览器原样滚它;
+    // 一路都滚不动才转发,转发时取消 iframe 里的默认滚动,免得制品和聊天页被同一次滚轮同时推动。
+    + `function __htmlArtifactCanScroll(node,dx,dy){`
+    + `var style=window.getComputedStyle;`
+    + `if(typeof style!=='function')return false;`
+    + `for(;node&&node.nodeType===1;node=node.parentElement){`
+    + `var s=style(node);`
+    + `if(dy&&/(auto|scroll|overlay)/.test(s.overflowY)&&node.scrollHeight>node.clientHeight+1&&(dy<0?node.scrollTop>0:node.scrollTop+node.clientHeight<node.scrollHeight-1))return true;`
+    + `if(dx&&/(auto|scroll|overlay)/.test(s.overflowX)&&node.scrollWidth>node.clientWidth+1&&(dx<0?node.scrollLeft>0:node.scrollLeft+node.clientWidth<node.scrollWidth-1))return true;`
+    + `}`
+    + `return false;`
+    + `}`
     + `window.addEventListener('wheel',function(event){`
     + `var doc=document.documentElement||{};`
-    + `if(window.parent!==window&&(doc.scrollHeight||0)<=(doc.clientHeight||0)+1&&(doc.scrollWidth||0)<=(doc.clientWidth||0)+1){`
+    + `if(window.parent===window||(doc.scrollHeight||0)>(doc.clientHeight||0)+1||(doc.scrollWidth||0)>(doc.clientWidth||0)+1)return;`
+    + `var dx=Number(event.deltaX)||0,dy=Number(event.deltaY)||0;`
+    + `if(__htmlArtifactCanScroll(event.target,dx,dy))return;`
     + `if(event.cancelable!==false)event.preventDefault();`
-    + `window.parent.postMessage({type:${jsString(HtmlArtifactBridgeMessageTypes.wheel)},deltaY:Number(event.deltaY)||0,deltaX:Number(event.deltaX)||0},'*');`
-    + `}`
+    + `window.parent.postMessage({type:${jsString(HtmlArtifactBridgeMessageTypes.wheel)},deltaY:dy,deltaX:dx},'*');`
     + `},{capture:true,passive:false});`
   )
 }
@@ -168,6 +180,17 @@ function sizeControllerScript(maxReportedHeight: number, maxWidthRatio: number):
   )
 }
 
+/**
+ * 顶层元素在一个方向上占多大：溢出可见时算上溢出（scrollWidth/scrollHeight）；溢出在它自己里面滚动或裁掉时
+ * （横向滚动的图表、限高的表格）只算它排版占的大小——里面的 scroll 尺寸不占页面，算进去框会被按超宽缩小、或者撑出一大片空白。
+ */
+const NodeScrollExtentScript =
+  `function nodeScrollExtent(node,axis){`
+  + `var extent=(axis==='x'?node.scrollWidth:node.scrollHeight)||0;`
+  + `try{var style=window.getComputedStyle(node);if((axis==='x'?style.overflowX:style.overflowY)!=='visible')return 0;}catch(e){}`
+  + `return extent;`
+  + `}`
+
 /** 静态文档尾部的测量脚本：量 body 里的内容，按控制器收敛后把尺寸报给宿主。 */
 function resizeTailScript(
   messages: HtmlArtifactBridgeMessages,
@@ -175,16 +198,16 @@ function resizeTailScript(
   maxWidthRatio: number
 ): string {
   return (
-    `(function(){`
+    `(function(){${NodeScrollExtentScript}`
     + `function measureContentSize(target){`
     + `var body=document.body||{};var doc=document.documentElement||{};var viewportWidth=Math.max(doc.clientWidth||0,window.innerWidth||0);`
     + `var nodes=target?Array.prototype.slice.call(target.children||[]):[];`
     + `var contentWidth=0;var height=0;nodes.forEach(function(node){`
     + `if(!node)return;var rect=node.getBoundingClientRect?node.getBoundingClientRect():{width:0,height:0,bottom:0};`
-    + `contentWidth=Math.max(contentWidth,node.scrollWidth||0,node.offsetWidth||0,Math.ceil(rect.width||0));`
+    + `contentWidth=Math.max(contentWidth,nodeScrollExtent(node,'x'),node.offsetWidth||0,Math.ceil(rect.width||0));`
     // rect.bottom 不含元素自身的 margin-bottom,漏算会让 iframe 比真实排版矮出一条滚动条。
     + `var mb=0;try{mb=parseFloat(window.getComputedStyle(node).marginBottom)||0;}catch(e){}`
-    + `height=Math.max(height,node.scrollHeight||0,node.offsetHeight||0,Math.ceil(rect.height||0),Math.ceil((rect.bottom||0)+mb));`
+    + `height=Math.max(height,nodeScrollExtent(node,'y'),node.offsetHeight||0,Math.ceil(rect.height||0),Math.ceil((rect.bottom||0)+mb));`
     + `});`
     + `var overflowWidth=Math.max(target&&target.scrollWidth||0,body.scrollWidth||0,doc.scrollWidth||0);`
     + `if(overflowWidth>viewportWidth+1)contentWidth=Math.max(contentWidth,overflowWidth);`
@@ -320,15 +343,15 @@ function liveRenderTailScript(
   return (
     `(function(){${renderRuntimeScript(
       `document.getElementById(${jsString(rootId)})`
-    )}function measureContentSize(target){`
+    )}${NodeScrollExtentScript}function measureContentSize(target){`
     + `var body=document.body||{};var doc=document.documentElement||{};var viewportWidth=Math.max(doc.clientWidth||0,window.innerWidth||0);`
     + `var rootRect=target&&target.getBoundingClientRect?target.getBoundingClientRect():{top:0,left:0};`
     + `var nodes=target?Array.prototype.slice.call(target.children||[]):[];`
     + `var contentWidth=0;var height=0;function measureNode(node,originRect){`
     + `if(!node)return;var rect=node.getBoundingClientRect?node.getBoundingClientRect():{width:0,height:0,bottom:0,right:0};`
     + `var right=Math.ceil((rect.right||0)-(originRect.left||0));var bottom=Math.ceil((rect.bottom||0)-(originRect.top||0));`
-    + `contentWidth=Math.max(contentWidth,node.scrollWidth||0,node.offsetWidth||0,Math.ceil(rect.width||0),right);`
-    + `height=Math.max(height,node.scrollHeight||0,node.offsetHeight||0,Math.ceil(rect.height||0),bottom);`
+    + `contentWidth=Math.max(contentWidth,nodeScrollExtent(node,'x'),node.offsetWidth||0,Math.ceil(rect.width||0),right);`
+    + `height=Math.max(height,nodeScrollExtent(node,'y'),node.offsetHeight||0,Math.ceil(rect.height||0),bottom);`
     + `}nodes.forEach(function(node){`
     + `measureNode(node,rootRect);`
     + `});`

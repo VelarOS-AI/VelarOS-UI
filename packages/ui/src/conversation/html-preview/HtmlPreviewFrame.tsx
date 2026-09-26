@@ -29,6 +29,11 @@ import { readStringScalar as readString } from '#internal/unknownJsonRecord'
 
 const cx = StyleUtils.bindCx(styles)
 
+/** 定型之后内容变矮要稳住这么久（毫秒）才缩回去：途中再有汇报就重新计时，免得和内容自己的重排来回拉扯。 */
+const FitShrinkSettleMs = 600
+/** 矮了不到这么多像素不算变矮：滚动条、字体回退这类抖动不值得动一次。 */
+const FitShrinkTolerancePx = 8
+
 function applyFrameFitToIframe(
   iframe: HTMLIFrameElement,
   fit: HtmlArtifactFrameFit,
@@ -93,6 +98,7 @@ export function HtmlPreviewFrame({
   )
   const frameFitFinalizedRef = useRef(false)
   const frameFitFinalizeTimerRef = useRef<Nullable<TimerLease>>(null)
+  const frameFitShrinkTimerRef = useRef<Nullable<TimerLease>>(null)
   const [frameFit, setFrameFit] = useState<HtmlArtifactFrameFit>(() => frameFitRef.current)
   const timers = useTimerScope('HtmlPreviewFrame')
   const titleLatest = useLatest(title)
@@ -104,6 +110,13 @@ export function HtmlPreviewFrame({
 
     frameFitFinalizeTimerRef.current.cancel()
     frameFitFinalizeTimerRef.current = null
+  })
+
+  const clearFrameFitShrink = useMemoizedFn((): void => {
+    if (isNull(frameFitShrinkTimerRef.current)) return
+
+    frameFitShrinkTimerRef.current.cancel()
+    frameFitShrinkTimerRef.current = null
   })
 
   const scheduleFrameFitFinalization = useMemoizedFn((): void => {
@@ -159,14 +172,48 @@ export function HtmlPreviewFrame({
     }
   })
 
+  /**
+   * 定型之后内容明显变矮：多半是定型前某次测量被顶高了（撞到高度上限、脚本还没排好版），框却一直留着那个高度，
+   * 底下空出一大片。等内容稳住再按它的尺寸缩回去；稳住之前又有汇报就重新计时，变高的汇报直接取消。
+   */
+  const scheduleFrameFitShrink = useMemoizedFn(
+    (naturalHeight: number, naturalWidth: Nullable<number>): void => {
+      clearFrameFitShrink()
+      frameFitShrinkTimerRef.current = timers.after(
+        FitShrinkSettleMs,
+        () => {
+          frameFitShrinkTimerRef.current = null
+          const maxViewportWidth = readFrameMaxWidth(naturalWidth)
+          setResolvedFrameFit(
+            htmlArtifactDocuments.resolveFrameFit({
+              fallbackHeight: initialHeight,
+              preferViewportWidth: fitViewportWidth,
+              maxViewportWidth,
+              naturalHeight,
+              naturalWidth: naturalWidth ?? maxViewportWidth,
+            })
+          )
+        },
+        { label: 'htmlArtifact.fit.shrink' }
+      )
+    }
+  )
+
   useEffect(() => {
     maxFrameWidthRef.current = null
     frameFitFinalizedRef.current = false
     clearFrameFitFinalization()
+    clearFrameFitShrink()
     setResolvedFrameFit(htmlArtifactDocuments.resolveFrameFit({ fallbackHeight: initialHeight }))
-  }, [clearFrameFitFinalization, initialHeight, reloadKey, setResolvedFrameFit])
+  }, [clearFrameFitFinalization, clearFrameFitShrink, initialHeight, reloadKey, setResolvedFrameFit])
 
-  useEffect(() => () => clearFrameFitFinalization(), [clearFrameFitFinalization])
+  useEffect(
+    () => () => {
+      clearFrameFitFinalization()
+      clearFrameFitShrink()
+    },
+    [clearFrameFitFinalization, clearFrameFitShrink]
+  )
 
   useEffect(() => {
     const host = hostRef.current
@@ -249,7 +296,12 @@ export function HtmlPreviewFrame({
         ((isPresent(naturalHeight) && naturalHeight > currentFit.contentHeight + 1) ||
           (isPresent(reportedNaturalWidth) && reportedNaturalWidth > currentFit.contentWidth + 1))
 
-      if (frameFitFinalizedRef.current && !finalizedReportHasGrowth) return
+      if (frameFitFinalizedRef.current && !finalizedReportHasGrowth) {
+        if (isPresent(naturalHeight) && naturalHeight < currentFit.contentHeight - FitShrinkTolerancePx)
+          scheduleFrameFitShrink(naturalHeight, reportedNaturalWidth)
+        return
+      }
+      clearFrameFitShrink()
       if (finalizedReportHasGrowth) {
         frameFitFinalizedRef.current = false
         clearFrameFitFinalization()

@@ -72,6 +72,8 @@ function createWheelBridgeHarness({
     ) {
       registrations.set(type, { listener, options })
     },
+    // 假元素把自己的样式挂在 style 上
+    getComputedStyle: (node: { style?: Record<string, string> }) => node.style ?? {},
   }
   iframeWindow.parent = embedded ? parentWindow : iframeWindow
 
@@ -217,7 +219,127 @@ describe('尺寸控制器', () => {
   })
 })
 
+/** 制品里的一个滚动容器：给了哪个方向的 overflow、多大的内容与视口、滚到了哪。 */
+function scrollBox(box: {
+  overflowX?: string
+  overflowY?: string
+  scrollWidth?: number
+  clientWidth?: number
+  scrollLeft?: number
+  scrollHeight?: number
+  clientHeight?: number
+  scrollTop?: number
+}) {
+  return {
+    nodeType: 1,
+    parentElement: null,
+    style: { overflowX: box.overflowX ?? 'visible', overflowY: box.overflowY ?? 'visible' },
+    scrollWidth: box.scrollWidth ?? 100,
+    clientWidth: box.clientWidth ?? 100,
+    scrollLeft: box.scrollLeft ?? 0,
+    scrollHeight: box.scrollHeight ?? 100,
+    clientHeight: box.clientHeight ?? 100,
+    scrollTop: box.scrollTop ?? 0,
+  }
+}
+
+/** 从静态制品文档里抠出量尺寸的那段尾部脚本。 */
+function readResizeTailScript(): string {
+  const html = htmlArtifactDocuments.buildDocument('<div></div>')
+  const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/gu)]
+    .map((match) => match[1] ?? '')
+    .find((source) => source.includes('function measureContentSize'))
+  expect(script).toBeTruthy()
+  return script ?? ''
+}
+
+/** 在假页面里跑一遍量尺寸的脚本：body 下是给定的顶层元素，交回发给宿主的第一次尺寸。 */
+function measureWithFakePage(children: Array<Record<string, unknown>>) {
+  const messages: Array<Record<string, unknown>> = []
+  const box = (width: number, height: number) => ({ width, height, bottom: height, right: width, top: 0, left: 0 })
+  const body = {
+    children,
+    scrollWidth: 600,
+    scrollHeight: 120,
+    offsetWidth: 600,
+    offsetHeight: 120,
+    getBoundingClientRect: () => box(600, 120),
+    style: { overflowX: 'visible', overflowY: 'visible', paddingBottom: '0', marginBottom: '0', borderBottomWidth: '0' },
+  }
+  const window: Record<string, unknown> = {
+    innerWidth: 600,
+    innerHeight: 400,
+    parent: { postMessage: (message: Record<string, unknown>) => messages.push(message) },
+    addEventListener: () => undefined,
+    getComputedStyle: (node: { style?: Record<string, string> }) => node.style ?? {},
+  }
+  vm.runInNewContext(readResizeTailScript(), {
+    document: { body, documentElement: { clientWidth: 600, clientHeight: 400, scrollWidth: 600, scrollHeight: 400 } },
+    window,
+    setTimeout: (callback: () => void) => callback(),
+  })
+  return messages[0]
+}
+
+describe('量尺寸', () => {
+  test('溢出在自己里面滚动的元素（横向滚动的图表、限高的表格）只算它排版占的大小，框不会被按里面的宽缩小、也不会撑高', () => {
+    const chart = {
+      style: { overflowX: 'auto', overflowY: 'auto' },
+      scrollWidth: 2400,
+      scrollHeight: 900,
+      offsetWidth: 600,
+      offsetHeight: 80,
+      getBoundingClientRect: () => ({ width: 600, height: 80, bottom: 80, right: 600, top: 0, left: 0 }),
+    }
+    const size = measureWithFakePage([chart])
+    expect(size).toMatchObject({ naturalWidth: 600, naturalHeight: 80 })
+  })
+
+  test('溢出可见的元素照旧算上溢出：真正超宽的版式交给宿主缩放', () => {
+    const poster = {
+      style: { overflowX: 'visible', overflowY: 'visible' },
+      scrollWidth: 1400,
+      scrollHeight: 80,
+      offsetWidth: 600,
+      offsetHeight: 80,
+      getBoundingClientRect: () => ({ width: 600, height: 80, bottom: 80, right: 600, top: 0, left: 0 }),
+    }
+    expect(measureWithFakePage([poster])).toMatchObject({ naturalWidth: 1400 })
+  })
+})
+
 describe('滚轮桥', () => {
+  test('鼠标下面有顺着这个方向还滚得动的容器（横向滚动的图表、可滚的表格）时让它自己滚，不转发', () => {
+    const { messages, registration } = createWheelBridgeHarness({ embedded: true })
+    let prevented = false
+    const chart = scrollBox({ overflowX: 'auto', scrollWidth: 900, clientWidth: 600 })
+    const bar = { nodeType: 1, parentElement: chart, style: {} }
+    registration.listener({ cancelable: true, deltaX: 40, deltaY: 0, target: bar, preventDefault: () => (prevented = true) })
+    const table = scrollBox({ overflowY: 'scroll', scrollHeight: 800, clientHeight: 300, scrollTop: 120 })
+    registration.listener({ cancelable: true, deltaX: 0, deltaY: -30, target: table, preventDefault: () => (prevented = true) })
+
+    expect(prevented).toBe(false)
+    expect(messages).toEqual([])
+  })
+
+  test('容器在这个方向上已经滚到头、或者根本不能滚时，照旧交给宿主', () => {
+    const { messages, registration } = createWheelBridgeHarness({ embedded: true })
+    let prevented = 0
+    const atEnd = scrollBox({ overflowX: 'auto', scrollWidth: 900, clientWidth: 600, scrollLeft: 300 })
+    registration.listener({ cancelable: true, deltaX: 40, deltaY: 0, target: atEnd, preventDefault: () => (prevented += 1) })
+    const clipped = scrollBox({ overflowY: 'hidden', scrollHeight: 800, clientHeight: 300 })
+    registration.listener({ cancelable: true, deltaX: 0, deltaY: 30, target: clipped, preventDefault: () => (prevented += 1) })
+    const sideways = scrollBox({ overflowX: 'auto', scrollWidth: 900, clientWidth: 600 })
+    registration.listener({ cancelable: true, deltaX: 0, deltaY: 30, target: sideways, preventDefault: () => (prevented += 1) })
+
+    expect(prevented).toBe(3)
+    expect(messages.map((message) => [message.deltaX, message.deltaY])).toEqual([
+      [40, 0],
+      [0, 30],
+      [0, 30],
+    ])
+  })
+
   test('嵌在宿主里时，这一次滚轮手势独占地交给宿主', () => {
     const { messages, registration } = createWheelBridgeHarness({ embedded: true })
     let prevented = false
