@@ -1,7 +1,7 @@
 /**
  * 交互卡：模型的提问、表单、确认与能力申请，宿主的危险命令确认与登录墙，每个请求一张，画在运行消息里。
- * 等回答时展开：选择题与表单题是轮播提问卡；一句话的提问与能力申请是一个输入框；确认一类是说明加两个
- * 按钮，危险命令把命令和目录单独列出，登录墙的按钮叫「继续」。回答、跳过或失效后收成一行，写明答了什么，
+ * 等回答时展开：选择题与表单题是轮播提问卡；一句话的提问与能力申请是一个输入框；确认一类（含危险命令）
+ * 是一行标题加两个按钮，登录墙的按钮叫「继续」。回答、跳过或失效后收成一行，写明答了什么，
  * 点开回看；底色表状态（等回答淡蓝，答了淡绿，拒绝或跳过淡红，失效淡灰），左边的图标表种类。
  */
 import {
@@ -23,6 +23,7 @@ import {
   WarningIcon,
 } from '@phosphor-icons/react'
 
+import { StyleUtils } from '@velaros-ai/ui'
 import { Textarea } from '@velaros-ai/ui/primitives/forms/Textarea'
 import { CardTextButton } from '@velaros-ai/ui/product/layout/CardKit'
 
@@ -48,6 +49,8 @@ import styles from './InteractionCard.module.css'
 
 import type { InteractionAnswer, InteractionBlock, InteractionKind } from '#contracts'
 import { isBlank } from '#internal/runtime'
+
+const cx = StyleUtils.bindCx(styles)
 
 /** 标题行图标的尺寸，与脚本卡一致。 */
 const IconSize = 13
@@ -137,9 +140,13 @@ function PendingQuestion({ block, onAnswer }: PendingProps): ReactElement {
   )
 }
 
-/** 等回答时的外框：左边图标，第一行说明做标题，下面是其余的说明与作答区。 */
+/**
+ * 等回答时的外框：左边图标，第一行说明做标题，下面是作答区。确认、危险命令与登录墙只有一行标题（太长截断），
+ * 其余的说明与命令全文不摊开，回答过之后点开回看；一句话的提问与能力申请才把其余的说明写在标题下面。
+ */
 function PendingFrame({ block, children }: { block: InteractionBlock; children: ReactNode }): ReactElement {
   const { t } = useConversationI18n()
+  const titleOnly = block.kind === 'confirm' || block.kind === 'danger' || block.kind === 'login'
   const { rest } = splitInteractionMessage(block.message)
 
   return (
@@ -154,10 +161,12 @@ function PendingFrame({ block, children }: { block: InteractionBlock; children: 
         <span className={stepStyles.icon} aria-hidden="true">
           <KindIcon kind={block.kind} />
         </span>
-        <span className={styles.pendingTitle}>{resolveInteractionTitle(block, t)}</span>
+        <span className={cx('pendingTitle', titleOnly && 'pendingTitleSingle')}>
+          {resolveInteractionTitle(block, t)}
+        </span>
       </div>
       <div className={styles.pendingBody}>
-        {!!rest && <p className={styles.message}>{rest}</p>}
+        {!titleOnly && !!rest && <p className={styles.message}>{rest}</p>}
         {children}
       </div>
     </div>
@@ -213,7 +222,7 @@ function PendingTextAnswer({ block, onAnswer }: PendingProps): ReactElement {
   )
 }
 
-/** 确认、危险命令与登录墙：说明加两个按钮；危险命令单独列出命令与目录。 */
+/** 确认、危险命令与登录墙：一行标题加两个按钮。 */
 function PendingConfirmation({ block, onAnswer }: PendingProps): ReactElement {
   const { t } = useConversationI18n()
   const { submitting, submit } = useSubmission(onAnswer)
@@ -221,7 +230,6 @@ function PendingConfirmation({ block, onAnswer }: PendingProps): ReactElement {
 
   return (
     <PendingFrame block={block}>
-      {!!block.operation && <InteractionOperation operation={block.operation} />}
       <div className={styles.actions}>
         <CardTextButton
           tone={login ? 'neutral' : 'reject'}

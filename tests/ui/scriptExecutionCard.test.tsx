@@ -317,7 +317,7 @@ void describe('ScriptExecutionCard', () => {
     assert.doesNotMatch(markup, />参数<|>返回<|velaros:project · edit|已生效/u)
     assert.doesNotMatch(markup, /command&quot;: &quot;bun run build/u)
     assert.equal(countMatches(markup, /<pre/gu), 3, '代码一段、有返回的两次调用各一段，等待中的不占位置')
-    assert.equal(countMatches(markup, />内容过长，已截断</gu), 1)
+    assert.doesNotMatch(markup, /内容过长/u)
   })
 
   void test('编写中还没有源码时详情说正在编写', () => {

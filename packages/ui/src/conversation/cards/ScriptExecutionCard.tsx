@@ -81,7 +81,7 @@ export function ScriptExecutionDetails({ block }: { block: ScriptExecutionBlock 
   return (
     <>
       {isNonBlankString(block.source) ? (
-        <ExecutionStepPayload text={block.source} language="typescript" truncated={block.sourceTruncated} />
+        <ExecutionStepPayload text={block.source} language="typescript" />
       ) : (
         <p className={styles.note}>
           {t(block.status === 'writing' ? 'scriptExecution.sourceWriting' : 'scriptExecution.sourceEmpty')}
@@ -105,7 +105,6 @@ function ScriptExecutionResult({ call }: { call: ScriptExecutionCall }): ReactEl
     <ExecutionStepPayload
       text={output}
       language={resolveScriptPayloadLanguage(output)}
-      truncated={call.outputTruncated}
       tone={call.status === 'failed' ? 'error' : 'default'}
     />
   )

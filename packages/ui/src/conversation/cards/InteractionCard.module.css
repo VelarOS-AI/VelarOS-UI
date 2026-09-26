@@ -26,6 +26,14 @@
   overflow-wrap: anywhere;
 }
 
+/* 确认一类只有这一行：太长截断，不换行摊开。 */
+.pendingTitleSingle {
+  overflow: hidden;
+  overflow-wrap: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .pendingBody {
   display: flex;
   min-width: 0;

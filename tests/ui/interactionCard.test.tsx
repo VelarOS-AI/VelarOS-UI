@@ -224,13 +224,13 @@ void describe('interaction card', () => {
     assert.match(html, />下一个</)
   })
 
-  void test('a pending risky command lists the command and its folder with reject and approve', () => {
+  void test('a pending risky command is one title line with reject and approve; the rest waits for the look-back', () => {
     const html = render(createElement(InteractionCard, { block: danger }))
     assert.match(html, /data-tone="waiting"/)
     assert.match(html, /这条命令会删除目录，确认执行？/)
-    assert.match(html, /删掉后要重新构建/)
-    assert.match(html, /<code[^>]*>rm -rf build<\/code>/)
-    assert.match(html, /在 \/tmp\/project 里运行/)
+    assert.doesNotMatch(html, /删掉后要重新构建/)
+    assert.doesNotMatch(html, /<code[^>]*>rm -rf build<\/code>/)
+    assert.doesNotMatch(html, /在 \/tmp\/project 里运行/)
     assert.match(html, />拒绝</)
     assert.match(html, />批准</)
   })

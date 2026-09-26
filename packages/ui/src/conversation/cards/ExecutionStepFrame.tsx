@@ -152,15 +152,12 @@ export function ExecutionStepPayload({
   label,
   text,
   language,
-  truncated = false,
   tone = 'default',
 }: {
   label?: string
   text: string
   /** 按哪种语言着色；不给就按纯文本显示，错误一律纯文本。 */
   language?: LooseOptional<ExecutionStepCodeLanguage>
-  /** 宿主或渲染层按上限截过，末尾标一句。 */
-  truncated?: boolean
   tone?: 'default' | 'error'
 }): ReactElement {
   const { t } = useConversationI18n()
@@ -181,7 +178,6 @@ export function ExecutionStepPayload({
         >
           {highlighted ? <HighlightedLines code={highlighted} /> : text}
         </pre>
-        {truncated && <p className={styles.note}>{t('executionStep.payloadTruncated')}</p>}
         {foldable && (
           <button
             type="button"
