@@ -3230,30 +3230,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "string | number"
     }
   ],
-  DefaultToolRender: [
-    {
-      "name": "DefaultToolRender.block",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "ToolCallBlockType",
-      "recommended": "Required"
-    },
-    {
-      "name": "DefaultToolRender.compact",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "boolean",
-      "defaultValue": "false"
-    },
-    {
-      "name": "DefaultToolRender.sessionId",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "string"
-    },
-    {
-      "name": "DefaultToolRender.formatPathForDisplay",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "((path: string) => string)"
-    }
-  ],
   DeleteOutlineIconButton: [
     {
       "name": "DeleteOutlineIconButton.label",
@@ -3559,29 +3535,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
     },
     {
       "name": "FileChangeSummaryList.formatPathForDisplay",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "((path: string) => string)"
-    }
-  ],
-  FileChangeToolRender: [
-    {
-      "name": "FileChangeToolRender.block",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "ToolCallBlock",
-      "recommended": "Required"
-    },
-    {
-      "name": "FileChangeToolRender.compact",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "boolean"
-    },
-    {
-      "name": "FileChangeToolRender.sessionId",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "string"
-    },
-    {
-      "name": "FileChangeToolRender.formatPathForDisplay",
       "description": "Auto-generated from TypeScript props.",
       "type": "((path: string) => string)"
     }
@@ -4819,133 +4772,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "defaultValue": "'info'"
     }
   ],
-  RichCardCollapsibleShell: [
-    {
-      "name": "RichCardCollapsibleShell.rootRef",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "((instance: HTMLDivElement | null) => void | (() => VoidOrUndefinedOnly) | React.DO_NOT_USE_OR_YOU_WILL_BE_FIRED_CALLBACK_REF_RETURN_VALUES[keyof React.DO_NOT_USE_OR_YOU_WILL_BE_FIRED_CALLBACK_REF_RETURN_VALUES]) | React.RefObject<Nullable<HTMLDivElement>>",
-      "recommended": "Required"
-    },
-    {
-      "name": "RichCardCollapsibleShell.tone",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "RichCardCollapsibleTone",
-      "recommended": "Required"
-    },
-    {
-      "name": "RichCardCollapsibleShell.isExpanded",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "boolean",
-      "recommended": "Required"
-    },
-    {
-      "name": "RichCardCollapsibleShell.icon",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "React.ReactNode"
-    },
-    {
-      "name": "RichCardCollapsibleShell.title",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "string",
-      "recommended": "Required"
-    },
-    {
-      "name": "RichCardCollapsibleShell.subtitle",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "string"
-    },
-    {
-      "name": "RichCardCollapsibleShell.badge",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "LooseOptional<string>"
-    },
-    {
-      "name": "RichCardCollapsibleShell.collapseAriaLabel",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "string",
-      "recommended": "Required"
-    },
-    {
-      "name": "RichCardCollapsibleShell.onToggleExpand",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "() => void",
-      "recommended": "Required"
-    },
-    {
-      "name": "RichCardCollapsibleShell.actions",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "React.ReactNode"
-    },
-    {
-      "name": "RichCardCollapsibleShell.shouldRenderBody",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "boolean",
-      "recommended": "Required"
-    },
-    {
-      "name": "RichCardCollapsibleShell.shouldShowBody",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "boolean",
-      "recommended": "Required"
-    },
-    {
-      "name": "RichCardCollapsibleShell.bodyHeight",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "number",
-      "recommended": "Required"
-    },
-    {
-      "name": "RichCardCollapsibleShell.bodyRef",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "((instance: HTMLDivElement | null) => void | (() => VoidOrUndefinedOnly) | React.DO_NOT_USE_OR_YOU_WILL_BE_FIRED_CALLBACK_REF_RETURN_VALUES[keyof React.DO_NOT_USE_OR_YOU_WILL_BE_FIRED_CALLBACK_REF_RETURN_VALUES]) | React.RefObject<Nullable<HTMLDivElement>>",
-      "recommended": "Required"
-    }
-  ],
-  RichToolOutputCard: [
-    {
-      "name": "RichToolOutputCard.icon",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "React.ReactNode"
-    },
-    {
-      "name": "RichToolOutputCard.title",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "string",
-      "recommended": "Required"
-    },
-    {
-      "name": "RichToolOutputCard.subtitle",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "string"
-    },
-    {
-      "name": "RichToolOutputCard.badge",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "LooseOptional<string>"
-    },
-    {
-      "name": "RichToolOutputCard.toolBlock",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "ToolCallBlock"
-    },
-    {
-      "name": "RichToolOutputCard.tone",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "RichCardCollapsibleTone",
-      "defaultValue": "'neutral'"
-    },
-    {
-      "name": "RichToolOutputCard.compact",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "boolean",
-      "defaultValue": "false"
-    },
-    {
-      "name": "RichToolOutputCard.actions",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "React.ReactNode"
-    }
-  ],
   Row: [
     {
       "name": "Row.align",
@@ -5613,41 +5439,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "description": "Auto-generated from TypeScript props.",
       "type": "1 | 4 | 2 | 3 | 5 | null",
       "defaultValue": "4"
-    }
-  ],
-  ToolCallBlock: [
-    {
-      "name": "ToolCallBlock.block",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "ToolCallBlockType",
-      "recommended": "Required"
-    },
-    {
-      "name": "ToolCallBlock.compact",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "boolean",
-      "defaultValue": "false"
-    },
-    {
-      "name": "ToolCallBlock.sessionId",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "string"
-    },
-    {
-      "name": "ToolCallBlock.planUpdateIndex",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "number"
-    },
-    {
-      "name": "ToolCallBlock.formatPathForDisplay",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "((path: string) => string)"
-    },
-    {
-      "name": "ToolCallBlock.registry",
-      "description": "Optional application-owned registry. Defaults to the bundled shared registry.",
-      "type": "ToolRendererRegistry",
-      "defaultValue": "ToolRenderRegistry"
     }
   ],
   ToolCallHoverDetails: [

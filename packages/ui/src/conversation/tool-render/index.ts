@@ -12,7 +12,6 @@ export {
 } from "./chatToolRenderCapabilitiesContext";
 export * from "./goal/goalToolBlock";
 export * from "./inferToolLeadingKind";
-export { LazyToolCallBlock, preloadToolCallBlock } from "./LazyToolCallBlock";
 export * from "./messageBubbleToolModel";
 export * from "./plan/planToolBlock";
 export * from "./toolActivityPredicates";
@@ -24,4 +23,3 @@ export * from "./toolDisplay";
 export * from "./toolLeadingPhosphorIcon";
 export * from "./toolOperationSummary";
 export * from "./toolPresentation";
-export * from "./ToolRenderRegistry";

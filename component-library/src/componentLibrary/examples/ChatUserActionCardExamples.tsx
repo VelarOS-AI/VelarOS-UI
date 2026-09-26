@@ -1,9 +1,8 @@
-import {
-  AskUserCarousel,
-  UserActionCard as UserActionCardComponent,
-} from '@catalog/adapters/UserActionPreview'
+import { UserActionCard as UserActionCardComponent } from '@catalog/adapters/UserActionPreview'
 import type { ComponentProps, ReactElement } from 'react'
 
+import { InteractionAnswerProvider, InteractionCard } from '@velaros-ai/ui/conversation'
+import type { InteractionBlock } from '@velaros-ai/ui/conversation/contracts'
 import { Stack } from '@velaros-ai/ui/primitives/layout/Stack'
 
 const SESSION_ID = 'component-library-useraction'
@@ -81,41 +80,37 @@ const textInputCard = toBlock({
   ],
 })
 
-const wizardCard = toBlock({
+/** 带两道选择题的表单请求：交互卡把它排成轮播，逐题作答、最后一页发送。 */
+const wizardInteraction: InteractionBlock = {
+  type: 'interaction',
   id: 'ua-wizard',
-  title: '2 个问题需要你拍板',
-  description: '在选项间选择,或在下面自由输入你的答案。',
-  tone: 'info',
-  icon: 'info',
-  blocking: true,
-  actions: [{ kind: 'submit_form', label: '提交' }],
-  form: {
-    layout: 'stack',
-    presentation: 'wizard',
-    fields: [
-      {
-        id: 'q0',
-        type: 'radio',
-        label: '这个项目最终要产出什么?',
-        options: [
-          { value: 'web', label: 'Web 前端应用', description: '浏览器端交互应用' },
-          { value: 'fullstack', label: '全栈 Web 应用', description: '带 API 服务的全栈应用' },
-          { value: 'cli', label: 'CLI / 后端服务', description: '命令行工具或后端服务,无 UI' },
-        ],
-      },
-      {
-        id: 'q1',
-        type: 'radio',
-        label: '技术栈有偏好吗?',
-        options: [
-          { value: 'ts', label: 'TypeScript 全栈', description: 'React + Node.js' },
-          { value: 'py', label: 'Python 生态', description: 'FastAPI / Django' },
-          { value: 'auto', label: '由你推荐', description: '根据项目类型推荐', recommended: true },
-        ],
-      },
-    ],
-  },
-})
+  kind: 'form',
+  message: '2 个问题需要你拍板\n在选项间选择,或在下面自由输入你的答案。',
+  fields: [
+    {
+      id: 'q0',
+      label: '这个项目最终要产出什么?',
+      kind: 'choice',
+      required: true,
+      options: [
+        { id: 'web', label: 'Web 前端应用', description: '浏览器端交互应用' },
+        { id: 'fullstack', label: '全栈 Web 应用', description: '带 API 服务的全栈应用' },
+        { id: 'cli', label: 'CLI / 后端服务', description: '命令行工具或后端服务,无 UI' },
+      ],
+    },
+    {
+      id: 'q1',
+      label: '技术栈有偏好吗?',
+      kind: 'choice',
+      options: [
+        { id: 'ts', label: 'TypeScript 全栈', description: 'React + Node.js' },
+        { id: 'py', label: 'Python 生态', description: 'FastAPI / Django' },
+        { id: 'auto', label: '由你推荐', description: '根据项目类型推荐', recommended: true },
+      ],
+    },
+  ],
+  status: 'pending',
+}
 
 /** UserActionCard:批准 / 确认 两种 action 形态。 */
 export function UserActionCardActionExample(): ReactElement {
@@ -149,7 +144,11 @@ export function UserActionCardDisabledExample(): ReactElement {
   )
 }
 
-/** AskUserCarousel:wizard 形态,把 form.fields 按问题分页逐题作答(收割自真实 ask_user)。 */
+/** AskUserCarousel:表单请求在交互卡里排成轮播,逐题作答、最后一页发送。 */
 export function AskUserCarouselExample(): ReactElement {
-  return <AskUserCarousel block={wizardCard} sessionId={SESSION_ID} onActionComplete={() => undefined} />
+  return (
+    <InteractionAnswerProvider value={() => undefined}>
+      <InteractionCard block={wizardInteraction} />
+    </InteractionAnswerProvider>
+  )
 }

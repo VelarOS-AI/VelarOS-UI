@@ -1,7 +1,6 @@
 import { type ReactElement, useCallback, useMemo, useState } from 'react'
 
 import {
-  AskUserCarousel as AskUserCarouselContent,
   type FormDraftValue,
   type FormDraftValues,
   UserActionCard as UserActionCardContent,
@@ -170,20 +169,4 @@ export function UserActionCard({
       onOpenArtifact={onOpenArtifact}
     />
   )
-}
-
-export function AskUserCarousel({
-  block,
-  disabled = false,
-  onActionComplete,
-  onDismiss,
-}: {
-  block: UserActionBlock
-  disabled?: boolean
-  onActionComplete?: (resolution: UserActionResolution) => void | Promise<void>
-  onDismiss?: () => void
-  sessionId: string
-}): ReactElement | null {
-  const view = usePreviewUserActionView({ block, disabled, onActionComplete })
-  return <AskUserCarouselContent view={view} onDismiss={onDismiss} />
 }

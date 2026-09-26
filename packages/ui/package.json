@@ -442,10 +442,6 @@
       "types": "./dist/conversation/tool-render/index.d.ts",
       "import": "./dist/conversation/tool-render/index.js"
     },
-    "./conversation/tool-render/ToolCallBlock": {
-      "types": "./dist/conversation/tool-render/ToolCallBlock.d.ts",
-      "import": "./dist/conversation/tool-render/ToolCallBlock.js"
-    },
     "./conversation/tool-render/command/CommandToolRenderDetails": {
       "types": "./dist/conversation/tool-render/command/CommandToolRenderDetails.d.ts",
       "import": "./dist/conversation/tool-render/command/CommandToolRenderDetails.js"

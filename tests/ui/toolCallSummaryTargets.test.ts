@@ -9,7 +9,6 @@ import {
   getToolDetailSummary,
   getToolSearchScopeItems,
 } from '../../packages/ui/src/conversation/tool-render/toolCallSummary'
-import { FileChangeToolNames } from '../../packages/ui/src/conversation/tool-render/toolRenderToolNames'
 
 function toolCall(toolName: string, args: Record<string, unknown>, id = toolName): ToolCallBlock {
   return { type: 'tool-call', toolCallId: id, toolName, args }
@@ -62,9 +61,8 @@ void describe('tool row targets', () => {
     )
   })
 
-  void test('project:write renders and counts as a file change like project:edit', () => {
+  void test('project:write counts as a file change like project:edit', () => {
     assert.equal(isFileChangeToolName('project:write'), true)
-    assert.ok(FileChangeToolNames.includes('project:write'))
-    assert.ok(FileChangeToolNames.includes('project:edit'))
+    assert.equal(isFileChangeToolName('project:edit'), true)
   })
 })

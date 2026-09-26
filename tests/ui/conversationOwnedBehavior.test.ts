@@ -12,16 +12,8 @@ import {
 import { canClaimChatDraftInsertion } from '../../packages/ui/src/conversation/composer/utils/chatDraftInsertion.utils'
 import { activateMarkdownTailMarker } from '../../packages/ui/src/conversation/markdown/markdownTailMarker.utils'
 import { getToolDetailSummary } from '../../packages/ui/src/conversation/tool-render/toolCallSummary'
-import { shouldUseDefaultTranscriptToolRenderer } from '../../packages/ui/src/conversation/tool-render/toolRenderToolNames'
 
 void describe('Platform-owned conversation card placement', () => {
-  void test('reserves rich transcript renderers for tools outside Plan and Goal lifecycle state', () => {
-    assert.equal(shouldUseDefaultTranscriptToolRenderer('plan:update'), true)
-    assert.equal(shouldUseDefaultTranscriptToolRenderer('goal:create'), true)
-    assert.equal(shouldUseDefaultTranscriptToolRenderer('goal:update'), true)
-    assert.equal(shouldUseDefaultTranscriptToolRenderer('project:read_file'), false)
-  })
-
   void test('derives the sticky dock from Plan and Goal while rendering conversation cards inline', () => {
     const source = readFileSync(
       new URL(

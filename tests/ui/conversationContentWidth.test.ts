@@ -16,13 +16,6 @@ const messageStyles = readFileSync(
   ),
   "utf8",
 );
-const fileChangeStyles = readFileSync(
-  new URL(
-    "../../packages/ui/src/conversation/tool-render/fileChange/FileChangeToolRender.module.css",
-    import.meta.url,
-  ),
-  "utf8",
-);
 const productStyles = readFileSync(
   new URL(
     "../../packages/ui/src/styles/components/product.css",
@@ -77,14 +70,6 @@ void describe("shared conversation content width", () => {
     assert.match(
       messageStyles,
       /\.toolActivityDisclosure\s*\{[\s\S]*?width: 100%;\s*max-width: 100%;/u,
-    );
-    assert.match(
-      fileChangeStyles,
-      /\.batchEditCard\.batchEditCard\s*\{\s*width: 100%;\s*max-width: 100%;\s*min-width: 0;/u,
-    );
-    assert.match(
-      fileChangeStyles,
-      /\.singleFileChangeList\s*\{\s*width: 100%;\s*max-width: 100%;\s*min-width: 0;/u,
     );
     assert.match(
       productStyles,

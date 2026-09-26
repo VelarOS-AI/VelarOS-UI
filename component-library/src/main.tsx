@@ -20,6 +20,7 @@ import './catalog.css'
 
 const previewBlockHooks: ConversationBlockHooks = {
   useAutoTranslateThinkingEnabled: () => false,
+  useScriptLiveOutput: () => null,
   useMessageActionView: () => ({
     actionItems: [],
     actionRows: [],

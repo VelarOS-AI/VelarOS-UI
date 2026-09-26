@@ -6,7 +6,6 @@ import {
 import { useI18n } from '@catalog/i18n'
 import type { ComponentLibraryExample } from '@catalog/models/componentLibraryTypes'
 import { CheckIcon, GearIcon, WrenchIcon, XCircleIcon } from '@phosphor-icons/react'
-import type { ComponentProps } from 'react'
 
 import {
   ChatInteractionNotice,
@@ -18,14 +17,12 @@ import {
   type ToolResultSummaryItem,
   ToolResultSummaryList,
 } from '@velaros-ai/ui/conversation'
-import { ToolCallBlock } from '@velaros-ai/ui/conversation/tool-render/ToolCallBlock'
 import { Badge } from '@velaros-ai/ui/primitives/display/Badge'
 import { Inline } from '@velaros-ai/ui/primitives/layout/Inline'
 import { Panel } from '@velaros-ai/ui/primitives/layout/Panel'
 import { Stack } from '@velaros-ai/ui/primitives/layout/Stack'
 import { ActionCardIconButton } from '@velaros-ai/ui/product/layout/ActionCard'
 
-type ToolCallBlockType = ComponentProps<typeof ToolCallBlock>['block']
 
 function WorkspaceSessionControlExample() {
   return (
@@ -112,55 +109,11 @@ function ToolResultRendererStatesExample() {
 }
 
 function SessionStickyDockExample() {
-  const planToolBlock: ToolCallBlockType = {
-    type: 'tool-call',
-    toolCallId: 'library-plan-update',
-    toolName: 'plan:update',
-    args: {
-      explanation: '把会话级提醒固定在对话顶部，展开时不遮挡卡片操作。',
-      plan: [
-        {
-          step: '完成业务组件拆分',
-          status: 'completed',
-        },
-        {
-          step: '补组件库 fixture',
-          status: 'in_progress',
-        },
-        {
-          step: '跑类型和组件库校验',
-          status: 'pending',
-        },
-      ],
-    },
-    result: {
-      explanation: '计划卡片复用原 plan:update 渲染器。',
-      plan: [
-        {
-          step: '完成业务组件拆分',
-          status: 'completed',
-        },
-        {
-          step: '补组件库 fixture',
-          status: 'in_progress',
-        },
-        {
-          step: '跑类型和组件库校验',
-          status: 'pending',
-        },
-      ],
-    },
-  }
   const stickyDockItems: SessionStickyDockItem[] = [
     {
       id: 'library-workspace-auto-approval',
       createdAt: Date.now() - 120_000,
       content: <WorkspaceAutoApprovalNoticeCard onDismiss={() => undefined} />,
-    },
-    {
-      id: 'library-plan-update',
-      createdAt: Date.now() - 60_000,
-      content: <ToolCallBlock block={planToolBlock} compact />,
     },
   ]
 
@@ -257,34 +210,12 @@ export function InteractionSuggestionCardExample() {
 
 const sessionStickyDockExampleCode = `
 import { SessionStickyDock, type SessionStickyDockItem } from '@velaros-ai/ui'
-import { ToolCallBlock } from '@velaros-ai/ui/conversation/tool-render/ToolCallBlock'
-import type { ComponentProps } from 'react'
-
-const planToolBlock: ComponentProps<typeof ToolCallBlock>['block'] = {
-  type: 'tool-call',
-  toolCallId: 'plan-update',
-  toolName: 'plan:update',
-  args: {
-    explanation: '计划卡片复用原 plan:update 渲染器。',
-    plan: [
-      { step: '完成业务组件拆分', status: 'completed' },
-      { step: '补组件库 fixture', status: 'in_progress' },
-    ],
-  },
-  result: {
-    explanation: '计划卡片复用原 plan:update 渲染器。',
-    plan: [
-      { step: '完成业务组件拆分', status: 'completed' },
-      { step: '补组件库 fixture', status: 'in_progress' },
-    ],
-  },
-}
 
 const items: SessionStickyDockItem[] = [
   {
-    id: 'plan-update',
+    id: 'workspace-auto-approval',
     createdAt: Date.now(),
-    content: <ToolCallBlock block={planToolBlock} compact />,
+    content: <WorkspaceAutoApprovalNoticeCard onDismiss={() => undefined} />,
   },
 ]
 

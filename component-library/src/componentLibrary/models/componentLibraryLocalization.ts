@@ -43,7 +43,6 @@ const zhExampleLabels: Record<string, string> = {
   'session-sticky-dock-fixture': '样例：会话级卡片停靠栏',
   'chat-interaction-notice-fixture': '样例：对话通知语气',
   'interaction-suggestion-card-fixture': '样例：建议卡壳层',
-  'tool-renderers-fixture': '样例：命令输出与 plan:update 计划卡片',
   'composer-neutral-switch': '通用：对话 composer 菜单内的 neutral Switch',
   'buttons-interactive-demo': 'Button / IconButton 属性',
   'feedback-interactive-demo': 'Badge / Panel 属性',
@@ -134,7 +133,7 @@ const zhRecommendationPatches: Record<string, LocalizedRecommendationPatch> = {
   'disclosure-surfaces:tool-call-card': {
     title: '对话工具折叠块',
     description:
-      'ToolCallBlock 用 ToolDisclosureCard 展示状态与前导图标，内层 Stack 承载参数/结果；紧凑模式退回 CompactToolRow。',
+      'ToolDisclosureCard 展示状态与前导图标，内层 Stack 承载参数/结果；紧凑模式退回 CompactToolRow。',
   },
   'disclosure-surfaces:widget-debug-frame': {
     title: 'Widget 调试外框',
@@ -203,7 +202,7 @@ const zhEntryPatches: Record<string, LocalizedEntryPatch> = {
   'disclosure-surfaces': {
     domain: '调试 / 工具结果',
     usage:
-      'Disclosure 用于设置或目录式分组（ToolCatalogPanel）；ToolDisclosureCard 用于对话工具块（ToolCallBlock）；WidgetCard 作为带头部背景的默认展开 shell；CompactToolRow 用于单行摘要。',
+      'Disclosure 用于设置或目录式分组（ToolCatalogPanel）；ToolDisclosureCard 用于可折叠的工具结果（命令台里的命令详情）；WidgetCard 作为带头部背景的默认展开 shell；CompactToolRow 用于单行摘要。',
     avoid: '不要在调试渲染里手写 `<details>` 样式；状态点不要重复套在 ToolDisclosureCard 外。',
   },
   'data-table': {
@@ -263,12 +262,6 @@ const zhEntryPatches: Record<string, LocalizedEntryPatch> = {
     domain: '对话展示',
     usage: '用于对话内 ActionCard 建议卡的统一壳层。',
     avoid: '不要把 block 解析或 IPC 放进壳层组件。',
-  },
-  'tool-renderers': {
-    domain: '调试 / 工具输出',
-    usage:
-      '用于 bash / plan:update 等工具输出的折叠与紧凑行：`ToolRendererExample` fixtures 内需同时预览命令输出与「计划卡片」两种 ToolCallBlock 形状。',
-    avoid: '更新计划时不要新建一次性卡片；通过 ToolCallBlock 复用内置工具渲染注册。',
   },
   'chat-message-bubble': {
     domain: '对话展示',

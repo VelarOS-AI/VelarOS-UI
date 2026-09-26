@@ -1,9 +1,3 @@
-import type {
-  SystemBackgroundTaskTerminateResult,
-  SystemConsoleControlResult,
-  SystemConsoleOutputChunk,
-  SystemFileChangePreviewResult,
-} from '#contracts'
 import type { Result } from '#internal/result'
 
 export interface LocalAttachmentReadRequest {
@@ -32,52 +26,13 @@ export interface ChatToolRenderNotice {
   showClose?: boolean
 }
 
-/** 工具渲染 / 消息块组件所需的可注入能力；由 feature 层绑定 IPC，组件库留空。 */
+/** 消息块组件所需的可注入能力；由宿主绑定 IPC，组件库留空。 */
 export interface ChatToolRenderCapabilities {
+  /** 读本机附件（浏览器截图等）；缺注入时相应的预览不显示。 */
   readLocalAttachmentFile?: (
     request: LocalAttachmentReadRequest
   ) => Promise<Result<LocalAttachmentReadResult>>
-  getFileChangePreview?: (
-    sessionId: string,
-    changeId: string,
-    path?: string
-  ) => Promise<Result<SystemFileChangePreviewResult>>
-  openProjectPath?: (sessionId: string, path: string) => Promise<Result<unknown>>
-  revealProjectPath?: (sessionId: string, path: string) => Promise<Result<unknown>>
-  restoreFileChange?: (
-    sessionId: string,
-    changeId: string,
-    path?: string
-  ) => Promise<Result<unknown>>
-  rollbackFileChange?: (
-    sessionId: string,
-    changeId: string,
-    path?: string
-  ) => Promise<Result<unknown>>
-  terminateBackgroundTask?: (
-    sessionId: string,
-    taskId: string,
-    force?: boolean
-  ) => Promise<Result<SystemBackgroundTaskTerminateResult>>
-  /** 读交互式任务控制台从 cursor 起的增量输出；缺注入时控制台卡片降级成只读，只显示工具结果里那一段。 */
-  readConsoleOutput?: (
-    sessionId: string,
-    taskId: string,
-    cursor?: number
-  ) => Promise<Result<SystemConsoleOutputChunk>>
-  /** 把用户在控制台卡片里打的一行写进任务；缺省补换行（相当于回车）。缺注入时卡片不显示输入框。 */
-  writeConsoleInput?: (
-    sessionId: string,
-    taskId: string,
-    text: string,
-    submit?: boolean
-  ) => Promise<Result<SystemConsoleControlResult>>
-  /** 给控制台发中断（Ctrl+C）；缺注入时卡片不显示中断按钮。 */
-  interruptConsole?: (
-    sessionId: string,
-    taskId: string
-  ) => Promise<Result<SystemConsoleControlResult>>
-  /** 工具卡异步操作完成/失败的全局提示；缺注入时静默（渲染增强，非必需）。 */
+  /** 异步操作完成/失败的全局提示；缺注入时静默（渲染增强，非必需）。 */
   showNotice?: (notice: ChatToolRenderNotice) => void
 }
 

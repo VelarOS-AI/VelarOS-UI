@@ -187,21 +187,6 @@ export interface ToolCallBlock {
   title?: string
   metadata?: Record<string, unknown>
   effects?: StreamToolResultEffects
-  widgetArtifact?: {
-    artifactId: string
-    versionId: string
-  }
-  widgetArtifactSnapshot?: {
-    artifactId: string
-    versionId: string
-    title: string
-    htmlSource: string
-    compiledHtml: string
-    sessionId: string
-    createdFromMessageId: string
-    createdFromToolCallId: string
-    createdAt: number
-  }
   modelImage?: {
     mediaType: 'image/jpeg' | 'image/png'
     data: string
@@ -932,24 +917,6 @@ export interface SystemConsoleSessionInfo {
   note: string
 }
 
-/** 控制台的一段增量输出：`cursor` 下次原样传回来，`droppedChars` 是缓冲区挤掉的字符数。 */
-export interface SystemConsoleOutputChunk {
-  taskId: string
-  text: string
-  cursor: number
-  droppedChars: number
-  status: string
-  acceptsInput: boolean
-}
-
-/** 写输入或发中断的结果；`accepted` 为 false 时看 `message`。 */
-export interface SystemConsoleControlResult {
-  taskId: string
-  accepted: boolean
-  status: string
-  message: string
-}
-
 export interface ProjectVerificationSummary {
   kind: 'build' | 'lint' | 'test' | 'typecheck' | 'unknown'
   status: 'aborted' | 'failed' | 'passed' | 'timed-out' | 'unknown'
@@ -984,17 +951,6 @@ export interface SystemFileChangePreviewResult {
   revertAvailable?: boolean
   beforeContent: string
   afterContent: string
-}
-
-export interface SystemBackgroundTaskTerminateResult {
-  taskId: string
-  sessionId: Nullable<string>
-  pid: number
-  signal: 'SIGTERM' | 'SIGKILL'
-  statusBefore: string
-  statusAfter: string
-  terminated: boolean
-  message: string
 }
 
 export interface ProjectCheckpointFileDiff {

@@ -69,9 +69,5 @@ void describe("keyboard focus reveal", () => {
       readStyles("conversation/cards/FileChangeSummaryList.module.css"),
       /\.fileActionButton\.fileActionButton:focus-visible \{\s*box-shadow: var\(--ui-shadow-focus-ring\);/u,
     );
-    assert.match(
-      readStyles("conversation/tool-render/fileChange/FileChangeToolRender.module.css"),
-      /\.actionIconButton\.actionIconButton:focus-visible \{\s*box-shadow: var\(--ui-shadow-focus-ring\);/u,
-    );
   });
 });
