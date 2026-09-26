@@ -24,6 +24,7 @@ import {
 } from '../src/conversation/blocks/ToolActivityMotion'
 import type { ToolCallBlock } from '../src/conversation/contracts'
 import {
+  isGroupedActivityMessageLive,
   shouldForceGroupedActivityFlat,
   shouldInlineGroupedActivityMessage,
 } from '../src/conversation/shell/ChatTranscript'
@@ -183,6 +184,10 @@ void describe('live chat activity presentation', () => {
   void test('keeps grouped child activity flat so the owning run creates one disclosure', () => {
     assert.equal(shouldForceGroupedActivityFlat(true), true)
     assert.equal(shouldForceGroupedActivityFlat(false), false)
+    // 整轮还在跑：收进来的片段跟着直播；整轮停了：写完的片段按完成态画，还在写的照旧直播
+    assert.equal(isGroupedActivityMessageLive(true, false), true)
+    assert.equal(isGroupedActivityMessageLive(false, false), false)
+    assert.equal(isGroupedActivityMessageLive(false, true), true)
 
     assert.equal(
       shouldInlineGroupedActivityMessage(

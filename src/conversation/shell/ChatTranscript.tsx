@@ -60,6 +60,14 @@ export function shouldForceGroupedActivityFlat(hasGroupedRunActivity: boolean): 
   return hasGroupedRunActivity
 }
 
+/**
+ * 收进别的消息活动里的片段按什么状态画：整轮还在跑时跟着直播平铺；整轮停了（展开「已处理」看）按它自己
+ * 是否在流式画，写完的思考收成一行，跟承载整轮那条自己的活动一个样子。
+ */
+export function isGroupedActivityMessageLive(groupRunning: boolean, messageStreaming: boolean): boolean {
+  return groupRunning || messageStreaming
+}
+
 /** 完成态中只有纯内部活动消息可以参与跨消息横排；正文、引导和卡片维持整行。 */
 export function shouldInlineGroupedActivityMessage(
   message: ChatMessage,
@@ -192,7 +200,8 @@ function ChatTranscriptInner({
 
   const renderActivityMessages = (
     activityMessages: ChatMessage[],
-    forceActivityFlat: boolean
+    forceActivityFlat: boolean,
+    groupRunning: boolean
   ): Nullable<ReactElement> => {
     if (isEmpty(activityMessages)) return null
 
@@ -207,6 +216,7 @@ function ChatTranscriptInner({
               {beforeMessage}
               {renderMessageItem(message, {
                 forceActivityFlat,
+                groupRunning,
                 groupedActivityLayout: shouldInlineGroupedActivityMessage(
                   message,
                   forceActivityFlat
@@ -226,6 +236,8 @@ function ChatTranscriptInner({
     message: ChatMessage,
     options: {
       forceActivityFlat?: boolean
+      /** 收进活动里的片段：承载它的那一轮是否还在跑。 */
+      groupRunning?: boolean
       groupedActivityLayout?: 'inline' | 'block'
       presentation?: ChatTranscriptMessagePresentation
     } = {}
@@ -259,9 +271,11 @@ function ChatTranscriptInner({
     const forceGroupedActivityFlat = shouldForceGroupedActivityFlat(
       !isEmpty(activityLeadingMessages) || !isEmpty(activityTrailingMessages)
     )
+    const groupRunning = groupedRunIsStreaming || !!options.presentation?.runInProgress
     const groupedActivityLeadingElement = renderActivityMessages(
       activityLeadingMessages,
-      forceGroupedActivityFlat
+      forceGroupedActivityFlat,
+      groupRunning
     )
     const ownActivityLeadingElement = renderActivityLeadingElement?.(message)
     const activityLeadingElement =
@@ -273,7 +287,8 @@ function ChatTranscriptInner({
       ) : null
     const activityTrailingElement = renderActivityMessages(
       activityTrailingMessages,
-      forceGroupedActivityFlat
+      forceGroupedActivityFlat,
+      groupRunning
     )
 
     return (
@@ -288,8 +303,13 @@ function ChatTranscriptInner({
           browserScreenshotDisplayMode={browserScreenshotDisplayMode}
           sessionId={sessionId}
           questionMessage={toNullable(getQuestionMessage?.(message))}
-          isStreaming={forceActivityFlat || groupedRunIsStreaming}
-          runInProgress={!forceActivityFlat && !!options.presentation?.runInProgress}
+          isStreaming={
+            forceActivityFlat
+              ? isGroupedActivityMessageLive(!!options.groupRunning, groupedRunIsStreaming)
+              : groupedRunIsStreaming
+          }
+          // 收进活动里的片段不单独画页脚、改动卡与产物，由承载整轮的那条画
+          runInProgress={forceActivityFlat || !!options.presentation?.runInProgress}
           runMarker={forceActivityFlat ? null : groupedRunMarker}
           implicitlyCompletedRun={
             !forceActivityFlat && !!options.presentation?.implicitlyCompletedRun
