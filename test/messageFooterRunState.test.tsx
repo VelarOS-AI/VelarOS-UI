@@ -211,4 +211,47 @@ void describe('回答收尾件（复制与时间）什么时候出现', () => {
     assert.match(messageMarkup(completed, 'a1'), /chat\.copyAnswer/u)
     assert.match(messageMarkup(completed, 'a2'), /chat\.copyAnswer/u)
   })
+
+  void test('被停下的运行没写出正文时，状态角标单独画一行；有正文时照旧挂在正文末尾', () => {
+    const scriptOnly: ChatMessage = {
+      id: 'stopped',
+      role: 'assistant',
+      timestamp: 1,
+      blocks: [
+        {
+          type: 'script-execution',
+          id: 'script-1',
+          kind: 'execute',
+          turnId: 'turn-1',
+          status: 'failed',
+          source: '// 分步实现',
+          sourceTruncated: false,
+          calls: [],
+          error: '第 3 行：add test failed',
+          durationMs: 348,
+        },
+      ],
+    }
+    const render = (target: ChatMessage): string =>
+      renderToStaticMarkup(
+        createElement(
+          ConversationLocalizationProvider,
+          { value: localization },
+          createElement(
+            ConversationBlockHooksProvider,
+            { value: blockHooks },
+            createElement(ChatTranscript, {
+              messages: [message('turn', 'user', 'turn-input'), target],
+              sessionId: 'session',
+              getRunMarker: (entry) => (entry.id === target.id ? marker(entry.id, 'aborted') : null),
+            })
+          )
+        ) as ReactElement
+      )
+
+    assert.match(messageMarkup(render(scriptOnly), 'stopped'), /aria-label="status\.aborted/u)
+    // 有正文：角标由正文末尾的槽位挂（挂载后经 portal 放进去，静态渲染里还没有），不另起一行
+    const withText = messageMarkup(render(message('answered', 'assistant')), 'answered')
+    assert.doesNotMatch(withText, /aria-label="status\.aborted/u)
+  })
 })

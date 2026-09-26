@@ -1752,6 +1752,17 @@
   }
 }
 
+/* 没有正文可挂时，运行角标单独占一行，贴在消息末尾。 */
+.standaloneStatusMarker {
+  display: flex;
+  width: fit-content;
+  margin-top: 0.38rem;
+
+  & .statusMarker {
+    margin-left: 0;
+  }
+}
+
 .statusMarker {
   @apply inline-flex items-center justify-center outline-none transition-all;
   width: 0.95rem;

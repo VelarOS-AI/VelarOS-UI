@@ -22,9 +22,11 @@ import {
   type GoalCompletionActivitySummary,
   type MessageRenderSegment,
   partitionProcessedActivitySummarySegments,
+  settledRunMarker,
   shouldUseProcessedActivitySummaryBoundary,
 } from './messageBubbleRenderModel'
 import { MessageContentBlock } from './MessageContentBlock'
+import { MessageStatusMarker } from './MessageStatusMarker'
 import { ToolActivityDisclosure } from './MessageToolActivity'
 import { StreamFadeViewContext, useStreamFadeViewState } from './streamTextFade'
 
@@ -660,6 +662,15 @@ function AssistantMessageSegmentsInner({
         <React.Fragment key="activity-trailing">{activityTrailingElement}</React.Fragment>
       )
     }
+    // 运行角标平时挂在最后一段正文末尾；整条消息没有正文（只跑了脚本就被停下、失败）时单独画一行，停没停看得出来
+    const standaloneMarker =
+      !isStreaming && !lastTextSegmentKey ? settledRunMarker(runMarker) : null
+    if (standaloneMarker)
+      renderedSegments.push(
+        <div key="run-status" className={styles.standaloneStatusMarker}>
+          <MessageStatusMarker marker={standaloneMarker} />
+        </div>
+      )
     return renderedSegments
   }
 
