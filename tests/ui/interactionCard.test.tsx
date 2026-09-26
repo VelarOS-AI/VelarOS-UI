@@ -6,7 +6,9 @@ import { renderToStaticMarkup } from 'react-dom/server'
 
 import {
   buildMessageRenderSegments,
+  type ConversationMessageRunMarker,
   partitionProcessedActivitySummarySegments,
+  settledRunMarker,
 } from '../../packages/ui/src/conversation/blocks/messageBubbleRenderModel'
 import { MessageContentBlock } from '../../packages/ui/src/conversation/blocks/MessageContentBlock'
 import {
@@ -250,6 +252,39 @@ void describe('interaction card', () => {
     )
     assert.match(input, /<textarea/)
     assert.match(input, /placeholder="写下你的回答，回车发送"/)
+  })
+
+  void test('a capability request is its message with an answer box, never a JSON payload', () => {
+    const capability = render(
+      createElement(InteractionCard, {
+        block: {
+          type: 'interaction',
+          id: 'cap-1',
+          kind: 'capability',
+          message: '需要挂载 velaros:files 模块',
+          status: 'pending',
+        },
+      })
+    )
+    assert.match(capability, /需要挂载 velaros:files 模块/)
+    assert.match(capability, /<textarea/)
+    assert.doesNotMatch(capability, /<pre/)
+  })
+
+  void test('the tail of the text only marks settled runs: waiting for an answer draws no pause mark', () => {
+    const marker = (status: ConversationMessageRunMarker['status']): ConversationMessageRunMarker => ({
+      messageId: 'm',
+      status,
+      detail: null,
+      turnCount: null,
+      turnKind: null,
+      timestamp: 1,
+    })
+    assert.equal(settledRunMarker(marker('awaiting-input')), null)
+    assert.equal(settledRunMarker(marker('awaiting-confirmation')), null)
+    assert.equal(settledRunMarker(undefined), null)
+    for (const status of ['completed', 'failed', 'aborted'] as const)
+      assert.equal(settledRunMarker(marker(status))?.status, status)
   })
 
   void test('without an answer channel, and once answered, the card is one collapsed line', () => {

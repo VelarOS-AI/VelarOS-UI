@@ -538,6 +538,24 @@ export function getProcessedActivityDisclosureLabel(
   return conversationTranslate(locale, 'chat.processedActivity')
 }
 
+/** 正文末尾画得出角标的运行状态：跑完、失败、中止。 */
+export type SettledRunMarkerStatus = Exclude<
+  ConversationMessageRunMarker['status'],
+  'awaiting-confirmation' | 'awaiting-input'
+>
+
+/** 结束了的运行标记。 */
+export type SettledRunMarker = ConversationMessageRunMarker & { status: SettledRunMarkerStatus }
+
+/** 正文末尾的运行角标只画结束了的运行：等确认、等回答的时候卡片自己就在等，不再多画一个暂停标。 */
+export function settledRunMarker(
+  runMarker: LooseOptional<ConversationMessageRunMarker>
+): Nullable<SettledRunMarker> {
+  if (!runMarker || runMarker.status === 'awaiting-confirmation' || runMarker.status === 'awaiting-input')
+    return null
+  return runMarker as SettledRunMarker
+}
+
 export function areRunMarkersEqual(
   prev: LooseOptional<ConversationMessageRunMarker>,
   next: LooseOptional<ConversationMessageRunMarker>

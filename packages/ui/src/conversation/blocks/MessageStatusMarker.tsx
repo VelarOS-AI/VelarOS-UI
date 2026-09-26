@@ -1,10 +1,5 @@
 import { memo, type ReactElement } from 'react'
-import {
-  CheckCircleIcon,
-  PauseCircleIcon,
-  StopCircleIcon,
-  XCircleIcon,
-} from '@phosphor-icons/react'
+import { CheckCircleIcon, StopCircleIcon, XCircleIcon } from '@phosphor-icons/react'
 
 import { StyleUtils } from '@velaros-ai/ui'
 import { BubbleTooltip } from '@velaros-ai/ui/primitives/overlays/Tooltip'
@@ -12,12 +7,17 @@ import { BubbleTooltip } from '@velaros-ai/ui/primitives/overlays/Tooltip'
 import { useConversationI18n } from '../i18n'
 import type { ConversationRunMarkerView } from '../projection'
 
+import type { SettledRunMarkerStatus } from './messageBubbleRenderModel'
+
 import styles from './MessageBubble.module.css'
 
 const cx = StyleUtils.bindCx(styles)
 
+/** 正文末尾角标读的那一片：只有结束了的运行才画（等确认、等回答时卡片自己在等）。 */
+type SettledRunMarkerView = ConversationRunMarkerView & { status: SettledRunMarkerStatus }
+
 function getRunMarkerMeta(
-  marker: ConversationRunMarkerView,
+  marker: SettledRunMarkerView,
   t: ReturnType<typeof useConversationI18n>['t']
 ): {
   label: string
@@ -58,26 +58,10 @@ function getRunMarkerMeta(
         toneClass: 'statusWarning',
         icon: <StopCircleIcon size={14} weight="fill" />,
       }
-    case 'awaiting-confirmation':
-      return {
-        label: t('status.awaitingConfirmation'),
-        turnLabel,
-        detail: marker.detail ?? t('status.awaitingConfirmationDescription'),
-        toneClass: 'statusWarning',
-        icon: <PauseCircleIcon size={14} weight="fill" />,
-      }
-    case 'awaiting-input':
-      return {
-        label: t('status.awaitingInput'),
-        turnLabel,
-        detail: marker.detail ?? t('status.awaitingInputDescription'),
-        toneClass: 'statusWarning',
-        icon: <PauseCircleIcon size={14} weight="fill" />,
-      }
   }
 }
 
-function MessageStatusMarkerInner({ marker }: { marker: ConversationRunMarkerView }): ReactElement {
+function MessageStatusMarkerInner({ marker }: { marker: SettledRunMarkerView }): ReactElement {
   const { t } = useConversationI18n()
   const meta = getRunMarkerMeta(marker, t)
   const tooltip = [meta.label, meta.turnLabel].filter(Boolean).join('\n')

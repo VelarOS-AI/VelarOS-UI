@@ -41,7 +41,7 @@ import { useDisclosurePresence } from '../react-hooks/useDisclosurePresence'
 import { useTimerScope } from '../react-hooks/useTimerScope'
 
 import { useConversationBlockHooks } from './conversationBlockHooks'
-import type { ConversationMessageRunMarker } from './messageBubbleRenderModel'
+import type { SettledRunMarker } from './messageBubbleRenderModel'
 import { MessageStatusMarker } from './MessageStatusMarker'
 import {
   createStreamFadeLedgerStore,
@@ -531,7 +531,7 @@ function MessageMarkdownBlockInner({
   onOpenProjectPath,
 }: {
   block: TextBlock
-  tailMarker?: LooseOptional<ConversationMessageRunMarker>
+  tailMarker?: LooseOptional<SettledRunMarker>
   formatPathForDisplay?: (path: string) => string
   onOpenBrowserLink?: (url: string) => void | Promise<void>
   onOpenProjectPath?: (path: string) => unknown
@@ -595,7 +595,7 @@ function StreamingTextBlockInner({
   animationKey: string
   animateText: boolean
   isMessageStreaming: boolean
-  tailMarker?: LooseOptional<ConversationMessageRunMarker>
+  tailMarker?: LooseOptional<SettledRunMarker>
   formatPathForDisplay?: (path: string) => string
   onOpenBrowserLink?: (url: string) => void | Promise<void>
   onOpenProjectPath?: (path: string) => unknown

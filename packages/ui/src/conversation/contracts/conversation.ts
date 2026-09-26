@@ -464,8 +464,6 @@ export interface InteractionBlock {
   fields?: InteractionField[]
   /** 危险命令的操作：命令与它的工作目录。 */
   operation?: { label: string; target?: string }
-  /** 能力申请附带的补充（JSON 文本）。 */
-  detail?: string
   status: InteractionStatus
   answer?: InteractionAnswer
 }

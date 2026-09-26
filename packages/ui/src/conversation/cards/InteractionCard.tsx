@@ -30,7 +30,7 @@ import { CardTextButton } from '@velaros-ai/ui/product/layout/CardKit'
 import { useConversationI18n } from '../i18n'
 
 import { AskUserCarousel, type AskUserDraft } from './AskUserCarousel'
-import { ExecutionStepFrame, ExecutionStepPayload } from './ExecutionStepFrame'
+import { ExecutionStepFrame } from './ExecutionStepFrame'
 import { useInteractionAnswer } from './interactionAnswerContext'
 import {
   buildInteractionAnswer,
@@ -173,7 +173,7 @@ function PendingFrame({ block, children }: { block: InteractionBlock; children: 
   )
 }
 
-/** 一句话的提问与能力申请：写一段话回答，回车发送，Shift+回车换行。 */
+/** 一句话的提问与能力申请：写一段话回答，回车发送，Shift+回车换行；输入框与跳过、发送在同一行。 */
 function PendingTextAnswer({ block, onAnswer }: PendingProps): ReactElement {
   const { t } = useConversationI18n()
   const { submitting, submit } = useSubmission(onAnswer)
@@ -192,31 +192,32 @@ function PendingTextAnswer({ block, onAnswer }: PendingProps): ReactElement {
 
   return (
     <PendingFrame block={block}>
-      {!!block.detail && <ExecutionStepPayload text={block.detail} language="json" />}
-      <Textarea
-        ref={textareaRef}
-        rows={1}
-        size="sm"
-        className={styles.answer}
-        value={text}
-        placeholder={t('interaction.answerPlaceholder')}
-        disabled={submitting}
-        onChange={(event) => setText(event.currentTarget.value)}
-        onKeyDown={handleKeyDown}
-        onCompositionStart={() => {
-          composingRef.current = true
-        }}
-        onCompositionEnd={() => {
-          composingRef.current = false
-        }}
-      />
-      <div className={styles.actions}>
-        <CardTextButton disabled={submitting} onClick={() => submit({ declined: true })}>
-          {t('common.skip')}
-        </CardTextButton>
-        <CardTextButton tone="approve" disabled={!canSend} onClick={send}>
-          {t('userActionForm.wizardSend')}
-        </CardTextButton>
+      <div className={styles.answerRow}>
+        <Textarea
+          ref={textareaRef}
+          rows={1}
+          size="sm"
+          className={styles.answer}
+          value={text}
+          placeholder={t('interaction.answerPlaceholder')}
+          disabled={submitting}
+          onChange={(event) => setText(event.currentTarget.value)}
+          onKeyDown={handleKeyDown}
+          onCompositionStart={() => {
+            composingRef.current = true
+          }}
+          onCompositionEnd={() => {
+            composingRef.current = false
+          }}
+        />
+        <div className={styles.actions}>
+          <CardTextButton disabled={submitting} onClick={() => submit({ declined: true })}>
+            {t('common.skip')}
+          </CardTextButton>
+          <CardTextButton tone="approve" disabled={!canSend} onClick={send}>
+            {t('userActionForm.wizardSend')}
+          </CardTextButton>
+        </div>
       </div>
     </PendingFrame>
   )
@@ -303,7 +304,6 @@ function InteractionDetails({ block }: InteractionCardProps): ReactElement {
     <>
       <p className={styles.message}>{block.message}</p>
       {!!block.operation && <InteractionOperation operation={block.operation} />}
-      {!!block.detail && <ExecutionStepPayload text={block.detail} language="json" />}
       {!!reply && <p className={styles.reply}>{reply}</p>}
     </>
   )

@@ -25,6 +25,8 @@ import { shouldUseLiveTextRenderer } from "./liveTextRendererMode";
 import {
   areRunMarkersEqual,
   type ConversationMessageRunMarker,
+  type SettledRunMarker,
+  settledRunMarker,
 } from "./messageBubbleRenderModel";
 import {
   getScriptExecutionMotionRevision,
@@ -222,7 +224,7 @@ function DeferredMessageMarkdownBlock({
   onOpenProjectPath,
 }: {
   block: TextBlock;
-  tailMarker?: LooseOptional<ConversationMessageRunMarker>;
+  tailMarker?: LooseOptional<SettledRunMarker>;
   formatPathForDisplay?: (path: string) => string;
   onOpenBrowserLink?: (url: string) => void | Promise<void>;
   onOpenProjectPath?: (path: string) => unknown;
@@ -351,7 +353,7 @@ function MessageContentBlockInner({
             animationKey={`${messageId}:${blockAnimationKey ?? blockIndex ?? "text"}`}
             animateText={isStreaming && animateStreamingText}
             isMessageStreaming={isStreaming}
-            tailMarker={!isStreaming && runMarker ? runMarker : null}
+            tailMarker={isStreaming ? null : settledRunMarker(runMarker)}
             formatPathForDisplay={formatPathForDisplay}
             onOpenBrowserLink={onOpenBrowserLink}
             onOpenProjectPath={onOpenProjectPath}
@@ -369,7 +371,7 @@ function MessageContentBlockInner({
     official: (
       <DeferredMessageMarkdownBlock
         block={block}
-        tailMarker={runMarker}
+        tailMarker={settledRunMarker(runMarker)}
         formatPathForDisplay={formatPathForDisplay}
         onOpenBrowserLink={onOpenBrowserLink}
         onOpenProjectPath={onOpenProjectPath}

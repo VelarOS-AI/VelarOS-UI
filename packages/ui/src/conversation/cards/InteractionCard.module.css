@@ -88,10 +88,22 @@
   overflow-wrap: anywhere;
 }
 
+/* 输入框与跳过、发送在同一行：输入框占满剩下的宽度，按钮贴着它的底边，输入框变高时按钮留在最后一行旁边。 */
+.answerRow {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--ui-space-2);
+}
+
 .answer {
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: 32px;
   background: var(--card);
+}
+
+.answerRow .actions {
+  flex: none;
 }
 
 .actions {
