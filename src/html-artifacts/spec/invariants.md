@@ -14,3 +14,4 @@ INV-6 的措辞跟着改：对外只剩沙箱文档一件能力。
 | INV-5 | 注入 iframe 的脚本不另抄常量：缺省高度上限与宽度倍数上限就是 `HtmlArtifactDefaults` 里那两个数字，改常量表脚本跟着变 | 测试 | `spec/acceptance.test.ts` |
 | INV-6 | 两个入口整条引用链不碰 Node 内置模块，浏览器扩展与渲染进程都能直接加载；类与工具函数不出包，外面只拿得到沙箱文档能力的实例与常量表 | 门禁 | `check:module-ownership` |
 | INV-8 | 外链只放行 `http:` / `https:`：`htmlArtifactDocuments.normalizeExternalUrl` 对主动执行型 URL（`javascript:` 一类）、相对地址、空串一律给 null，宿主据此拒绝跳转 | 测试 | `spec/acceptance.test.ts` |
+| INV-9 | 制品里的每段脚本跑且只跑一次：外壳文档再收到 `render` 时，跑过的脚本内容没变就不重跑，同一位置换了内容的换上新的一份再跑；普通脚本的顶层 `let` / `const` / `class` 因重名（`window` 上改不掉的 `top`、`location`、`document`、`window`，或者前面一段脚本已声明）在实例化时整段失败的，套一层块原位再跑一次，这次的错不上报，再失败才报；跑到一半抛出的错、模块脚本与外链脚本不重跑 | 测试 | `spec/acceptance.test.ts` |

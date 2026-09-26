@@ -127,6 +127,23 @@ function bridgeHeadScript(messages: HtmlArtifactBridgeMessages): string {
     + `window.sendPrompt=function(text){window.parent.postMessage({type:${jsString(messages.sendPrompt)},prompt:String(text||'')},'*')};`
     + `window.openLink=function(url){window.parent.postMessage({type:${jsString(messages.openLink)},url:String(url||'')},'*')};`
     + `window.artifactBridge={send:function(payload){window.parent.postMessage({type:${jsString(messages.generic)},payload:payload},'*')}};`
+    // 普通脚本的顶层 let / const / class 跟 window 上改不掉的名字同名（top、location、document、window），或者跟前面
+    // 一段脚本重名，整段在实例化时就失败，一行都没跑。套一层块再跑一次：顶层声明只在这段脚本里，var 与函数照旧挂到全局；
+    // 这次的错不上报，再跑还失败才报。只认实例化阶段的重名错，脚本跑到一半抛出的 SyntaxError（JSON.parse 之类）不重跑。
+    + `window.addEventListener('error',function(event){`
+    + `var script=document.currentScript;var error=event&&event.error;`
+    + `if(!script||!script.parentNode||script.src||script.hasAttribute('data-velaros-script-retry'))return;`
+    + `if(!error||error.name!=='SyntaxError'||!/already been declared|redeclaration of|duplicate variable|variable twice/i.test(String(error.message||'')))return;`
+    + `var type=String(script.getAttribute('type')||'').trim().toLowerCase();`
+    + `if(type&&type!=='text/javascript'&&type!=='application/javascript')return;`
+    + `var retry=document.createElement('script');`
+    + `Array.prototype.slice.call(script.attributes).forEach(function(attr){retry.setAttribute(attr.name,attr.value);});`
+    + `retry.setAttribute('data-velaros-script-retry','true');`
+    + `retry.__velarosScriptSource=script.__velarosScriptSource;`
+    + `retry.text='{'+(script.text||'')+'\\n}';`
+    + `event.preventDefault();event.stopImmediatePropagation();`
+    + `script.parentNode.replaceChild(retry,script);`
+    + `});`
     + `window.addEventListener('error',function(event){window.__htmlArtifactReportRuntimeError(event&&event.error||event&&event.message||'制品脚本执行出错',{phase:'window'});});`
     + `window.addEventListener('unhandledrejection',function(event){window.__htmlArtifactReportRuntimeError(event&&event.reason||'制品脚本里有 Promise 出错没人接',{phase:'script'});});`
     // 平铺后 iframe 根文档无可滚区域,wheel 事件却被 iframe 文档吞掉(跨文档不冒泡到宿主),
@@ -294,6 +311,7 @@ function renderRuntimeScript(rootExpression: string): string {
     + `next.onerror=function(event){reportPatchError(event&&event.error||'制品脚本加载失败',{type:'script',scriptId:next.getAttribute('data-artifact-script')||next.src||'inline'},'script');};`
     + `if(hasAllowedSrc){next.async=false;next.onload=function(){activateScriptAt(index+1);};next.onerror=function(event){reportPatchError(event&&event.error||'制品脚本加载失败',{type:'script',scriptId:next.getAttribute('data-artifact-script')||next.src||'inline'},'script');activateScriptAt(index+1);};if(script.parentNode){script.parentNode.replaceChild(next,script);}else{activateScriptAt(index+1);}return;}`
     + `if(hasBlockedSrc){reportPatchError('已拦下非 https 的外部脚本: '+next.getAttribute('data-blocked-src'),{type:'script',scriptId:next.getAttribute('data-artifact-script')||next.getAttribute('data-blocked-src')||'inline'},'script');}`
+    + `next.__velarosScriptSource=scriptSource(script);`
     + `next.text=script.text||script.textContent||'';`
     + `if(script.parentNode){script.parentNode.replaceChild(next,script);}`
     + `activateScriptAt(index+1);`
@@ -306,9 +324,18 @@ function renderRuntimeScript(rootExpression: string): string {
     + `Array.prototype.slice.call(target.attributes).forEach(function(attr){if(!source.hasAttribute(attr.name))target.removeAttribute(attr.name);});`
     + `Array.prototype.slice.call(source.attributes).forEach(function(attr){if(target.getAttribute(attr.name)!==attr.value)target.setAttribute(attr.name,attr.value);});`
     + `}`
+    + `function scriptSource(script){`
+    + `return Array.prototype.map.call(script.attributes,function(attr){return attr.name+'='+attr.value;}).sort().join('\\n')+'\\n'+(script.text||script.textContent||'');`
+    + `}`
     + `function patchNode(target,source){`
     + `if(!sameNode(target,source)){target.parentNode&&target.parentNode.replaceChild(source.cloneNode(true),target);return;}`
     + `if(target.nodeType===3){if(target.nodeValue!==source.nodeValue)target.nodeValue=source.nodeValue;return;}`
+    // 跑过的脚本：内容没变就原样留着，换了内容就换成新的一份再激活。照常同步属性会抹掉激活标记，脚本每次渲染都重跑一遍
+    // （事件挂两次、图画两遍，顶层 const 报重复声明）。
+    + `if(target.nodeName==='SCRIPT'&&target.hasAttribute('data-velaros-script-activated')){`
+    + `if(target.__velarosScriptSource!==scriptSource(source)&&target.parentNode)target.parentNode.replaceChild(source.cloneNode(true),target);`
+    + `return;`
+    + `}`
     + `syncAttributes(target,source);patchChildren(target,source);`
     + `}`
     + `function patchChildren(target,source){`
