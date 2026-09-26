@@ -3493,11 +3493,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "ReactNode"
     },
     {
-      "name": "ExecutionStepFrame.sourcePreview",
-      "description": "收起时悬停标题行弹出的源码预览；给了才挂气泡，展开后不再弹。",
-      "type": "ReactNode"
-    },
-    {
       "name": "ExecutionStepFrame.renderDetails",
       "description": "展开后的详情；只在展开期间渲染，收起的卡不付这份开销。",
       "type": "() => ReactNode",

@@ -1,8 +1,7 @@
 /**
  * 执行步骤卡的外框：一行标题（图标 + 一句话 + 标签 + 行尾状态）本身就是展开按钮，点开看详情。
- * 状态不画图标，看整张卡的底色：进行中与已取消是很淡的灰，成功淡绿，失败淡红。给了源码预览时，收起
- * 状态下悬停标题行弹出可追进去滚动、选中复制的气泡（HoverCard），Escape 关闭；展开后详情里就有源码，
- * 不再弹气泡。脚本执行卡、旧工具调用卡与回答过的交互卡共用这副外框，聊天流里的每一步都长同一个样子。
+ * 状态不画图标，看整张卡的底色：进行中与已取消是很淡的灰，成功淡绿，失败淡红。脚本执行卡、旧工具调用卡与
+ * 回答过的交互卡共用这副外框，聊天流里的每一步都长同一个样子。
  */
 import {
   Fragment,
@@ -15,7 +14,6 @@ import {
 import { CaretRightIcon } from '@phosphor-icons/react'
 
 import { StyleUtils } from '@velaros-ai/ui'
-import { HoverCard } from '@velaros-ai/ui/primitives/overlays/HoverCard'
 
 import { useConversationI18n } from '../i18n'
 import { AutoScrollSuspendEventName } from '../react-hooks/scrollBehavior'
@@ -60,8 +58,6 @@ export interface ExecutionStepFrameProps {
   tags?: ReactNode
   /** 行尾的状态文字（耗时、执行中）。 */
   meta?: ReactNode
-  /** 收起时悬停标题行弹出的源码预览；给了才挂气泡，展开后不再弹。 */
-  sourcePreview?: ReactNode
   /** 展开后的详情；只在展开期间渲染，收起的卡不付这份开销。 */
   renderDetails: () => ReactNode
 }
@@ -78,7 +74,6 @@ export function ExecutionStepFrame({
   live,
   tags,
   meta,
-  sourcePreview,
   renderDetails,
 }: ExecutionStepFrameProps): ReactElement {
   const [expanded, setExpanded] = useState(false)
@@ -128,13 +123,7 @@ export function ExecutionStepFrame({
 
   return (
     <div className={styles.root} data-slot={slot} data-tone={tone}>
-      {sourcePreview ? (
-        <HoverCard content={sourcePreview} widthStrategy="anchor" disabled={expanded}>
-          {header}
-        </HoverCard>
-      ) : (
-        header
-      )}
+      {header}
       {mounted && (
         <div id={detailsId} className={cx('detailsShell', visible && 'detailsShellVisible')}>
           <div className={styles.detailsFrame}>

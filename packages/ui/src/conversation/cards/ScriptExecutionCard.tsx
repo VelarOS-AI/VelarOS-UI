@@ -16,8 +16,7 @@ import {
 import { formatToolDurationMs } from '../tool-render/toolCallSummary'
 import { toolLeadingPhosphorIcon } from '../tool-render/toolLeadingPhosphorIcon'
 
-import { ExecutionStepFrame, ExecutionStepPayload, HighlightedLines } from './ExecutionStepFrame'
-import { useHighlightedCode } from './executionStepHighlight'
+import { ExecutionStepFrame, ExecutionStepPayload } from './ExecutionStepFrame'
 import {
   formatScriptPayload,
   resolveScriptExecutionFailureReason,
@@ -69,35 +68,8 @@ function ScriptExecutionCardInner({ block }: ScriptExecutionCardProps): ReactEle
       reason={resolveScriptExecutionFailureReason(block)}
       live={optionalWhen(block.status === 'running', live)}
       meta={duration}
-      sourcePreview={<ScriptSourcePreview block={block} />}
       renderDetails={() => <ScriptExecutionDetails block={block} />}
     />
-  )
-}
-
-/** 悬停气泡里的脚本源码，按语法着色；编写中还没有源码时给一句正在编写。 */
-export function ScriptSourcePreview({
-  block,
-}: {
-  block: Pick<ScriptExecutionBlock, 'source' | 'sourceTruncated' | 'status'>
-}): ReactElement {
-  const { t } = useConversationI18n()
-  const code = useHighlightedCode(block.source, 'typescript')
-
-  if (!isNonBlankString(block.source))
-    return (
-      <p className={styles.note}>
-        {t(block.status === 'writing' ? 'scriptExecution.sourceWriting' : 'scriptExecution.sourceEmpty')}
-      </p>
-    )
-
-  return (
-    <div className={styles.source} data-slot="script-execution-source">
-      <pre className={styles.sourceCode}>
-        {code ? <HighlightedLines code={code} /> : <code>{block.source}</code>}
-      </pre>
-      {block.sourceTruncated && <p className={styles.note}>{t('scriptExecution.sourceTruncated')}</p>}
-    </div>
   )
 }
 

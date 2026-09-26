@@ -285,7 +285,6 @@ export const conversationZhCNMessages = {
     executeTitle: '执行脚本',
     observeTitle: '持续观察',
     sourceEmpty: '没有源码。',
-    sourceTruncated: '源码过长，后面的部分已截断。',
     sourceWriting: '正在编写…',
   },
   sessionStickyDock: {
@@ -686,7 +685,6 @@ export const conversationEnUSMessages = {
     executeTitle: 'Run script',
     observeTitle: 'Keep watching',
     sourceEmpty: 'No source.',
-    sourceTruncated: 'Source too long; the rest was truncated.',
     sourceWriting: 'Writing…',
   },
   sessionStickyDock: {

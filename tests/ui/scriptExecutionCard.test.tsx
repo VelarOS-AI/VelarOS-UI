@@ -32,7 +32,6 @@ import {
 import {
   ScriptExecutionCard,
   ScriptExecutionDetails,
-  ScriptSourcePreview,
 } from '../../packages/ui/src/conversation/cards/ScriptExecutionCard'
 import { ToolCallStepCard } from '../../packages/ui/src/conversation/cards/ToolCallStepCard'
 import type {
@@ -329,26 +328,6 @@ void describe('ScriptExecutionCard', () => {
         })
       ),
       />正在编写…</
-    )
-  })
-
-  void test('悬停气泡：有源码时等宽原样给出，截断时末尾标注；编写中还没源码时说正在编写', () => {
-    const withSource = render(
-      createElement(ScriptSourcePreview, {
-        block: { source: 'const a = 1\n  return a', sourceTruncated: true, status: 'running' },
-      })
-    )
-    assert.match(withSource, /data-slot="script-execution-source"/)
-    assert.match(textOf(withSource), /const a = 1\n {2}return a/)
-    assert.match(withSource, />源码过长，后面的部分已截断。</)
-
-    assert.match(
-      render(createElement(ScriptSourcePreview, { block: { source: '', sourceTruncated: false, status: 'writing' } })),
-      />正在编写…</
-    )
-    assert.match(
-      render(createElement(ScriptSourcePreview, { block: { source: ' ', sourceTruncated: false, status: 'cancelled' } })),
-      />没有源码。</
     )
   })
 })
