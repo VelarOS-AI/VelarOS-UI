@@ -31,9 +31,12 @@ import { type ExecutionFrameTone, isLongExecutionPayload } from './executionStep
 
 import styles from './ExecutionStep.module.css'
 
-import { optionalWhen } from '#internal/runtime'
+import { isNonBlankString, optionalWhen } from '#internal/runtime'
 
 const cx = StyleUtils.bindCx(styles)
+
+/** 运行中的输出在标题下最多露几行。 */
+const LiveOutputLines = 3
 
 export interface ExecutionStepFrameProps {
   /** 写在根节点 `data-slot` 上，宿主与测试据此认出是哪种步骤卡。 */
@@ -51,6 +54,8 @@ export interface ExecutionStepFrameProps {
   reason?: LooseOptional<string>
   /** 标题下那行中性小字：交互卡收起后写明答了什么。 */
   summary?: LooseOptional<string>
+  /** 正在跑的命令刚吐出的输出：标题下最后几行等宽小字，收起也看得到，跑完就没了。 */
+  live?: LooseOptional<string>
   /** 标题右边的标签（用到的模块、工具名），用 `ExecutionStep.module.css` 的 `tags` / `tag` 排。 */
   tags?: ReactNode
   /** 行尾的状态文字（耗时、执行中）。 */
@@ -70,6 +75,7 @@ export function ExecutionStepFrame({
   monospaceTitle = false,
   reason,
   summary,
+  live,
   tags,
   meta,
   sourcePreview,
@@ -100,6 +106,16 @@ export function ExecutionStepFrame({
         <span className={cx('title', monospaceTitle && 'titleMono')}>{title}</span>
         {!!reason && <span className={styles.reason}>{reason}</span>}
         {!!summary && <span className={styles.summary}>{summary}</span>}
+        {!!live && (
+          <span className={styles.live} data-slot="execution-step-live">
+            {liveOutputLines(live).map((line, index) => (
+              // 只显示末尾几行、整段随新输出替换，行的序号就是它的身份。
+              <span key={index} className={styles.liveLine}>
+                {line}
+              </span>
+            ))}
+          </span>
+        )}
       </span>
       {tags}
       {!!meta && <span className={styles.meta}>{meta}</span>}
@@ -128,6 +144,15 @@ export function ExecutionStepFrame({
       )}
     </div>
   )
+}
+
+/** 运行中的输出只露最后几行：空行不占位置，每行过长的在行尾省略。 */
+function liveOutputLines(text: string): string[] {
+  return text
+    .split('\n')
+    .map((line) => line.trimEnd())
+    .filter(isNonBlankString)
+    .slice(-LiveOutputLines)
 }
 
 /**

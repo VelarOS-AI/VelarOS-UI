@@ -15,6 +15,9 @@ import type { ChatMessage, ProjectRootEntry } from '#contracts'
  * `useAutoTranslateThinkingEnabled`（pass-3b2）：思考块自动翻译开关来自宿主 AppConfigProvider
  * （`useSystemConfig().modelProvider.thinking.autoTranslateThinking`）——包内 `ThinkingBlock` 经此 hook 读取，
  * 不直依宿主配置上下文。
+ *
+ * `useScriptLiveOutput`：脚本卡正在跑的命令刚吐出的输出末尾（宿主从运行中的输出攒的，按脚本卡 id 取）。它是
+ * 跑着时才有的临时状态，不写进消息块，免得跟着会话落盘；没有就是 null。
  */
 export interface ConversationMessageActionOptions {
   activeProjectRoot: Nullable<string>
@@ -27,6 +30,7 @@ export interface ConversationMessageActionOptions {
 export interface ConversationBlockHooks {
   useMessageActionView: (options: ConversationMessageActionOptions) => MessageActionView
   useAutoTranslateThinkingEnabled: () => boolean
+  useScriptLiveOutput: (blockId: string) => Nullable<string>
 }
 
 const emptyMessageActionView: MessageActionView = Object.freeze({
@@ -41,6 +45,7 @@ const emptyMessageActionView: MessageActionView = Object.freeze({
 export const emptyConversationBlockHooks: ConversationBlockHooks = Object.freeze({
   useMessageActionView: () => emptyMessageActionView,
   useAutoTranslateThinkingEnabled: () => false,
+  useScriptLiveOutput: () => null,
 })
 
 const ConversationBlockHooksContext = createContext<Nullable<ConversationBlockHooks>>(null)

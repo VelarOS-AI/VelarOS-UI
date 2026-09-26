@@ -119,6 +119,24 @@
   white-space: nowrap;
 }
 
+/* 正在跑的命令刚吐出的最后几行：等宽、淡色，和标题同一列对齐。 */
+.live {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  margin-top: 2px;
+}
+
+.liveLine {
+  overflow: hidden;
+  color: var(--foreground-tertiary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: pre;
+}
+
 .tags {
   display: inline-flex;
   flex-shrink: 0;

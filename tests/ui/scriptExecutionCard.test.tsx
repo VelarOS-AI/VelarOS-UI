@@ -66,8 +66,12 @@ const i18n: ConversationI18nContextValue = {
     ),
 }
 
+/** 宿主给的运行中输出：按脚本卡 id 取。 */
+const liveOutputs = new Map<string, string>()
+
 const blockHooks: ConversationBlockHooks = {
   useAutoTranslateThinkingEnabled: () => false,
+  useScriptLiveOutput: (blockId) => liveOutputs.get(blockId) ?? null,
   useMessageActionView: () => ({
     actionItems: [],
     actionRows: [],
@@ -247,6 +251,20 @@ void describe('ScriptExecutionCard', () => {
     assert.match(markup, />失败</)
     assert.match(markup, />TypeError: exitCode of undefined</)
     assert.doesNotMatch(markup, /at script:2:1/)
+  })
+
+  void test('跑着时标题下露出正在跑的命令最后三行输出，空行不算；跑完就不再显示', () => {
+    liveOutputs.set('script-1', 'resolving\n\nfetching 1/3\nfetching 2/3\nlinking   \n')
+    try {
+      const running = render(createElement(ScriptExecutionCard, { block: script({ status: 'running' }) }))
+      assert.match(running, /data-slot="execution-step-live"/)
+      assert.doesNotMatch(running, /resolving/)
+      assert.match(running, /fetching 1\/3<\/span><span[^>]*>fetching 2\/3<\/span><span[^>]*>linking<\/span>/)
+      const done = render(createElement(ScriptExecutionCard, { block: script({ status: 'succeeded' }) }))
+      assert.doesNotMatch(done, /execution-step-live/)
+    } finally {
+      liveOutputs.clear()
+    }
   })
 
   void test('标题为空时按第一处调用兜底，没有调用时显示「执行脚本」', () => {

@@ -32,6 +32,7 @@ const localization: ConversationI18nContextValue = {
 
 const blockHooks: ConversationBlockHooks = {
   useAutoTranslateThinkingEnabled: () => false,
+  useScriptLiveOutput: () => null,
   useMessageActionView: () => ({
     actionItems: [],
     actionRows: [],

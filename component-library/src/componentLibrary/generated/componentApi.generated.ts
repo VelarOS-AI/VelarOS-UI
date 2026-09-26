@@ -3502,6 +3502,11 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "LooseOptional<string>"
     },
     {
+      "name": "ExecutionStepFrame.live",
+      "description": "正在跑的命令刚吐出的输出：标题下最后几行等宽小字，收起也看得到，跑完就没了。",
+      "type": "LooseOptional<string>"
+    },
+    {
       "name": "ExecutionStepFrame.tags",
       "description": "标题右边的标签（用到的模块、工具名），用 `ExecutionStep.module.css` 的 `tags` / `tag` 排。",
       "type": "ReactNode"

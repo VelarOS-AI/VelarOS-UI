@@ -2,10 +2,12 @@
  * 脚本执行卡：模型一轮里的一个程序声明。execute 这一轮执行一次，observe 登记持续观察、从下一回合起每帧
  * 运行；两种只靠标题行最左的图标区分（命令图标、搜索图标）。标题用一句话说这一步做什么，右边是执行用了
  * 多久；状态只看整张卡的底色。收起时悬停标题行看源码，点开看执行的代码与每次调用的结果，都按语法着色。
+ * 跑着的时候，正在跑的命令刚吐出的输出露在标题下（宿主经块钩子给），跑完就没了。
  * 不走旧工具卡的分类，也不进「调用了 N 次工具」的折叠。
  */
 import { memo, type ReactElement, useMemo } from 'react'
 
+import { useConversationBlockHooks } from '../blocks/conversationBlockHooks'
 import {
   type ConversationMessageKey,
   useConversationI18n,
@@ -27,7 +29,7 @@ import {
 import styles from './ExecutionStep.module.css'
 
 import type { ScriptExecutionBlock, ScriptExecutionCall } from '#contracts'
-import { isNonBlankString, isPresent, trimmedStringOrEmpty } from '#internal/runtime'
+import { isNonBlankString, isPresent, optionalWhen, trimmedStringOrEmpty } from '#internal/runtime'
 
 /** 标题行图标的尺寸，与原来的工具行一致。 */
 const StepIconSize = 13
@@ -47,6 +49,7 @@ export interface ScriptExecutionCardProps {
 function ScriptExecutionCardInner({ block }: ScriptExecutionCardProps): ReactElement {
   const { t, locale } = useConversationI18n()
   const translatorRuntime = useConversationTranslatorRuntime()
+  const live = useConversationBlockHooks().useScriptLiveOutput(block.id)
   const observe = block.kind === 'observe'
   const title =
     resolveScriptExecutionTitle(block) ??
@@ -64,6 +67,7 @@ function ScriptExecutionCardInner({ block }: ScriptExecutionCardProps): ReactEle
       icon={toolLeadingPhosphorIcon(observe ? 'search' : 'command', StepIconSize)}
       title={title}
       reason={resolveScriptExecutionFailureReason(block)}
+      live={optionalWhen(block.status === 'running', live)}
       meta={duration}
       sourcePreview={<ScriptSourcePreview block={block} />}
       renderDetails={() => <ScriptExecutionDetails block={block} />}
