@@ -49,6 +49,12 @@ const BRAND_TOKEN_MAP: ReadonlyArray<readonly [artifactVar: string, appVar: stri
   ['--brand-accent', '--accent'],
   ['--brand-radius', '--radius'],
   ['--brand-font', '--font-sans'],
+  // 沙箱设计样式里的信息色引用这一组；不注入就只剩缺省的蓝色，跟不上品牌色
+  ['--status-blue-rgb', '--status-blue-rgb'],
+  ['--status-blue', '--status-blue'],
+  ['--status-blue-strong', '--status-blue-strong'],
+  ['--status-blue-muted', '--status-blue-muted'],
+  ['--status-blue-surface', '--status-blue-surface'],
 ]
 
 function buildBrandTokenRootCss(): string {

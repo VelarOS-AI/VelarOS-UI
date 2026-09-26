@@ -5,6 +5,15 @@
   --bg2: #f7f7f8;
   --bg3: rgba(17, 17, 17, 0.045);
   --b: rgba(15, 15, 15, 0.09);
+  /*
+   * 信息色（--color-text-info、--color-background-info、.c-blue、焦点框）跟宿主的品牌主色走。iframe 不继承宿主的变量，
+   * 这里先给一份缺省值（单独下载的制品、读不到宿主样式时用）；嵌在应用里时宿主把实际值注入进来覆盖。
+   */
+  --status-blue-rgb: 37, 99, 235;
+  --status-blue: rgb(var(--status-blue-rgb));
+  --status-blue-strong: var(--status-blue);
+  --status-blue-muted: var(--status-blue);
+  --status-blue-surface: var(--color-background-secondary);
   --color-text-primary: #262626;
   --color-text-secondary: #666a70;
   --color-text-tertiary: #8b9097;
