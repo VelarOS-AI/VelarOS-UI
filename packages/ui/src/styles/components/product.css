@@ -1579,6 +1579,25 @@
   --sticky-dock-pane-top-padding: 1rem;
 }
 
+/*
+ * 展开时幕布进文档流、铺一层与页面同色的底：在顶部时占住自己的高度，第一条消息不被盖住；
+ * 往下滚时贴在顶上，正文从它下面过去，不会从卡片四周和上方透出来。收起时照旧零高度，只露拉手。
+ */
+.velar-session-sticky-dock:has(.velar-session-sticky-dock-curtain-open) {
+  top: 0;
+  height: auto;
+  flex: 0 0 auto;
+  margin-top: calc(0px - var(--sticky-dock-pane-top-padding));
+  margin-bottom: 0;
+  padding-top: var(--sticky-dock-safe-top);
+  background: var(--background);
+}
+
+.velar-session-sticky-dock:has(.velar-session-sticky-dock-curtain-open)
+  .velar-session-sticky-dock-layer {
+  height: auto;
+}
+
 .velar-session-sticky-dock-layer {
   position: relative;
   width: 100%;
@@ -1607,6 +1626,7 @@
 }
 
 .velar-session-sticky-dock-curtain.velar-session-sticky-dock-curtain-open {
+  position: relative;
   overflow: visible;
 }
 
