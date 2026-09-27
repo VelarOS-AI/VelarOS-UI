@@ -276,12 +276,12 @@
 
 .fileRemoveBtn {
   @apply absolute border-transparent p-0 text-primary-foreground shadow-none transition-all;
-  top: 3px;
-  right: 3px;
-  width: 14px;
-  height: 14px;
-  min-width: 14px;
-  min-height: 14px;
+  top: 4px;
+  right: 4px;
+  width: 12px;
+  height: 12px;
+  min-width: 12px;
+  min-height: 12px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--foreground) 72%, transparent);
   backdrop-filter: blur(4px);
@@ -293,9 +293,11 @@
   transform: none;
 }
 
-.fileRemoveBtn svg {
-  width: 8px;
-  height: 8px;
+/* 按钮原语把里面的图标统一撑到 16px（.velar-button svg:not([class*='size-'])），比这个圆还大，
+   X 会顶满整个圆；这里要压过它，让 X 四周留出空。 */
+button.fileRemoveBtn svg:not([class*="size-"]) {
+  width: 7px;
+  height: 7px;
 }
 
 .fileChip {

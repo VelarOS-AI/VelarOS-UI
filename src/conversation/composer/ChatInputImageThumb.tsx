@@ -33,13 +33,13 @@ function ChatInputImageThumb({
         <ImageIcon size={16} className={styles.fileChipName} />
         <IconButton
           label={removeLabel}
-          size={14}
+          size={12}
           shape="round"
           onClick={onRemove}
           disabled={disabled}
           className={styles.fileRemoveBtn}
         >
-          <XIcon size={8} />
+          <XIcon size={7} weight="bold" />
         </IconButton>
       </div>
     )
@@ -58,13 +58,13 @@ function ChatInputImageThumb({
       </Button>
       <IconButton
         label={removeLabel}
-        size={14}
+        size={12}
         shape="round"
         onClick={onRemove}
         disabled={disabled}
         className={styles.fileRemoveBtn}
       >
-        <XIcon size={8} />
+        <XIcon size={7} weight="bold" />
       </IconButton>
     </div>
   )
