@@ -33,6 +33,8 @@ import {
   STREAMDOWN_MARKDOWN_CONTROLS,
   STREAMDOWN_MARKDOWN_LINK_SAFETY,
   STREAMDOWN_MARKDOWN_PLUGINS,
+  STREAMDOWN_MARKDOWN_REHYPE_PLUGINS,
+  transformMessageMarkdownUrl,
 } from '../markdown/streamdownMarkdown.config'
 import { prepareStreamdownMarkdownText } from '../markdown/streamdownMarkdownSource.utils'
 import { useConversationScrollFollow } from '../react-hooks/conversationScrollFollow'
@@ -482,9 +484,12 @@ function MessageStreamdownInner({
           mode={resolveStreamdownMarkdownMode({ isStreaming })}
           isAnimating={isStreaming && !!animationKey}
           animated={false}
+          remend={{ linkMode: 'text-only' }}
           BlockComponent={animationKey ? PersistentStreamingTextBlock : undefined}
           plugins={STREAMDOWN_MARKDOWN_PLUGINS}
           linkSafety={STREAMDOWN_MARKDOWN_LINK_SAFETY}
+          rehypePlugins={STREAMDOWN_MARKDOWN_REHYPE_PLUGINS}
+          urlTransform={transformMessageMarkdownUrl}
           controls={STREAMDOWN_MARKDOWN_CONTROLS}
           className={MESSAGE_STREAMDOWN_CLASS_NAME}
           components={components}

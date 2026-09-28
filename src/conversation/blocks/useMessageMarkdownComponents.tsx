@@ -13,6 +13,7 @@ import {
   ArrowSquareOutIcon,
   CodeIcon,
   EyeIcon,
+  FileIcon,
 } from '@phosphor-icons/react'
 import { useMemoizedFn } from 'ahooks'
 import {
@@ -28,7 +29,6 @@ import { Link } from '@velaros-ai/ui/primitives/display/Link'
 import { ExpandableContentControls } from '../cards/ExpandableContentControls'
 import { useConversationI18n } from '../i18n'
 import {
-  normalizeMessageMarkdownFileReference,
   resolveMessageMarkdownHrefTarget,
 } from '../markdown/messageMarkdownLinks.utils'
 import { useTimerScope } from '../react-hooks/useTimerScope'
@@ -500,38 +500,8 @@ function MarkdownPre(props: React.ComponentPropsWithoutRef<'pre'>): ReactElement
   return <MarkdownPreWithExpandableCode {...props} isStreaming={isStreaming} />
 }
 
-function MarkdownInlineCode({
-  children,
-  className,
-  ...props
-}: React.ComponentPropsWithoutRef<'code'>): ReactElement {
-  const { openProjectPath } = useContext(MessageMarkdownRuntimeContext)
-  const language = readCodeLanguage(className)
-  const filePath = !language ? normalizeMessageMarkdownFileReference(readCodeText(children)) : null
-  const renderInlineCode = (content: React.ReactNode): ReactElement => (
-    <code className={className} {...props}>
-      {content}
-    </code>
-  )
-
-  if (!filePath || !openProjectPath) return renderInlineCode(children)
-
-  return renderInlineCode(
-    <Link
-      href={filePath}
-      className={styles.markdownFileLink}
-      data-streamdown="link"
-      data-tour-id="chat-result-link"
-      onClick={(event) => {
-        if (!isPrimaryPointerClick(event)) return
-
-        event.preventDefault()
-        void openProjectPath(filePath)
-      }}
-    >
-      {children}
-    </Link>
-  )
+function MarkdownInlineCode(props: React.ComponentPropsWithoutRef<'code'>): ReactElement {
+  return <code {...props} />
 }
 
 function MarkdownLink({
@@ -549,34 +519,40 @@ function MarkdownLink({
   const shouldOpenInBrowser = linkTarget.kind === 'web' && !!openBrowserLink
   const shouldOpenExternally = linkTarget.kind === 'external-protocol'
 
-  if (linkTarget.kind === 'project-file' && openProjectPath)
+  if (linkTarget.kind === 'file' && openProjectPath)
     return (
       <Link
-        href={href}
+        href={linkTarget.uri}
         className={styles.markdownFileLink}
         data-streamdown="link"
         data-tour-id="chat-result-link"
         {...props}
+        title={linkTarget.uri}
         onClick={(event) => {
           onClick?.(event)
-          if (event.defaultPrevented || !isPrimaryPointerClick(event)) return
+          if (event.defaultPrevented) return
 
           event.preventDefault()
           void openProjectPath(linkTarget.path)
         }}
-      />
+        onAuxClick={(event) => event.preventDefault()}
+      >
+        <FileIcon aria-hidden size={14} className={styles.markdownFileIcon} />{' '}
+        {props.children}
+      </Link>
     )
 
-  if (linkTarget.kind === 'text') return <span>{props.children}</span>
+  if (linkTarget.kind === 'text' || linkTarget.kind === 'file') return <span>{props.children}</span>
 
   if (linkTarget.kind === 'web')
     return (
       <span className={styles.markdownWebLinkGroup}>
         <Link
-          href={href}
+          href={linkTarget.url}
           className={styles.markdownWebLink}
           data-tour-id="chat-result-link"
           {...props}
+          title={linkTarget.url}
           rel={rel}
           target={target}
           onClick={(event) => {
@@ -634,23 +610,14 @@ const TailMarkerCandidateComponents = Object.fromEntries(
 
 const BaseMarkdownComponents: StreamdownComponents = {
   pre: MarkdownPre as StreamdownComponents['pre'],
+  a: MarkdownLink as StreamdownComponents['a'],
   inlineCode: MarkdownInlineCode as StreamdownComponents['inlineCode'],
   table: MarkdownTableWithExpandableViewport as StreamdownComponents['table'],
 }
 
 // 没有宿主打开能力时不覆盖 `a`，沿用 Streamdown 自带的链接（含 linkSafety 确认）。
-const LinkAwareMarkdownComponents: StreamdownComponents = {
-  ...BaseMarkdownComponents,
-  a: MarkdownLink as StreamdownComponents['a'],
-}
-
-/** 四张常量表，按「有无链接处理 × 有无尾标」选一张：身份只在这两个布尔翻转时变化。 */
-const MarkdownComponentTables = {
-  base: BaseMarkdownComponents,
-  linkAware: LinkAwareMarkdownComponents,
-  baseWithTail: { ...BaseMarkdownComponents, ...TailMarkerCandidateComponents },
-  linkAwareWithTail: { ...LinkAwareMarkdownComponents, ...TailMarkerCandidateComponents },
-} satisfies Record<string, StreamdownComponents>
+/** 仅在是否需要尾标槽变化时切换组件表。 */
+const MarkdownComponentsWithTail = { ...BaseMarkdownComponents, ...TailMarkerCandidateComponents }
 
 export function MessageMarkdownRuntimeProvider({
   runtime,
@@ -703,14 +670,7 @@ export function useMessageMarkdownComponents(
       openProjectPath,
     ]
   )
-  const linkAware = hasBrowserLink || hasProjectPath
-  const components = withTailMarkerSlots
-    ? linkAware
-      ? MarkdownComponentTables.linkAwareWithTail
-      : MarkdownComponentTables.baseWithTail
-    : linkAware
-      ? MarkdownComponentTables.linkAware
-      : MarkdownComponentTables.base
+  const components = withTailMarkerSlots ? MarkdownComponentsWithTail : BaseMarkdownComponents
 
   return { components, runtime }
 }

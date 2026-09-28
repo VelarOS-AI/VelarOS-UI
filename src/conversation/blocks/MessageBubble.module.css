@@ -1958,3 +1958,8 @@
     }
   }
 }
+
+.markdownFileIcon {
+  display: inline;
+  vertical-align: text-bottom;
+}
