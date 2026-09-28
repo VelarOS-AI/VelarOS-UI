@@ -171,6 +171,8 @@ function coalesceTextBlocksAcrossThinking(blocks: ContentBlock[]): ContentBlock[
 
       if (
         nextBlock.type === 'text' &&
+        nextBlock.segmentId === textBlock.segmentId &&
+        nextBlock.turnId === textBlock.turnId &&
         getTextBlockTone(nextBlock) === getTextBlockTone(textBlock)
       ) {
         textBlock = {

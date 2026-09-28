@@ -1,0 +1,126 @@
+.expandableCodeBlockOverlay {
+  appearance: none;
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  left: 1px;
+  display: flex;
+  height: 86px;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 0 10px;
+  border: 0;
+  border-radius: 0 0 calc(var(--ui-radius-control) - 1px) calc(var(--ui-radius-control) - 1px);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--card) 78%, transparent) 48%,
+    color-mix(in srgb, var(--card) 96%, transparent) 100%
+  );
+  color: color-mix(in srgb, var(--foreground-secondary) 88%, transparent);
+  cursor: pointer;
+  font: inherit;
+  pointer-events: auto;
+  text-align: center;
+  touch-action: manipulation;
+}
+
+.expandableCodeBlockButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: currentColor;
+  line-height: 1;
+  box-shadow: none;
+  pointer-events: auto;
+  animation: expandable-block-control-drift 2.8s ease-in-out infinite;
+  will-change: transform;
+  transition:
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.expandableCodeBlockOverlay:hover .expandableCodeBlockButton,
+.expandableCodeBlockOverlay:focus-visible .expandableCodeBlockButton {
+  color: var(--foreground);
+  transform: translateY(-1px);
+}
+
+.expandableCodeBlockOverlay:focus-visible {
+  outline: none;
+}
+
+.expandableCodeBlockOverlay:focus-visible .expandableCodeBlockButton {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+.expandableCodeBlockCollapseSlot {
+  position: absolute;
+  z-index: 12;
+  right: 0;
+  bottom: 8px;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.expandableCodeBlockCollapseButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  appearance: none;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--foreground-secondary) 88%, transparent);
+  cursor: pointer;
+  line-height: 1;
+  box-shadow: none;
+  pointer-events: auto;
+  animation: expandable-block-control-drift 2.8s ease-in-out infinite;
+  will-change: transform;
+  transition:
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.expandableCodeBlockCollapseButton:hover,
+.expandableCodeBlockCollapseButton:focus-visible {
+  color: var(--foreground);
+  transform: translateY(-1px);
+}
+
+.expandableCodeBlockCollapseButton:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+@keyframes expandable-block-control-drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .expandableCodeBlockButton,
+  .expandableCodeBlockCollapseButton {
+    animation: none;
+    transition: none;
+  }
+}

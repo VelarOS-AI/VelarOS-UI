@@ -158,6 +158,10 @@ export type ToolActivityKind =
 export interface TextBlock {
   type: 'text'
   text: string
+  /** 同一段正文的稳定身份；不同段落不能在展示时直接拼接。 */
+  segmentId?: string
+  /** 生成这段正文的模型回合。 */
+  turnId?: string
   tone?: 'default' | 'error'
 }
 

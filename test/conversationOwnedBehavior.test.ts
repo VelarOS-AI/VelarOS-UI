@@ -165,7 +165,7 @@ void describe('Platform-owned conversation composer behavior', () => {
     const imageThumbButtonStyles =
       styles.match(/\.imageThumbButton\s*\{(?<body>[^}]*)\}/su)?.groups?.body ?? ''
 
-    assert.equal(source.match(/size=\{14\}/gu)?.length, 2)
+    assert.equal(source.match(/size=\{12\}/gu)?.length, 2)
     assert.equal(source.match(/shape="round"/gu)?.length, 2)
     assert.doesNotMatch(source, /size="icon-sm"/u)
     assert.match(
@@ -251,6 +251,10 @@ void describe('Platform-owned conversation composer behavior', () => {
       ),
       'utf8'
     )
+    const controlStyles = readFileSync(
+      new URL('../src/conversation/cards/ExpandableContentControls.module.css', import.meta.url),
+      'utf8'
+    )
     const codeBodyStyles =
       styles.match(
         /& \[data-streamdown='code-block-body'\] \{(?<body>[\s\S]*?)\n {2}\}/u
@@ -260,10 +264,10 @@ void describe('Platform-owned conversation composer behavior', () => {
         /\.expandableCodeBlock\[data-collapsed='true'\] \[data-streamdown='code-block-body'\] \{(?<body>[\s\S]*?)\n {2}\}/u
       )?.groups?.body ?? ''
     const collapseSlotStyles =
-      styles.match(/\.expandableCodeBlockCollapseSlot \{(?<body>[\s\S]*?)\n {2}\}/u)?.groups
+      controlStyles.match(/\.expandableCodeBlockCollapseSlot \{(?<body>[\s\S]*?)\n\}/u)?.groups
         ?.body ?? ''
     const collapseButtonStyles =
-      styles.match(/\.expandableCodeBlockCollapseButton \{(?<body>[\s\S]*?)\n {2}\}/u)?.groups
+      controlStyles.match(/\.expandableCodeBlockCollapseButton \{(?<body>[\s\S]*?)\n\}/u)?.groups
         ?.body ?? ''
 
     assert.match(codeBodyStyles, /overflow-x: auto;/u)
@@ -276,7 +280,7 @@ void describe('Platform-owned conversation composer behavior', () => {
     )
     assert.match(source, /table: MarkdownTableWithExpandableViewport/u)
     assert.equal(source.match(/const collapsed = hasOverflow && !expanded/gu)?.length, 2)
-    assert.equal(source.match(/onClick=\{\(\) => setExpanded\(true\)\}/gu)?.length, 2)
+    assert.equal(source.match(/<ExpandableContentControls/gu)?.length, 2)
     assert.match(collapseSlotStyles, /position: absolute;/u)
     assert.match(collapseSlotStyles, /bottom: 8px;/u)
     assert.match(collapseSlotStyles, /pointer-events: none;/u)

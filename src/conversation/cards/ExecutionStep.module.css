@@ -255,6 +255,7 @@
 }
 
 .payloadBody {
+  position: relative;
   display: flex;
   min-width: 0;
   flex-direction: column;
@@ -283,7 +284,12 @@
 .payloadTextFolded {
   max-height: calc(17px * 6 + 8px);
   overflow: hidden;
-  mask-image: linear-gradient(to bottom, black 65%, transparent);
+}
+
+.payloadBody[data-expanded='true'] .payloadText {
+  max-height: none;
+  overflow-y: hidden;
+  padding-bottom: 40px;
 }
 
 .payloadTextError {
@@ -299,22 +305,6 @@
   color: var(--shiki-dark, var(--sdm-c, inherit));
 }
 
-.payloadToggle {
-  padding: 0;
-  border: 0;
-  border-radius: var(--ui-radius-control-sm);
-  appearance: none;
-  background: transparent;
-  color: var(--foreground-secondary);
-  cursor: pointer;
-  font: inherit;
-  font-size: 11px;
-  line-height: 16px;
-}
-
-.payloadToggle:hover {
-  color: var(--foreground);
-}
 
 .payloadToggle:focus-visible {
   outline: 2px solid var(--ring);

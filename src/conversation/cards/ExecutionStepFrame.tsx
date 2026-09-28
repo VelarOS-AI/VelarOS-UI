@@ -26,6 +26,7 @@ import {
   useHighlightedCode,
 } from './executionStepHighlight'
 import { type ExecutionFrameTone, isLongExecutionPayload } from './executionStepPresentation'
+import { ExpandableContentControls } from './ExpandableContentControls'
 
 import styles from './ExecutionStep.module.css'
 
@@ -146,7 +147,7 @@ function liveOutputLines(text: string): string[] {
 
 /**
  * 详情里的一段代码、参数、返回或错误：等宽正文，给了语言就按语法着色；给了标签时左边一列小标签。
- * 长的先折起来，点「展开全部」再看。
+ * 长的先折起来，通过代码块共用的底部图标展开与收起。
  */
 export function ExecutionStepPayload({
   label,
@@ -168,7 +169,7 @@ export function ExecutionStepPayload({
   return (
     <div className={cx('payload', !label && 'payloadBare')}>
       {!!label && <span className={styles.payloadLabel}>{label}</span>}
-      <div className={styles.payloadBody}>
+      <div className={styles.payloadBody} data-expanded={expanded}>
         <pre
           className={cx(
             'payloadText',
@@ -179,14 +180,12 @@ export function ExecutionStepPayload({
           {highlighted ? <HighlightedLines code={highlighted} /> : text}
         </pre>
         {foldable && (
-          <button
-            type="button"
-            className={styles.payloadToggle}
-            aria-expanded={expanded}
-            onClick={() => setExpanded((current) => !current)}
-          >
-            {t(expanded ? 'executionStep.collapsePayload' : 'executionStep.expandPayload')}
-          </button>
+          <ExpandableContentControls
+            expanded={expanded}
+            expandLabel={t('executionStep.expandPayload')}
+            collapseLabel={t('executionStep.collapsePayload')}
+            onExpandedChange={setExpanded}
+          />
         )}
       </div>
     </div>

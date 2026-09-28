@@ -11,8 +11,6 @@ import React, {
 } from 'react'
 import {
   ArrowSquareOutIcon,
-  CaretDoubleDownIcon,
-  CaretDoubleUpIcon,
   CodeIcon,
   EyeIcon,
 } from '@phosphor-icons/react'
@@ -27,6 +25,7 @@ import {
 import { IconButton } from '@velaros-ai/ui/primitives/buttons/IconButton'
 import { Link } from '@velaros-ai/ui/primitives/display/Link'
 
+import { ExpandableContentControls } from '../cards/ExpandableContentControls'
 import { useConversationI18n } from '../i18n'
 import {
   normalizeMessageMarkdownFileReference,
@@ -366,33 +365,13 @@ function ExpandableCodeBlockFrame({ children }: { children: ReactElement }): Rea
       data-expandable-viewport="code"
     >
       {children}
-      {collapsed && (
-        <button
-          type="button"
-          className={styles.expandableCodeBlockOverlay}
-          aria-expanded="false"
-          aria-label={t('chat.codeBlockExpand')}
-          title={t('chat.codeBlockExpand')}
-          onClick={() => setExpanded(true)}
-        >
-          <span className={styles.expandableCodeBlockButton} aria-hidden="true">
-            <CaretDoubleDownIcon size={18} weight="bold" />
-          </span>
-        </button>
-      )}
-      {hasOverflow && expanded && (
-        <div className={styles.expandableCodeBlockCollapseSlot}>
-          <button
-            type="button"
-            className={styles.expandableCodeBlockCollapseButton}
-            aria-expanded="true"
-            aria-label={t('chat.codeBlockCollapse')}
-            title={t('chat.codeBlockCollapse')}
-            onClick={() => setExpanded(false)}
-          >
-            <CaretDoubleUpIcon size={18} weight="bold" aria-hidden="true" />
-          </button>
-        </div>
+      {hasOverflow && (
+        <ExpandableContentControls
+          expanded={expanded}
+          expandLabel={t('chat.codeBlockExpand')}
+          collapseLabel={t('chat.codeBlockCollapse')}
+          onExpandedChange={setExpanded}
+        />
       )}
     </div>
   )
@@ -504,33 +483,13 @@ function MarkdownTableWithExpandableViewport({
           {children}
         </table>
       </div>
-      {collapsed && (
-        <button
-          type="button"
-          className={styles.expandableCodeBlockOverlay}
-          aria-expanded="false"
-          aria-label={t('chat.richExpand')}
-          title={t('chat.richExpand')}
-          onClick={() => setExpanded(true)}
-        >
-          <span className={styles.expandableCodeBlockButton} aria-hidden="true">
-            <CaretDoubleDownIcon size={18} weight="bold" />
-          </span>
-        </button>
-      )}
-      {hasOverflow && expanded && (
-        <div className={styles.expandableCodeBlockCollapseSlot}>
-          <button
-            type="button"
-            className={styles.expandableCodeBlockCollapseButton}
-            aria-expanded="true"
-            aria-label={t('chat.richCollapse')}
-            title={t('chat.richCollapse')}
-            onClick={() => setExpanded(false)}
-          >
-            <CaretDoubleUpIcon size={18} weight="bold" aria-hidden="true" />
-          </button>
-        </div>
+      {hasOverflow && (
+        <ExpandableContentControls
+          expanded={expanded}
+          expandLabel={t('chat.richExpand')}
+          collapseLabel={t('chat.richCollapse')}
+          onExpandedChange={setExpanded}
+        />
       )}
     </div>
   )
