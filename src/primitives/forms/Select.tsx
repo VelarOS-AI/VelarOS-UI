@@ -161,7 +161,6 @@ function SelectImpl<T extends string>({
             <div
               className={"velar-select-search"}
               onClick={(event) => event.stopPropagation()}
-              onPointerDown={(event) => event.stopPropagation()}
             >
               <SearchField
                 autoFocus
@@ -221,7 +220,8 @@ function SelectImpl<T extends string>({
                       className={"velar-select-item-help"}
                       tabIndex={0}
                       onClick={(event) => event.stopPropagation()}
-                      onPointerDown={(event) => event.stopPropagation()}
+                      // pointerdown 需要到达弹层的外部点击检测；在 pointerup 阻止条目选择。
+                      onPointerUp={(event) => event.stopPropagation()}
                     >
                       <QuestionMarkIcon size={11} weight="bold" />
                     </span>

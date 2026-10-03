@@ -37,6 +37,12 @@ border-style: solid;
   width: var(--ui-confirm-dialog-width);
 }
 
+/* 遮罩与内容同时结束动画，关闭后释放模态交互锁。 */
+.velar-dialog-overlay[data-state="closed"],
+.velar-dialog-content[data-state="closed"] {
+  animation: none;
+}
+
 .velar-dialog-header {
   display: flex;
   flex-direction: column;

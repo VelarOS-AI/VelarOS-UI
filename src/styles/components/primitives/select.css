@@ -165,6 +165,11 @@
   box-shadow: 0 18px 42px rgba(15, 15, 15, 0.12);
 }
 
+/* 关闭时立即结束动画，让 Presence 卸载节点并释放外部点击锁。 */
+.velar-select-content[data-state="closed"] {
+  animation: none;
+}
+
 .velar-select-viewport {
   display: flex;
   min-height: 0;

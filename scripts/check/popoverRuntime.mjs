@@ -39,7 +39,8 @@ try {
   }
   const environment = { ...process.env }
   delete environment.ELECTRON_RUN_AS_NODE
-  const child = spawn(require('electron'), [join(here, 'popoverRuntimeElectron.cjs'), directory], {
+  const electronPath = process.env.VELAROS_UI_ELECTRON_PATH || require('electron')
+  const child = spawn(electronPath, [join(here, 'popoverRuntimeElectron.cjs'), directory], {
     env: environment, stdio: 'inherit', detached: process.platform !== 'win32',
   })
   const stop = () => {

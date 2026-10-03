@@ -538,7 +538,7 @@
     "test": "bun test ./test ./src/html-artifacts/spec/acceptance.test.ts ./src/html-artifacts/test",
     "prepack": "bun run build",
     "check": "bun run build && bun run typecheck && bun run lint && bun run test && bun run check:module-ownership && bun run check:gates && bun run build:component-library",
-    "check:gates": "bun run check:ui-component-library && bun run check:ui-package-contracts && bun run check:ui-form-closure && bun run check:ui-color-literal && bun run check:ui-hook-deps && bun run check:package-pack-safety && bun run check:code-style",
+    "check:gates": "bun run check:ui-component-library && bun run check:ui-package-contracts && bun run check:ui-form-closure && bun run check:ui-color-literal && bun run check:ui-hook-deps && bun run check:package-pack-safety && bun run check:code-style && bun run check:ui-popover-runtime",
     "check:module-ownership": "bun scripts/ownership/check-module-ownership.mjs",
     "check:ui-component-library": "node scripts/component-library/generateComponentApi.mjs && node scripts/check/componentLibraryDocsFreshness.mjs && node scripts/check/componentLibraryIndependence.mjs",
     "check:ui-package-contracts": "node scripts/check/packageContracts.mjs",
