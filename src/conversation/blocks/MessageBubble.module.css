@@ -1131,6 +1131,7 @@
   & [data-streamdown='link'].markdownFileLink {
     color: var(--chat-markdown-file-link);
     text-decoration-line: underline;
+    text-decoration-skip-ink: none;
     text-decoration-color: rgba(var(--chat-markdown-file-link-rgb), 0.28);
     text-decoration-thickness: 2px;
   }
@@ -1723,6 +1724,7 @@
   color: var(--chat-markdown-file-link);
   font-weight: inherit;
   text-decoration: underline;
+  text-decoration-skip-ink: none;
   text-decoration-color: rgba(var(--chat-markdown-file-link-rgb), 0.28);
   text-decoration-thickness: 2px;
   text-underline-offset: 0.2em;

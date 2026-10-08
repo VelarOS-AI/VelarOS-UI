@@ -238,7 +238,8 @@
   overflow: auto;
   overscroll-behavior: contain;
   font-family:
-    ui-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+    ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
   font-size: 12px;
   line-height: 1.65;
 }
@@ -364,47 +365,97 @@
   color: color-mix(in srgb, var(--foreground) 68%, transparent);
 }
 
-:global(html[data-theme='dark']) .diffTokenKeyword {
+:global(html[data-theme="dark"]) .diffTokenKeyword {
   color: #cf8efa;
 }
 
-:global(html[data-theme='dark']) .diffTokenOperator {
+:global(html[data-theme="dark"]) .diffTokenOperator {
   color: #bfc7d5;
 }
 
-:global(html[data-theme='dark']) .diffTokenString {
+:global(html[data-theme="dark"]) .diffTokenString {
   color: #6aab73;
 }
 
-:global(html[data-theme='dark']) .diffTokenNumber {
+:global(html[data-theme="dark"]) .diffTokenNumber {
   color: #2aacb8;
 }
 
-:global(html[data-theme='dark']) .diffTokenComment {
+:global(html[data-theme="dark"]) .diffTokenComment {
   color: #7a808b;
 }
 
-:global(html[data-theme='dark']) .diffTokenFunction {
+:global(html[data-theme="dark"]) .diffTokenFunction {
   color: #dcdcaa;
 }
 
-:global(html[data-theme='dark']) .diffTokenType,
-:global(html[data-theme='dark']) .diffTokenTag {
+:global(html[data-theme="dark"]) .diffTokenType,
+:global(html[data-theme="dark"]) .diffTokenTag {
   color: #56c3d6;
 }
 
-:global(html[data-theme='dark']) .diffTokenProperty,
-:global(html[data-theme='dark']) .diffTokenAttribute {
+:global(html[data-theme="dark"]) .diffTokenProperty,
+:global(html[data-theme="dark"]) .diffTokenAttribute {
   color: #bababa;
 }
 
-:global(html[data-theme='dark']) .diffTokenVariable {
+:global(html[data-theme="dark"]) .diffTokenVariable {
   color: #c8a56c;
 }
 
 .diffRowAdd .diffTokenPunctuation,
 .diffRowRemove .diffTokenPunctuation {
   color: color-mix(in srgb, var(--foreground) 74%, transparent);
+}
+
+/* Python 使用共享 PyCharm 令牌，函数调用与普通标识符保持默认墨色。 */
+.diffText[data-language="python"] {
+  color: var(--syntax-python-foreground);
+}
+
+.diffText[data-language="python"] .diffTokenKeyword {
+  color: var(--syntax-python-keyword);
+  font-weight: normal;
+}
+
+.diffText[data-language="python"] .diffTokenString {
+  color: var(--syntax-python-string);
+}
+
+.diffText[data-language="python"] .diffTokenNumber {
+  color: var(--syntax-python-number);
+}
+
+.diffText[data-language="python"] .diffTokenComment {
+  color: var(--syntax-python-comment);
+  font-style: var(--syntax-python-comment-style);
+}
+
+.diffText[data-language="python"] .diffTokenFunction {
+  color: var(--syntax-python-function-definition);
+}
+
+.diffText[data-language="python"] .diffTokenBuiltin {
+  color: var(--syntax-python-builtin);
+}
+
+.diffText[data-language="python"] .diffTokenSelf {
+  color: var(--syntax-python-self);
+}
+
+.diffText[data-language="python"] .diffTokenPredefined {
+  color: var(--syntax-python-predefined);
+}
+
+.diffText[data-language="python"] .diffTokenBytes {
+  color: var(--syntax-python-bytes);
+}
+
+.diffText[data-language="python"] .diffTokenType,
+.diffText[data-language="python"] .diffTokenProperty,
+.diffText[data-language="python"] .diffTokenOperator,
+.diffText[data-language="python"] .diffTokenPunctuation {
+  color: var(--syntax-python-foreground);
 }
 
 .collapsedRow {

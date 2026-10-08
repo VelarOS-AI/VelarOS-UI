@@ -1,7 +1,7 @@
 /**
  * 统一搜索框。
  *
- * 搜索图标、透明输入层和整框聚焦态由组件自身持有，消费方只负责尺寸与布局。
+ * 搜索图标、透明输入层与外框样式由组件自身持有，消费方只负责尺寸与布局。
  */
 import React, { forwardRef, memo } from 'react'
 import { MagnifyingGlassIcon } from '@phosphor-icons/react'

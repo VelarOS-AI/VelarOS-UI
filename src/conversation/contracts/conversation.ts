@@ -396,6 +396,8 @@ export interface ScriptExecutionBlock {
   /** 一句话说明这一步做什么；可能为空串，此时界面按模块与操作兜底。 */
   title: string
   status: 'writing' | 'running' | 'succeeded' | 'failed' | 'cancelled'
+  /** 本次执行开始的时间戳，用于运行期间实时计时。 */
+  startedAt?: number
   /** 脚本源码（有界）；writing 阶段可能为空。 */
   source: string
   sourceTruncated: boolean

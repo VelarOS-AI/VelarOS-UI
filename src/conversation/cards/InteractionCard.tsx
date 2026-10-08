@@ -1,8 +1,8 @@
 /**
  * 交互卡：模型的提问、表单、确认与能力申请，宿主的危险命令确认与登录墙，每个请求一张，画在运行消息里。
  * 等回答时展开：选择题与表单题是轮播提问卡；一句话的提问与能力申请是一个输入框；确认一类（含危险命令）
- * 是一行标题加两个按钮，登录墙的按钮叫「继续」。回答、跳过或失效后收成一行，写明答了什么，
- * 点开回看；底色表状态（等回答淡蓝，答了淡绿，拒绝或跳过淡红，失效淡灰），左边的图标表种类。
+ * 是一行标题加两个按钮，登录墙的按钮叫「继续」。已填写的表单与选择题直接展示只读轮播；
+ * 其余回执收成一行，写明结果并可点开回看。底色表状态，左边的图标表种类。
  */
 import {
   type KeyboardEvent,
@@ -126,7 +126,12 @@ function PendingQuestion({ block, onAnswer }: PendingProps): ReactElement {
   const questions = useMemo(() => buildInteractionQuestions(block, t), [block, t])
 
   return (
-    <div className={styles.question} data-slot="interaction" data-kind={block.kind} data-status="pending">
+    <div
+      className={styles.question}
+      data-slot="interaction"
+      data-kind={block.kind}
+      data-status="pending"
+    >
       <AskUserCarousel
         intro={block.kind === 'form' ? block.message : undefined}
         questions={questions}
@@ -144,7 +149,13 @@ function PendingQuestion({ block, onAnswer }: PendingProps): ReactElement {
  * 等回答时的外框：左边图标，第一行说明做标题，下面是作答区。确认、危险命令与登录墙只有一行标题（太长截断），
  * 其余的说明与命令全文不摊开，回答过之后点开回看；一句话的提问与能力申请才把其余的说明写在标题下面。
  */
-function PendingFrame({ block, children }: { block: InteractionBlock; children: ReactNode }): ReactElement {
+function PendingFrame({
+  block,
+  children,
+}: {
+  block: InteractionBlock
+  children: ReactNode
+}): ReactElement {
   const { t } = useConversationI18n()
   const titleOnly = block.kind === 'confirm' || block.kind === 'danger' || block.kind === 'login'
   const { rest } = splitInteractionMessage(block.message)
@@ -239,7 +250,11 @@ function PendingConfirmation({ block, onAnswer }: PendingProps): ReactElement {
         >
           {t(login ? 'common.cancel' : 'common.reject')}
         </CardTextButton>
-        <CardTextButton tone="approve" disabled={submitting} onClick={() => submit({ approved: true })}>
+        <CardTextButton
+          tone="approve"
+          disabled={submitting}
+          onClick={() => submit({ approved: true })}
+        >
           {t(login ? 'interaction.continue' : 'common.approve')}
         </CardTextButton>
       </div>
@@ -267,9 +282,21 @@ function InteractionOperation({
   )
 }
 
-/** 回答过、跳过或失效的卡：一行标题加一行结果，点开回看说明与回答。 */
+/** 已填写的表单直接回看答案；其他回执用一行标题与结果提供折叠详情。 */
 function SettledInteraction({ block }: InteractionCardProps): ReactElement {
   const { t } = useConversationI18n()
+
+  if (block.status === 'answered' && (block.kind === 'form' || block.kind === 'choice'))
+    return (
+      <div
+        className={styles.question}
+        data-slot="interaction"
+        data-kind={block.kind}
+        data-status={block.status}
+      >
+        <InteractionDetails block={block} />
+      </div>
+    )
 
   return (
     <ExecutionStepFrame
@@ -284,7 +311,7 @@ function SettledInteraction({ block }: InteractionCardProps): ReactElement {
   )
 }
 
-/** 点开后的回看：选择题与表单题是锁住的轮播，其余是完整说明，加上写下的回答或拒绝的理由。 */
+/** 答案回看：选择题与表单题是只读轮播，其余展示完整说明、写下的回答或拒绝理由。 */
 function InteractionDetails({ block }: InteractionCardProps): ReactElement {
   const { t } = useConversationI18n()
   const questions = useMemo(() => buildInteractionQuestions(block, t), [block, t])

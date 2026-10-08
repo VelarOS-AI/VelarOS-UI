@@ -108,8 +108,16 @@
 .velar-select-trigger-content {
   display: flex;
   min-width: 0;
+  flex: 1;
   align-items: center;
   gap: var(--ui-space-2);
+}
+
+.velar-select-trigger-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .velar-select-trigger-icon {
@@ -309,6 +317,7 @@
 
 .velar-select-item-label {
   display: block;
+  overflow-wrap: anywhere;
   font-weight: var(--font-weight-medium);
   color: var(--foreground);
   line-height: 1.35;

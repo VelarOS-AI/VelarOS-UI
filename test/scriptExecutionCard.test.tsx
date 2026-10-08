@@ -282,6 +282,43 @@ void describe('ScriptExecutionCard', () => {
     )
   })
 
+  void test('运行预览保留内容行，不拿 JSON 尾括号或空白占位置', () => {
+    try {
+      liveOutputs.set('script-1', '{\n  "message": "checking modules"\n}\n  ]\n}\n]')
+      const running = render(createElement(ScriptExecutionCard, { block: script({ status: 'running' }) }))
+      assert.match(running, /checking modules/)
+      assert.doesNotMatch(running, />\s*[[\]{},]+\s*</u)
+      for (const output of ['\n\n', ']\n}\n]', '  {\n  },\n]']) {
+        liveOutputs.set('script-1', output)
+        assert.doesNotMatch(
+          render(createElement(ScriptExecutionCard, { block: script({ status: 'running' }) })),
+          /execution-step-live/
+        )
+      }
+    } finally {
+      liveOutputs.clear()
+    }
+  })
+
+  void test('运行中从开始时间计时，完成后显示最终耗时', () => {
+    const originalNow = Date.now
+    Date.now = () => 64_000
+    try {
+      const markup = render(createElement(ScriptExecutionCard, {
+        block: script({ status: 'running', startedAt: 1_000, durationMs: null }),
+      }))
+      assert.match(markup, /data-slot="execution-step-elapsed"/)
+      assert.match(markup, />1分3秒</)
+      const done = render(createElement(ScriptExecutionCard, {
+        block: script({ status: 'succeeded', startedAt: 1_000, durationMs: 1200 }),
+      }))
+      assert.doesNotMatch(done, /execution-step-elapsed/)
+      assert.match(done, />1秒</)
+    } finally {
+      Date.now = originalNow
+    }
+  })
+
   void test('观察卡与执行卡只靠图标区分，不写方法名；观察卡没有标题时是「持续观察」', () => {
     const iconOf = (markup: string) => /<svg[\s\S]*?<\/svg>/u.exec(markup)?.[0]
     const observed = render(

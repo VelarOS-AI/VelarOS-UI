@@ -1,0 +1,30 @@
+/* PyCharm 默认 IntelliJ Light / Darcula 语法色，文件视图和差异视图共用。
+ * 来源：JetBrains/intellij-community 的 themes/Light.xml、
+ * DefaultColorSchemesManager.xml 与 python/pluginResources/colorSchemes/Python*.xml。
+ */
+:root,
+[data-theme="light"] {
+  --syntax-python-foreground: #080808;
+  --syntax-python-keyword: #0033b3;
+  --syntax-python-string: #067d17;
+  --syntax-python-number: #1750eb;
+  --syntax-python-comment: #8c8c8c;
+  --syntax-python-comment-style: italic;
+  --syntax-python-function-definition: #00627a;
+  --syntax-python-builtin: #000080;
+  --syntax-python-self: #94558d;
+  --syntax-python-predefined: #b200b2;
+  --syntax-python-bytes: #8a822d;
+}
+
+[data-theme="dark"] {
+  --syntax-python-foreground: #a9b7c6;
+  --syntax-python-keyword: #cc7832;
+  --syntax-python-string: #6a8759;
+  --syntax-python-number: #6897bb;
+  --syntax-python-comment: #808080;
+  --syntax-python-comment-style: normal;
+  --syntax-python-function-definition: #ffc66d;
+  --syntax-python-builtin: #8888c6;
+  --syntax-python-bytes: #a5c261;
+}

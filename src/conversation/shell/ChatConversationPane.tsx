@@ -20,17 +20,20 @@ import { Stack } from '@velaros-ai/ui/primitives/layout/Stack'
 import { useChatThinkingVisibility } from '../blocks/chatThinkingVisibility'
 import { MessageBubble } from '../blocks/MessageBubble'
 import type { FileChangeSummaryListEntry } from '../cards/FileChangeSummaryList'
-import { type AnswerInteraction, InteractionAnswerProvider } from '../cards/interactionAnswerContext'
+import {
+  type AnswerInteraction,
+  InteractionAnswerProvider,
+} from '../cards/interactionAnswerContext'
 import { useConversationI18n, useConversationTranslatorRuntime } from '../i18n'
 import type { ConversationView, ConversationWorkerThread } from '../projection'
 import type { ConversationRewindPlan } from '../projection'
 import { ConversationScrollFollowProvider } from '../react-hooks/conversationScrollFollow'
-import {
-  type BrowserScreenshotDisplayMode,
-  useConversationRenderSlots,
-} from '../render-slots'
+import { type BrowserScreenshotDisplayMode, useConversationRenderSlots } from '../render-slots'
 import { getChatInlineNoticeMeta } from '../status/chatStatus'
-import { getPlanToolBlockSignature, isPlanToolBlockComplete } from '../tool-render/plan/planToolBlock'
+import {
+  getPlanToolBlockSignature,
+  isPlanToolBlockComplete,
+} from '../tool-render/plan/planToolBlock'
 
 import { isChatInteractionRunActive, resolveChatInteractionState } from './chatInteractionState'
 import { ChatScrollNavigator } from './ChatScrollNavigator'
@@ -64,7 +67,14 @@ import type {
   UserActionCardResult,
 } from '#contracts'
 import { buildGoalDockViewModel } from '#internal/goalLifecycle'
-import { isEmpty, isPresent, Log, optionalWhenLazy, toNullable, toOptional } from '#internal/runtime'
+import {
+  isEmpty,
+  isPresent,
+  Log,
+  optionalWhenLazy,
+  toNullable,
+  toOptional,
+} from '#internal/runtime'
 
 const cx = StyleUtils.bindCx(styles)
 const log = Log.tag('chat-conversation-pane')
@@ -180,8 +190,7 @@ export function ChatConversationPane({
   // 单一交互状态：等待交互优先于流式标记（isStreaming 残留不再被当作运行中）。
   const interactionState = resolveChatInteractionState(isStreaming, runtime.status)
   const isRunActive = isChatInteractionRunActive(interactionState)
-  const conversationRefreshGenerationRef =
-    useRef<Nullable<ConversationRefreshGeneration>>(null)
+  const conversationRefreshGenerationRef = useRef<Nullable<ConversationRefreshGeneration>>(null)
   const conversationRefreshGeneration = resolveConversationRefreshGeneration(
     conversationRefreshGenerationRef.current,
     {
@@ -323,15 +332,28 @@ export function ChatConversationPane({
       log.warn('发送目标继续引导失败', { error, sessionId })
       await refreshGoalLifecycle()
     }
-  }, [actionPort, handleGoalLifecycleAction, isRunActive, onContinueGoal, refreshGoalLifecycle, sessionId, t])
+  }, [
+    actionPort,
+    handleGoalLifecycleAction,
+    isRunActive,
+    onContinueGoal,
+    refreshGoalLifecycle,
+    sessionId,
+    t,
+  ])
 
   const canRewindToMessage = interactionState === 'idle'
   const presentationRuntime = runtime
   const inlineNotice = shouldHideInlineNoticeForAwaitingInteraction
     ? null
-    : getChatInlineNoticeMeta(presentationRuntime, locale, {
-        liveTraceSummary: toOptional(visibleRuntimeSummary),
-      }, translatorRuntime)
+    : getChatInlineNoticeMeta(
+        presentationRuntime,
+        locale,
+        {
+          liveTraceSummary: toOptional(visibleRuntimeSummary),
+        },
+        translatorRuntime
+      )
   const inlineNoticeRuntimeSource = useMemo(() => {
     if (inlineNotice?.tone !== 'running' || presentationRuntime.status !== 'running') return null
 
@@ -384,7 +406,10 @@ export function ChatConversationPane({
     enableOlderMessageSentinel: isWindowAtLoadedTop,
   })
   const activeDockPlanBlock = useMemo(() => {
-    const latestPlanBlock = getLatestCurrentTurnToolBlock(messages, (toolName) => toolName === 'plan:update')
+    const latestPlanBlock = getLatestCurrentTurnToolBlock(
+      messages,
+      (toolName) => toolName === 'plan:update'
+    )
 
     return latestPlanBlock && !isPlanToolBlockComplete(latestPlanBlock) ? latestPlanBlock : null
   }, [messages])
@@ -407,15 +432,13 @@ export function ChatConversationPane({
       goalDockModel!.blockedAuditTurns,
     ].join(':')
   )
-  const goalLifecycleCollapseKey = optionalWhenLazy(
-    goalLifecycleArtifact && !goalDockModel,
-    () =>
-      [
-        goalLifecycleArtifact!.id,
-        goalLifecycleArtifact!.status,
-        goalLifecycleArtifact!.metadata?.goalStatus,
-        goalLifecycleArtifact!.updatedAt,
-      ].join(':')
+  const goalLifecycleCollapseKey = optionalWhenLazy(goalLifecycleArtifact && !goalDockModel, () =>
+    [
+      goalLifecycleArtifact!.id,
+      goalLifecycleArtifact!.status,
+      goalLifecycleArtifact!.metadata?.goalStatus,
+      goalLifecycleArtifact!.updatedAt,
+    ].join(':')
   )
   const activeDockStatusSpotlightItemIds = useMemo(
     () => [goalLifecycleDockItemId, activeDockPlanItemId].filter(isPresent),
@@ -582,6 +605,16 @@ export function ChatConversationPane({
     },
     [renderWorkerThreadPanel, workerThreadPlacement]
   )
+  const renderWorkerThreadActivityLeading = useCallback(
+    (message: ChatMessage) =>
+      message.role === 'assistant' ? renderWorkerThreadsAfterMessage(message) : null,
+    [renderWorkerThreadsAfterMessage]
+  )
+  const renderWorkerThreadsAfterUserMessage = useCallback(
+    (message: ChatMessage) =>
+      message.role === 'assistant' ? null : renderWorkerThreadsAfterMessage(message),
+    [renderWorkerThreadsAfterMessage]
+  )
   const renderWorkerThreadsAfterStep = useCallback(
     (block: ConversationStepBlock) => {
       const threads = workerThreadPlacement.afterStepId.get(
@@ -650,7 +683,8 @@ export function ChatConversationPane({
                   canShowFileChangeSummary={supportsProjectFiles}
                   getRunCostEstimate={getTranscriptRunCostEstimate}
                   getGoalCompletionSummary={getTranscriptGoalCompletionSummary}
-                  renderAfterMessage={renderWorkerThreadsAfterMessage}
+                  renderActivityLeadingElement={renderWorkerThreadActivityLeading}
+                  renderAfterMessage={renderWorkerThreadsAfterUserMessage}
                   renderAfterStep={renderWorkerThreadsAfterStep}
                   onOpenBrowserLink={onOpenBrowserLink}
                   onOpenFileChange={onOpenFileChange}
@@ -687,7 +721,9 @@ export function ChatConversationPane({
                     <div className={styles.thinkingRow}>
                       <div className={styles.thinkingText}>
                         <span className={styles.thinkingDot} />
-                        <Paragraph spacing="none">{visibleRuntimeSummary ?? runningLabel}</Paragraph>
+                        <Paragraph spacing="none">
+                          {visibleRuntimeSummary ?? runningLabel}
+                        </Paragraph>
                       </div>
                     </div>
                   )}

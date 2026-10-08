@@ -16,7 +16,8 @@
  * → theme-light（默认主题）→ theme-dark（主题覆盖）→ seed-presets（种子覆盖）。
  */
 
-@import './foundation.css';
-@import './theme-light.css';
-@import './theme-dark.css';
-@import './seed-presets.css';
+@import "./foundation.css";
+@import "./theme-light.css";
+@import "./theme-dark.css";
+@import "./seed-presets.css";
+@import "./python-syntax.css";

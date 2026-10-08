@@ -23,7 +23,14 @@ import type {
   TextBlock,
   ToolCallBlock as ToolCallBlockType,
 } from '#contracts'
-import { isBlank, isEmpty, isFalse, isFiniteNumber, isPresent, optionalWhenLazy } from '#internal/runtime'
+import {
+  isBlank,
+  isEmpty,
+  isFalse,
+  isFiniteNumber,
+  isPresent,
+  optionalWhenLazy,
+} from '#internal/runtime'
 
 /**
  * `ConversationMessageRunMarker` 现住投影层（`../projection`）——气泡渲染模型 + memo 比较器 + transcript
@@ -267,7 +274,7 @@ export function hasVisibleSegmentContent(segment: ToolRenderSegment): boolean {
   }
 }
 
-/** 给用户看的成品不收进「已处理」：交互卡（问了什么、答了什么）、小部件，以及摘出来单独展示的工具调用。 */
+/** 给用户看的成品留在「已处理」外：小部件，以及摘出来单独展示的工具调用。交互卡属于执行过程。 */
 export function shouldRenderSegmentOutsideProcessedActivityDisclosure(
   segment: MessageRenderSegment
 ): boolean {
@@ -277,7 +284,6 @@ export function shouldRenderSegmentOutsideProcessedActivityDisclosure(
   switch (block.type) {
     case 'tool-call':
       return isToolActivitySummaryExcludedToolCall(block)
-    case 'interaction':
     case 'widget':
       return true
     default:
@@ -287,7 +293,7 @@ export function shouldRenderSegmentOutsideProcessedActivityDisclosure(
 
 /**
  * 最终答复前的工具活动只能形成一个「已处理」分组。需要外置的成品卡从分组中提取，
- * 统一排在该分组下方；这样插入计划卡、Widget 或交互卡时不会把「已处理」切成两段。
+ * 统一排在该分组下方；这样插入计划卡或 Widget 时不会把「已处理」切成两段。
  */
 export function partitionProcessedActivitySummarySegments(
   segments: MessageRenderSegment[],
@@ -314,9 +320,12 @@ export function partitionProcessedActivitySummarySegments(
     const segment = segments[index]
     if (!segment) continue
 
-    // 续答或块合并有时会把已经结束的思考过程延后到最终正文之后。
-    // 完成态下将这类孤立思考重新归入唯一的「已处理」分组，正文和成品卡仍留在外面。
-    if (summaryBoundaryIndex >= 0 && messageSegmentIsThinking(segment)) {
+    // 续答或块合并有时会把思考过程与交互回执延后到最终正文之后。
+    // 完成态下将这些执行记录归入唯一的「已处理」分组，正文和成品卡仍留在外面。
+    if (
+      summaryBoundaryIndex >= 0 &&
+      (messageSegmentIsThinking(segment) || messageSegmentIsSettledInteraction(segment))
+    ) {
       processedSegments.push(segment)
       continue
     }
@@ -426,6 +435,14 @@ function messageSegmentIsThinking(segment: MessageRenderSegment): boolean {
   )
 }
 
+function messageSegmentIsSettledInteraction(segment: MessageRenderSegment): boolean {
+  return (
+    segment.kind === 'segment' &&
+    segment.segment.block.type === 'interaction' &&
+    segment.segment.block.status !== 'pending'
+  )
+}
+
 function messageRenderSegmentHasVisibleContent(segment: MessageRenderSegment): boolean {
   if (segment.kind === 'activity-group') return segment.segments.some(hasVisibleSegmentContent)
 
@@ -456,10 +473,11 @@ export function getProcessedActivitySummaryBoundaryIndex(
       break
     }
 
-    // 完成态正文后出现思考块属于异常尾巴；始终允许越过它寻找最终正文边界，
-    // 后续 partition 会把它兜底搬回「已处理」。普通尾部工具活动仍沿用显式开关。
+    // 越过延后的思考块与交互回执寻找最终正文，后续 partition 将它们收进「已处理」。
+    // 普通尾部工具活动仍沿用显式开关。
     if (
       messageSegmentIsThinking(segment) ||
+      messageSegmentIsSettledInteraction(segment) ||
       (options.allowTrailingActivity && messageRenderSegmentIsTrailingActivity(segment))
     ) {
       continue
@@ -472,7 +490,6 @@ export function getProcessedActivitySummaryBoundaryIndex(
 
   return summaryTextIndex
 }
-
 
 function formatGoalCompletionActivityLabel(
   summary: GoalCompletionActivitySummary,
@@ -553,7 +570,11 @@ export type SettledRunMarker = ConversationMessageRunMarker & { status: SettledR
 export function settledRunMarker(
   runMarker: LooseOptional<ConversationMessageRunMarker>
 ): Nullable<SettledRunMarker> {
-  if (!runMarker || runMarker.status === 'awaiting-confirmation' || runMarker.status === 'awaiting-input')
+  if (
+    !runMarker ||
+    runMarker.status === 'awaiting-confirmation' ||
+    runMarker.status === 'awaiting-input'
+  )
     return null
   return runMarker as SettledRunMarker
 }

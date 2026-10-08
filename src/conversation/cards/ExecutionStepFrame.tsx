@@ -80,6 +80,7 @@ export function ExecutionStepFrame({
   const [expanded, setExpanded] = useState(false)
   const { mounted, visible } = useDisclosurePresence(expanded)
   const detailsId = useId()
+  const previewLines = live ? liveOutputLines(live) : []
 
   const handleToggle = (event: MouseEvent<HTMLButtonElement>): void => {
     // 展开会撑高消息：先让会话停止跟随底部，读者正在看的这张卡不被推走。
@@ -102,9 +103,9 @@ export function ExecutionStepFrame({
         <span className={cx('title', monospaceTitle && 'titleMono')}>{title}</span>
         {!!reason && <span className={styles.reason}>{reason}</span>}
         {!!summary && <span className={styles.summary}>{summary}</span>}
-        {!!live && (
+        {previewLines.length > 0 && (
           <span className={styles.live} data-slot="execution-step-live">
-            {liveOutputLines(live).map((line, index) => (
+            {previewLines.map((line, index) => (
               // 只显示末尾几行、整段随新输出替换，行的序号就是它的身份。
               <span key={index} className={styles.liveLine}>
                 {line}
@@ -141,7 +142,8 @@ function liveOutputLines(text: string): string[] {
   return text
     .split('\n')
     .map((line) => line.trimEnd())
-    .filter(isNonBlankString)
+    // JSON 尾部的独立括号不挤掉有内容的行；完整原文仍可在详情里查看。
+    .filter((line) => isNonBlankString(line) && !/^[\s{}[\],]+$/u.test(line))
     .slice(-LiveOutputLines)
 }
 

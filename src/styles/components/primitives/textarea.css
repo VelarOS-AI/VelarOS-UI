@@ -4,7 +4,7 @@
   width: 100%;
   resize: none;
   color: var(--foreground);
-  transition: color var(--ui-transition-fast), background-color var(--ui-transition-fast), border-color var(--ui-transition-fast), opacity var(--ui-transition-fast);
+  transition: color var(--ui-transition-fast), background-color var(--ui-transition-fast), border-color var(--ui-transition-fast), box-shadow var(--ui-transition-fast), opacity var(--ui-transition-fast);
   outline-style: none;
   &::placeholder {
     color: var(--muted-foreground);
@@ -40,12 +40,6 @@
   box-shadow: none;
 }
 
-.velar-textarea-variant-default:focus-visible {
-  background: var(--control-themed-open-bg);
-  border-color: transparent;
-  box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.08);
-}
-
 .velar-textarea-variant-ghost {
   border-style: solid;
   border-width: 1px;
@@ -53,9 +47,13 @@
   background: rgba(17, 17, 17, 0.04);
 }
 
+.velar-textarea-variant-default:focus-visible {
+  box-shadow: var(--ui-shadow-inset-focus), var(--ui-shadow-field-focus-ring);
+}
+
 .velar-textarea-variant-ghost:focus-visible {
-  border-color: rgba(15, 15, 15, 0.08);
-  background: rgba(255, 255, 255, 0.84);
+  border-color: var(--ring);
+  box-shadow: var(--ui-shadow-field-focus-ring);
 }
 
 .velar-textarea-variant-bare {

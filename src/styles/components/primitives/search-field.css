@@ -29,10 +29,10 @@
   border-color: var(--border-strong);
 }
 
-.velar-search-field:focus-within {
+.velar-search-field:focus-within:not([data-disabled='true']) {
   border-color: var(--ring);
   color: var(--foreground);
-  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.08);
+  box-shadow: var(--ui-shadow-field-focus-ring);
 }
 
 .velar-search-field[data-disabled='true'] {

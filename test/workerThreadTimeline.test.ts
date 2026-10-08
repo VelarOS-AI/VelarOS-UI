@@ -26,10 +26,12 @@ function dispatchBlock(
     ...(finished
       ? {
           finishedAt: options.startedAt + 10_000,
-          result: `【子 agent 的返回】\n结论\n<subagent-result type="application/json">${JSON.stringify({
-            thread_id: options.threadIdInResult,
-            status: 'completed',
-          })}</subagent-result>`,
+          result: `【子 agent 的返回】\n结论\n<subagent-result type="application/json">${JSON.stringify(
+            {
+              thread_id: options.threadIdInResult,
+              status: 'completed',
+            }
+          )}</subagent-result>`,
         }
       : {}),
   }
@@ -122,13 +124,21 @@ void describe('worker thread transcript placement', () => {
     const placement = groupWorkerThreadsByTranscriptAnchor(
       [
         assistantMessage([
-          dispatchBlock('call-atlas', { agent_name: 'Atlas', prompt: 'audit tool contracts' }, {
-            startedAt: 1_000,
-            threadIdInResult: 'subagent:atlas',
-          }),
-          dispatchBlock('call-forge', { agent_name: 'Forge', prompt: ' audit the transaction core ' }, {
-            startedAt: 2_000,
-          }),
+          dispatchBlock(
+            'call-atlas',
+            { agent_name: 'Atlas', prompt: 'audit tool contracts' },
+            {
+              startedAt: 1_000,
+              threadIdInResult: 'subagent:atlas',
+            }
+          ),
+          dispatchBlock(
+            'call-forge',
+            { agent_name: 'Forge', prompt: ' audit the transaction core ' },
+            {
+              startedAt: 2_000,
+            }
+          ),
         ]),
       ],
       [
@@ -182,13 +192,21 @@ void describe('worker thread transcript placement', () => {
     const placement = groupWorkerThreadsByTranscriptAnchor(
       [
         assistantMessage([
-          dispatchBlock('call-first', { prompt: 'review the patch' }, {
-            startedAt: 1_000,
-            threadIdInResult: 'subagent:reviewer',
-          }),
-          dispatchBlock('call-resume', { thread_id: 'subagent:reviewer', prompt: 'check the edge case too' }, {
-            startedAt: 2_000,
-          }),
+          dispatchBlock(
+            'call-first',
+            { prompt: 'review the patch' },
+            {
+              startedAt: 1_000,
+              threadIdInResult: 'subagent:reviewer',
+            }
+          ),
+          dispatchBlock(
+            'call-resume',
+            { thread_id: 'subagent:reviewer', prompt: 'check the edge case too' },
+            {
+              startedAt: 2_000,
+            }
+          ),
         ]),
       ],
       [
@@ -206,16 +224,22 @@ void describe('worker thread transcript placement', () => {
     )
 
     assert.deepEqual(anchoredThreadIds(placement, 'call-first'), ['subagent:reviewer:activation:1'])
-    assert.deepEqual(anchoredThreadIds(placement, 'call-resume'), ['subagent:reviewer:activation:2'])
+    assert.deepEqual(anchoredThreadIds(placement, 'call-resume'), [
+      'subagent:reviewer:activation:2',
+    ])
   })
 
   void test('a running dispatch without a thread yet still shows its optimistic placeholder', () => {
     const placement = groupWorkerThreadsByTranscriptAnchor(
       [
         assistantMessage([
-          dispatchBlock('call-pending', { agent_name: 'Scout', prompt: 'map the repo', description: 'Map repo' }, {
-            startedAt: 1_000,
-          }),
+          dispatchBlock(
+            'call-pending',
+            { agent_name: 'Scout', prompt: 'map the repo', description: 'Map repo' },
+            {
+              startedAt: 1_000,
+            }
+          ),
         ]),
       ],
       []
@@ -245,24 +269,74 @@ void describe('worker thread transcript placement', () => {
 
   void test('streamed text alone leaves the placement equal, placeholders included', () => {
     const running = dispatchBlock('call-running', { prompt: 'scan' }, { startedAt: 1_000 })
-    const done = dispatchBlock('call-done', { prompt: 'read' }, { startedAt: 500, threadIdInResult: 'subagent:done' })
+    const done = dispatchBlock(
+      'call-done',
+      { prompt: 'read' },
+      { startedAt: 500, threadIdInResult: 'subagent:done' }
+    )
     const thread = workerThread('subagent:done', { startedAt: 501, input: 'read' })
     const before = groupWorkerThreadsByTranscriptAnchor(
-      [{ id: 'm', role: 'assistant', blocks: [done, running, { type: 'text', text: 'wor' }], timestamp: 500 }],
+      [
+        {
+          id: 'm',
+          role: 'assistant',
+          blocks: [done, running, { type: 'text', text: 'wor' }],
+          timestamp: 500,
+        },
+      ],
       [thread]
     )
     // 下一个 token：正文块换新，派发块与线程对象不变。
     const after = groupWorkerThreadsByTranscriptAnchor(
-      [{ id: 'm', role: 'assistant', blocks: [done, running, { type: 'text', text: 'working' }], timestamp: 500 }],
+      [
+        {
+          id: 'm',
+          role: 'assistant',
+          blocks: [done, running, { type: 'text', text: 'working' }],
+          timestamp: 500,
+        },
+      ],
       [thread]
     )
 
     assert.equal(isSameWorkerThreadPlacement(before, after), true)
-    assert.equal(before.afterStepId.get('call-running')?.[0], after.afterStepId.get('call-running')?.[0])
+    assert.equal(
+      before.afterStepId.get('call-running')?.[0],
+      after.afterStepId.get('call-running')?.[0]
+    )
+  })
+
+  void test('a thread that precedes its first assistant message joins that run activity', () => {
+    const thread = workerThread('subagent:early', { startedAt: 550, input: null })
+    const messages: ChatMessage[] = [
+      { id: 'user', role: 'user', conversationKind: 'turn-input', blocks: [], timestamp: 500 },
+      { id: 'assistant', role: 'assistant', blocks: [], timestamp: 600 },
+    ]
+    const placement = groupWorkerThreadsByTranscriptAnchor(messages, [thread])
+
+    assert.equal(placement.afterMessageId.has('user'), false)
+    assert.deepEqual(placement.afterMessageId.get('assistant'), [thread])
+  })
+
+  void test('a missing assistant anchor never moves the thread into the next user turn', () => {
+    const thread = workerThread('subagent:previous', { startedAt: 550, input: null })
+    const messages: ChatMessage[] = [
+      { id: 'user', role: 'user', conversationKind: 'turn-input', blocks: [], timestamp: 500 },
+      { id: 'next-user', role: 'user', conversationKind: 'turn-input', blocks: [], timestamp: 700 },
+      { id: 'next-assistant', role: 'assistant', blocks: [], timestamp: 800 },
+    ]
+    const placement = groupWorkerThreadsByTranscriptAnchor(messages, [thread])
+
+    assert.deepEqual(placement.afterMessageId.get('user'), [thread])
+    assert.equal(placement.afterMessageId.has('next-assistant'), false)
   })
 
   void test('an updated thread makes the placement differ', () => {
-    const done = dispatchBlock('call-done', { prompt: 'read' }, { startedAt: 500, threadIdInResult: 'subagent:done' })
+    const done = dispatchBlock(
+      'call-done',
+      { prompt: 'read' },
+      { startedAt: 500, threadIdInResult: 'subagent:done' }
+    )
     const messages: ChatMessage[] = [{ id: 'm', role: 'assistant', blocks: [done], timestamp: 500 }]
     const thread = workerThread('subagent:done', { startedAt: 501, input: 'read' })
 

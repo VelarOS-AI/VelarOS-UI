@@ -140,9 +140,14 @@ function SelectImpl<T extends string>({
           {!!selected?.icon && (
             <span className={"velar-select-trigger-icon"}>{selected.icon}</span>
           )}
-          <SelectPrimitive.Value placeholder={placeholder}>
-            {selected?.label ?? placeholder}
-          </SelectPrimitive.Value>
+          <span
+            className="velar-select-trigger-label"
+            title={selected?.label ?? placeholder}
+          >
+            <SelectPrimitive.Value placeholder={placeholder}>
+              {selected?.label ?? placeholder}
+            </SelectPrimitive.Value>
+          </span>
         </span>
         <SelectPrimitive.Icon className={"velar-select-trigger-caret"}>
           <CaretDownIcon size={iconSize} />

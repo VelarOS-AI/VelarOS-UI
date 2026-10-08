@@ -518,3 +518,32 @@ void test('运行内引导复用气泡视觉，但展示自己的标签和复制
   assert.match(markup, /复制引导/)
   assert.doesNotMatch(markup, /chat\.rewind/)
 })
+
+void test('普通消息收到上下文回执时保持普通消息语义和展示', () => {
+  for (const kind of ['turn-input', 'interaction-reply'] as const) {
+    const markup = renderToStaticMarkup(
+      createElement(
+        ConversationLocalizationProvider,
+        { value: localization },
+        createElement(UserMessageBubble, {
+          message: { ...message('ordinary', 'user', kind), guidanceStatus: 'applied' },
+        })
+      ) as ReactElement
+    )
+    assert.match(markup, new RegExp(`data-conversation-kind="${kind}"`))
+    assert.doesNotMatch(markup, /chat\.guidanceApplied|已纳入执行上下文|复制引导/)
+  }
+})
+
+void test('真正的运行中引导在回执后显示已纳入状态', () => {
+  const markup = renderToStaticMarkup(
+    createElement(
+      ConversationLocalizationProvider,
+      { value: localization },
+      createElement(UserMessageBubble, {
+        message: { ...message('guidance', 'user', 'run-guidance'), guidanceStatus: 'applied' },
+      })
+    ) as ReactElement
+  )
+  assert.match(markup, /chat\.guidanceApplied/)
+})

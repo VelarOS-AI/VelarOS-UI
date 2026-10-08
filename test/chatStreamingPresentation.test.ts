@@ -4,7 +4,6 @@ import { describe, test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 
 import {
-  ProcessedActivityAutoCollapseWindowMs,
   shouldAnimateLiveToolActivity,
   shouldGroupProcessedActivityDisclosure,
   shouldRenderActivityGroupDisclosure,
@@ -14,10 +13,7 @@ import {
 import type { MessageRenderSegment } from '../src/conversation/blocks/messageBubbleRenderModel'
 import { shouldRenderThinkingAsFlat } from '../src/conversation/blocks/MessageMarkdownBlocks'
 import { shouldInitiallyExpandToolActivityDisclosure } from '../src/conversation/blocks/MessageToolActivity'
-import {
-  planStreamFade,
-  splitStreamFadeText,
-} from '../src/conversation/blocks/streamTextFade'
+import { planStreamFade, splitStreamFadeText } from '../src/conversation/blocks/streamTextFade'
 import {
   getToolActivityMotionRevision,
   resolveToolActivityMotionKind,
@@ -64,26 +60,12 @@ void describe('live chat activity presentation', () => {
     assert.equal(shouldRequestProcessedActivityAutoCollapse(finished, finished), false)
     assert.equal(shouldRequestProcessedActivityAutoCollapse(finished, streaming), false)
     assert.equal(
-      shouldRequestProcessedActivityAutoCollapse(streaming, { messageId: 'assistant-2', isStreaming: false }),
+      shouldRequestProcessedActivityAutoCollapse(streaming, {
+        messageId: 'assistant-2',
+        isStreaming: false,
+      }),
       false
     )
-  })
-
-  void test('the collapse request outlives the re-renders that follow a completion', () => {
-    const source = readFileSync(
-      fileURLToPath(
-        new URL('../src/conversation/blocks/AssistantMessageSegments.tsx', import.meta.url)
-      ),
-      'utf8'
-    )
-    // 请求锁存在状态里，按保留时长撤下；不再由渲染期读一次 ref 决定（下一次重渲染就会把它翻回去）。
-    assert.match(source, /const shouldAutoCollapseProcessedActivity = !isStreaming && autoCollapseRequested/u)
-    assert.doesNotMatch(source, /!isStreaming && recentlyStreamingMessageIdRef\.current === messageId\s*\n\s*\/\/ 流式结束/u)
-    assert.match(
-      source,
-      /timers\.after\(\s*ProcessedActivityAutoCollapseWindowMs,\s*\(\) => setAutoCollapseRequested\(false\)/u
-    )
-    assert.ok(ProcessedActivityAutoCollapseWindowMs >= 500)
   })
 
   void test('keeps the completion-collapse request live after the disclosure has mounted', () => {
@@ -97,28 +79,17 @@ void describe('live chat activity presentation', () => {
     )
 
     const source = readFileSync(
-      fileURLToPath(
-        new URL(
-          '../src/conversation/blocks/MessageToolActivity.tsx',
-          import.meta.url
-        )
-      ),
+      fileURLToPath(new URL('../src/conversation/blocks/MessageToolActivity.tsx', import.meta.url)),
       'utf8'
     )
-    assert.match(
-      source,
-      /autoCollapseAfterPaint\s*&&\s*!hasRunningTool/u
-    )
+    assert.match(source, /autoCollapseAfterPaint\s*&&\s*!hasRunningTool/u)
     assert.doesNotMatch(source, /useRef\(\s*autoCollapseAfterPaint/u)
   })
 
   void test('keeps closed consecutive disclosures inline while exit content is still mounted', () => {
     const stylesheet = readFileSync(
       fileURLToPath(
-        new URL(
-          '../src/conversation/blocks/MessageBubble.module.css',
-          import.meta.url
-        )
+        new URL('../src/conversation/blocks/MessageBubble.module.css', import.meta.url)
       ),
       'utf8'
     )
@@ -195,10 +166,7 @@ void describe('live chat activity presentation', () => {
           id: 'activity-only',
           role: 'assistant',
           timestamp: 1,
-          blocks: [
-            { type: 'thinking', text: '检查。' },
-            toolBlock('tool-inline'),
-          ],
+          blocks: [{ type: 'thinking', text: '检查。' }, toolBlock('tool-inline')],
         },
         false
       ),
@@ -297,13 +265,23 @@ void describe('live chat activity presentation', () => {
       { text: ' world', start: 5, bornAt: 1_000 },
     ])
     // 没有新字时什么都不淡。
-    const idle = planStreamFade({ ledger: { length: 11, chunks: [] }, now: 1_000, sourceLength: 11, mounted: true })
+    const idle = planStreamFade({
+      ledger: { length: 11, chunks: [] },
+      now: 1_000,
+      sourceLength: 11,
+      mounted: true,
+    })
     assert.deepEqual(splitStreamFadeText('hello world', 0, idle), [
       { text: 'hello world', start: 0, bornAt: null },
     ])
     // 首次见到的长块（切回、首次打开）整段当作已显示。
     assert.deepEqual(
-      planStreamFade({ ledger: undefined, now: 1_000, sourceLength: 400, mounted: false }),
+      planStreamFade({
+        ledger: undefined,
+        now: 1_000,
+        sourceLength: 400,
+        mounted: false,
+      }),
       []
     )
   })

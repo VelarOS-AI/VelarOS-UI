@@ -5,7 +5,7 @@
  * 跑着的时候，正在跑的命令刚吐出的输出露在标题下（宿主经块钩子给），跑完就没了。
  * 不走旧工具卡的分类，也不进「调用了 N 次工具」的折叠。
  */
-import { memo, type ReactElement, useMemo } from 'react'
+import { memo, type ReactElement, useEffect, useMemo, useState } from 'react'
 
 import { useConversationBlockHooks } from '../blocks/conversationBlockHooks'
 import {
@@ -13,6 +13,7 @@ import {
   useConversationI18n,
   useConversationTranslatorRuntime,
 } from '../i18n'
+import { useTimerScope } from '../react-hooks/useTimerScope'
 import { formatToolDurationMs } from '../tool-render/toolCallSummary'
 import { toolLeadingPhosphorIcon } from '../tool-render/toolLeadingPhosphorIcon'
 
@@ -67,10 +68,28 @@ function ScriptExecutionCardInner({ block }: ScriptExecutionCardProps): ReactEle
       title={title}
       reason={resolveScriptExecutionFailureReason(block)}
       live={optionalWhen(block.status === 'running', live)}
-      meta={duration}
+      meta={block.status === 'running'
+        ? <ScriptExecutionLiveDuration key={`${block.id}:${block.startedAt ?? ''}`} startedAt={block.startedAt} />
+        : duration}
       renderDetails={() => <ScriptExecutionDetails block={block} />}
     />
   )
+}
+
+/** 只有运行中的卡订阅时钟；状态落定后卸载，右侧改读最终耗时。 */
+function ScriptExecutionLiveDuration({ startedAt }: { startedAt?: number }): ReactElement {
+  const { locale } = useConversationI18n()
+  const translatorRuntime = useConversationTranslatorRuntime()
+  const timers = useTimerScope('ScriptExecutionLiveDuration')
+  const [mountedAt] = useState(Date.now)
+  const [now, setNow] = useState(Date.now)
+  useEffect(() => {
+    const clock = timers.every(1000, () => setNow(Date.now()))
+    return () => { clock.cancel() }
+  }, [timers])
+  return <span data-slot="execution-step-elapsed">{
+    formatToolDurationMs(Math.max(0, now - (startedAt ?? mountedAt)), locale, translatorRuntime)
+  }</span>
 }
 
 /** 展开后的详情：执行的代码，接着按发出顺序是每次调用的结果，脚本本身的错误排在最后。 */

@@ -1,6 +1,7 @@
 import type { ConversationWorkerThread } from '../projection'
 
 import type { ChatMessage } from '#contracts'
+import { isConversationTurnInputMessage } from '#contracts'
 import { isFiniteNumber } from '#internal/runtime'
 import { isArray, isEmpty, isRecord, isString, toNullable } from '#internal/runtime'
 
@@ -13,6 +14,8 @@ interface WorkerThreadTimestampAnchor {
 
 interface WorkerThreadMessageAnchor extends WorkerThreadTimestampAnchor {
   messageId: string
+  role: ChatMessage['role']
+  isTurnInput: boolean
 }
 
 interface WorkerThreadDispatchAnchor extends WorkerThreadTimestampAnchor {
@@ -102,7 +105,10 @@ function createPendingWorkerThreadFromDispatchToolCall(
   return thread
 }
 
-function buildPendingWorkerThread(message: ChatMessage, block: ToolCallBlock): ConversationWorkerThread {
+function buildPendingWorkerThread(
+  message: ChatMessage,
+  block: ToolCallBlock
+): ConversationWorkerThread {
   const args = isRecord(block.args) ? block.args : {}
   const prompt = readDispatchArg(args, 'prompt')
   const description = readDispatchArg(args, 'description')
@@ -178,12 +184,7 @@ function collectThreadIdsFromRecord(value: Record<string, unknown>, threadIds: S
     threadIds.add(directThreadId)
   }
 
-  for (const directListKey of [
-    'thread_ids',
-    'threadIds',
-    'worker_thread_ids',
-    'workerThreadIds',
-  ]) {
+  for (const directListKey of ['thread_ids', 'threadIds', 'worker_thread_ids', 'workerThreadIds']) {
     const directListValue = value[directListKey]
 
     if (!isArray(directListValue)) continue
@@ -316,6 +317,8 @@ function createWorkerThreadTranscriptAnchorIndex(
   messages.forEach((message, messageOrder) => {
     messageAnchors.push({
       messageId: message.id,
+      role: message.role,
+      isTurnInput: isConversationTurnInputMessage(message),
       timestamp: message.timestamp,
       order: messageOrder,
     })
@@ -401,7 +404,10 @@ function resolveWorkerThreadAnchorStepId(
   if (thread.anchorId && anchorIndex.scriptIds.has(thread.anchorId)) return thread.anchorId
   const prompt = readNonBlankText(thread.input)
   const explicitAnchor = findNearestTranscriptAnchor(
-    preferSamePromptAnchors(anchorIndex.dispatchAnchorsByThreadId.get(thread.threadId) ?? [], prompt),
+    preferSamePromptAnchors(
+      anchorIndex.dispatchAnchorsByThreadId.get(thread.threadId) ?? [],
+      prompt
+    ),
     thread.startedAt
   )
   if (explicitAnchor) return explicitAnchor.toolCallId
@@ -422,14 +428,25 @@ function resolveWorkerThreadAnchorStepId(
     return promptAnchor.toolCallId
   }
 
-  return toNullable(findNearestTranscriptAnchor(anchorIndex.dispatchAnchors, thread.startedAt)?.toolCallId)
+  return toNullable(
+    findNearestTranscriptAnchor(anchorIndex.dispatchAnchors, thread.startedAt)?.toolCallId
+  )
 }
 
 function findWorkerThreadAnchorMessageId(
   anchorIndex: WorkerThreadTranscriptAnchorIndex,
   thread: ConversationWorkerThread
 ): Nullable<string> {
-  return toNullable(findAnchorAtOrBefore(anchorIndex.messageAnchors, thread.startedAt)?.messageId)
+  const anchor = findAnchorAtOrBefore(anchorIndex.messageAnchors, thread.startedAt)
+  if (!anchor || anchor.role === 'assistant') return toNullable(anchor?.messageId)
+
+  // 线程可能先于本轮第一条助手消息出现；助手到达后，归入这轮的执行过程。
+  for (const next of anchorIndex.messageAnchors) {
+    if (next.order <= anchor.order) continue
+    if (next.isTurnInput) break
+    if (next.role === 'assistant') return next.messageId
+  }
+  return anchor.messageId
 }
 
 function appendPendingDispatchAgentPlaceholders(

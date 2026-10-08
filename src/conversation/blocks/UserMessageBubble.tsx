@@ -97,7 +97,7 @@ function UserMessageBubbleInner({
   // 能不能回退由按钮内部按 disabled 处理：图标隐藏，但已打开的弹窗留着并禁用确认。
   const canShowRewindAction = isConversationTurnInputMessage(message) && !!onRewindToMessage
   const hasUserActions = canShowRewindAction || !isBlank(clipboardContent.plainText)
-  const guidanceStatus = message.guidanceStatus ?? (isRunGuidance ? 'sent' : null)
+  const guidanceStatus = isRunGuidance ? message.guidanceStatus ?? 'sent' : null
   const guidanceLabel =
     guidanceStatus === 'awaiting-decision'
       ? t('chat.awaitingUserDecision')

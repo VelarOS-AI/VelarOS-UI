@@ -165,7 +165,11 @@ void describe('interaction presentation', () => {
   void test('the collapsed line says what was answered, rejected with its reason, or expired', () => {
     assert.equal(
       describeInteractionOutcome(
-        { ...choice, status: 'answered', answer: { choices: ['staging', 'production'], text: '都要' } },
+        {
+          ...choice,
+          status: 'answered',
+          answer: { choices: ['staging', 'production'], text: '都要' },
+        },
         t
       ),
       '预发环境、生产环境、都要'
@@ -247,7 +251,13 @@ void describe('interaction card', () => {
     assert.match(login, />继续</)
     const input = render(
       createElement(InteractionCard, {
-        block: { type: 'interaction', id: 'ask-3', kind: 'input', message: '文件在哪？', status: 'pending' },
+        block: {
+          type: 'interaction',
+          id: 'ask-3',
+          kind: 'input',
+          message: '文件在哪？',
+          status: 'pending',
+        },
       })
     )
     assert.match(input, /<textarea/)
@@ -272,7 +282,9 @@ void describe('interaction card', () => {
   })
 
   void test('the tail of the text only marks settled runs: waiting for an answer draws no pause mark', () => {
-    const marker = (status: ConversationMessageRunMarker['status']): ConversationMessageRunMarker => ({
+    const marker = (
+      status: ConversationMessageRunMarker['status']
+    ): ConversationMessageRunMarker => ({
       messageId: 'm',
       status,
       detail: null,
@@ -287,20 +299,48 @@ void describe('interaction card', () => {
       assert.equal(settledRunMarker(marker(status))?.status, status)
   })
 
-  void test('without an answer channel, and once answered, the card is one collapsed line', () => {
+  void test('confirmation receipts use a collapsed line when read-only or answered', () => {
     const readOnly = render(createElement(InteractionCard, { block: danger }), false)
     assert.match(readOnly, /aria-expanded="false"/)
     assert.match(readOnly, /等你回答/)
     assert.doesNotMatch(readOnly, />批准</)
     const answered = render(
       createElement(InteractionCard, {
-        block: { ...choice, status: 'answered', answer: { choices: ['staging'] } },
+        block: { ...danger, status: 'answered', answer: { approved: true } },
       })
     )
     assert.match(answered, /data-tone="success"/)
-    assert.match(answered, /改动先应用到哪个环境？/)
-    assert.match(answered, /预发环境/)
+    assert.match(answered, /这条命令会删除目录，确认执行？/)
+    assert.match(answered, /aria-expanded="false"/)
     assert.doesNotMatch(answered, />发送</)
+  })
+
+  void test('answered forms and choices display their saved answers directly in a read-only carousel', () => {
+    const answeredForm = render(
+      createElement(InteractionCard, {
+        block: {
+          ...form,
+          status: 'answered',
+          answer: { values: { version: 'v2', count: 3, notify: true, regions: ['cn'] } },
+        },
+      }),
+      false
+    )
+    assert.match(answeredForm, /data-kind="form" data-status="answered"/)
+    assert.equal(answeredForm.match(/请填写发布信息。/gu)?.length, 1)
+    assert.match(answeredForm, /value="v2"/)
+    assert.match(answeredForm, /问题 1 \/ 4/)
+    assert.match(answeredForm, /disabled=""/)
+    assert.doesNotMatch(answeredForm, /aria-expanded|>发送<|>跳过</)
+
+    const answeredChoice = render(
+      createElement(InteractionCard, {
+        block: { ...choice, status: 'answered', answer: { choices: ['staging'], text: '先验证' } },
+      })
+    )
+    assert.match(answeredChoice, /aria-pressed="true"/)
+    assert.match(answeredChoice, /value="先验证"/)
+    assert.doesNotMatch(answeredChoice, /aria-expanded|>发送<|>跳过</)
   })
 
   void test('message blocks render interaction cards', () => {
@@ -318,7 +358,7 @@ void describe('interaction card', () => {
 })
 
 void describe('processed activity', () => {
-  void test('interaction cards and widgets stay outside the collapsed processed group', () => {
+  void test('interaction cards join processed activity while widgets remain visible', () => {
     const blocks: ContentBlock[] = [
       { type: 'thinking', text: '想一想' },
       { ...danger, status: 'answered', answer: { approved: true } },
@@ -329,8 +369,8 @@ void describe('processed activity', () => {
     const partition = partitionProcessedActivitySummarySegments(segments, 3)
     const types = (list: typeof segments): string[] =>
       list.map((segment) => (segment.kind === 'segment' ? segment.segment.block.type : 'group'))
-    assert.deepEqual(types(partition.processedSegments), ['thinking'])
-    assert.deepEqual(types(partition.outsideSegments), ['interaction', 'widget'])
+    assert.deepEqual(types(partition.processedSegments), ['thinking', 'interaction'])
+    assert.deepEqual(types(partition.outsideSegments), ['widget'])
     assert.deepEqual(types(partition.trailingSegments), ['text'])
   })
 })
