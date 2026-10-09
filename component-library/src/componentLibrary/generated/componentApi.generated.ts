@@ -1464,17 +1464,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "LooseOptional<string>"
     },
     {
-      "name": "ChatInputQueuePanel.isPaused",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "boolean",
-      "defaultValue": "false"
-    },
-    {
-      "name": "ChatInputQueuePanel.onResume",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "(() => void | Promise<void>)"
-    },
-    {
       "name": "ChatInputQueuePanel.queuedDrafts",
       "description": "Auto-generated from TypeScript props.",
       "type": "ChatInputQueuedDraft[]",
@@ -1513,9 +1502,14 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "((id: string) => void | Promise<void>)"
     },
     {
-      "name": "ChatInputQueuePanel.onQueuedDraftReturnToInput",
+      "name": "ChatInputQueuePanel.onQueuedDraftUpdate",
       "description": "Auto-generated from TypeScript props.",
-      "type": "((id: string) => void)"
+      "type": "((id: string, value: string) => void)"
+    },
+    {
+      "name": "ChatInputQueuePanel.onQueuedDraftEditingChange",
+      "description": "Auto-generated from TypeScript props.",
+      "type": "((id: Nullable<string>) => void)"
     },
     {
       "name": "ChatInputQueuePanel.onQueuedDraftRunNow",
@@ -2870,16 +2864,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
     }
   ],
   ComposerToolbarRightPrimaryAction: [
-    {
-      "name": "ComposerToolbarRightPrimaryAction.deferredAction",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "{ title: string; disabled: boolean; onClick: () => void; }"
-    },
-    {
-      "name": "ComposerToolbarRightPrimaryAction.secondaryStop",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "{ title: string; disabled: boolean; pending: boolean; }"
-    },
     {
       "name": "ComposerToolbarRightPrimaryAction.showButton",
       "description": "Auto-generated from TypeScript props.",

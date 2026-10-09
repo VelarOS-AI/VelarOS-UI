@@ -91,21 +91,21 @@
 
 .queuePanel {
   @apply border-b;
-  padding: 6px 9px;
+  padding: 3px 9px;
   border-color: color-mix(in srgb, var(--border) 75%, transparent);
   background: var(--background-elevated);
 }
 
 .queueList {
   @apply flex min-w-0 flex-col;
-  gap: 2px;
+  gap: 0;
 }
 
 .queueItem {
   @apply flex min-w-0 items-center gap-1 border;
   position: relative;
-  min-height: 34px;
-  padding: 4px;
+  min-height: 28px;
+  padding: 0 2px;
   border-color: transparent;
   border-radius: var(--ui-radius-control-sm);
   background: transparent;
@@ -148,7 +148,7 @@
 
 .queueItemMain {
   @apply flex min-w-0 flex-1 items-center;
-  height: 26px;
+  height: 24px;
 }
 
 .queueText {
@@ -157,9 +157,35 @@
   line-height: var(--ui-line-compact);
 }
 
+.queueEditInput,
+.queueEditInput:focus,
+.queueEditInput:focus-visible {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: var(--ui-line-compact);
+  appearance: none;
+}
+
 .queueActions {
   @apply flex shrink-0 items-center gap-1;
   min-height: 24px;
+}
+
+.queueActions :global(.velar-button) {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
 }
 
 .queueActionButton {

@@ -129,11 +129,8 @@ export interface ChatInputAttachmentsControl {
 export interface ChatInputQueueControl {
   errorMessage?: LooseOptional<string>
   canEnqueue?: boolean
-  canGuideCurrentTask?: boolean
   /** 运行停在等一句话的回答：有字时主按钮是「回答」，发出去的就是那句回答，不排队也不算引导。 */
   answering?: boolean
-  isPaused?: boolean
-  onResume?: () => void | Promise<void>
   queuedDrafts?: ChatInputQueuedDraft[]
   drainingId?: LooseOptional<string>
   isQueueDraining?: boolean
@@ -141,7 +138,7 @@ export interface ChatInputQueueControl {
   onQueuedDraftRemove?: (id: string) => void
   onQueuedDraftUpdate?: (id: string, value: string) => void
   onQueuedDraftGuide?: (id: string) => void | Promise<void>
-  onQueuedDraftReturnToInput?: (id: string) => void
+  onQueuedDraftEditingChange?: (id: Nullable<string>) => void
   onQueuedDraftRunNow?: (id: string) => void | Promise<void>
 }
 
@@ -341,17 +338,15 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
   const {
     queuedDrafts = EmptyQueuedDrafts,
     canEnqueue = false,
-    canGuideCurrentTask = false,
     answering = false,
-    isPaused: isQueuePaused = false,
     errorMessage: queueErrorMessage,
-    onResume: onQueueResume,
     isQueueDraining = false,
     drainingId,
     onQueuedDraftMove,
     onQueuedDraftRemove,
     onQueuedDraftGuide,
-    onQueuedDraftReturnToInput,
+    onQueuedDraftUpdate,
+    onQueuedDraftEditingChange,
     onQueuedDraftRunNow,
   } = control.queue ?? {}
   const executionControl = control.execution
@@ -845,15 +840,6 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
     void requestSend()
   }, [requestSend])
 
-  const handleEnqueueClick = useCallback((): void => {
-    void requestSend({
-      value: valueRef.current,
-      files: filesRef.current,
-      virtualPasteReferences: [...virtualPasteReferencesRef.current],
-      delivery: 'after-current',
-    })
-  }, [requestSend])
-
   const toolbarRightChrome = useMemo(
     () => ({
       rightActions,
@@ -883,12 +869,6 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
   )
   const toolbarRightPrimaryAction = useMemo(
     () => ({
-      deferredAction: canEnqueue && canGuideCurrentTask && !answering && primaryActionState.kind === 'send'
-        ? { title: t('chat.sendAfterCurrent'), disabled: primaryActionState.disabled, onClick: handleEnqueueClick }
-        : undefined,
-      secondaryStop: isStreaming && canStop && primaryActionState.kind !== 'stop'
-        ? { title: t('chat.stopStreaming'), disabled: isStopPending, pending: isStopPending }
-        : undefined,
       showButton: primaryActionState.showButton,
       kind: primaryActionState.kind,
       title:
@@ -898,7 +878,7 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
             ? t('chat.sendingMessage')
             : answering
               ? t('chat.answerQuestion')
-              : canEnqueue ? t(canGuideCurrentTask ? 'chat.guideCurrentTask' : 'chat.sendAfterCurrent') : sendButtonTitle,
+              : canEnqueue ? t('chat.sendAfterCurrent') : sendButtonTitle,
       disabled: primaryActionState.disabled,
       pending: primaryActionState.pending,
       buttonClassName:
@@ -916,12 +896,7 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
     }),
     [
       canEnqueue,
-      canGuideCurrentTask,
       answering,
-      isStreaming,
-      canStop,
-      isStopPending,
-      handleEnqueueClick,
       handleSendClick,
       handleStopRequest,
       interactionState.sendButtonTone,
@@ -1086,15 +1061,14 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
       <ChatInputQueuePanel
         queuedDrafts={queuedDrafts}
         errorMessage={queueErrorMessage}
-        isPaused={isQueuePaused}
-        onResume={onQueueResume}
         isQueueDraining={isQueueDraining}
         drainingId={drainingId}
         isStreaming={isStreaming}
         onQueuedDraftMove={onQueuedDraftMove}
         onQueuedDraftRemove={onQueuedDraftRemove}
         onQueuedDraftGuide={onQueuedDraftGuide}
-        onQueuedDraftReturnToInput={onQueuedDraftReturnToInput}
+        onQueuedDraftUpdate={onQueuedDraftUpdate}
+        onQueuedDraftEditingChange={onQueuedDraftEditingChange}
         onQueuedDraftRunNow={onQueuedDraftRunNow}
       />
 

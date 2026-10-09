@@ -222,7 +222,7 @@ export function ChatGuidanceQueueExample(): ReactElement {
     },
     {
       id: 'guidance-queue-2',
-      value: '编辑时退回聊天框，修改后重新排队',
+      value: '点击修改后原地编辑，回车完成',
       files: [],
     },
   ])
@@ -232,12 +232,8 @@ export function ChatGuidanceQueueExample(): ReactElement {
     setQueuedDrafts((current) => current.filter((item) => item.id !== id))
   }
 
-  function returnQueuedDraftToInput(id: string): void {
-    const item = queuedDrafts.find((queuedDraft) => queuedDraft.id === id)
-    if (!item) return
-
-    setValue(item.value)
-    removeQueuedDraft(id)
+  function updateQueuedDraft(id: string, value: string): void {
+    setQueuedDrafts((current) => current.map((item) => item.id === id ? { ...item, value } : item))
   }
 
   function moveQueuedDraft(id: string, direction: 'up' | 'down'): void {
@@ -282,11 +278,12 @@ export function ChatGuidanceQueueExample(): ReactElement {
               onFilesChange: () => undefined,
             },
             queue: {
+              canEnqueue: true,
               queuedDrafts,
               onQueuedDraftMove: moveQueuedDraft,
               onQueuedDraftRemove: removeQueuedDraft,
               onQueuedDraftGuide: removeQueuedDraft,
-              onQueuedDraftReturnToInput: returnQueuedDraftToInput,
+              onQueuedDraftUpdate: updateQueuedDraft,
             },
             streaming: {
               isStreaming: true,

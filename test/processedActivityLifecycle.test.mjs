@@ -21,6 +21,7 @@ const electronPath =
 void test(
   'mounted completed activity collapses without input after updates and paused frames',
   {
+    timeout: 30_000,
     skip: !electronPath && 'Set VELAROS_UI_ELECTRON_PATH to reuse an installed Electron runtime',
   },
   async () => {

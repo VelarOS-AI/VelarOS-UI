@@ -34,7 +34,7 @@ import {
   isRunGuidanceMessage,
   resolveChatMessageConversationKind,
 } from '#contracts'
-import { isBlank, isEmpty, isPresent, optionalWhenLazy } from '#internal/runtime'
+import { isBlank, isEmpty, isPresent } from '#internal/runtime'
 
 const cx = StyleUtils.bindCx(styles)
 const EmptyAttachments: ChatAttachmentMeta[] = []
@@ -127,7 +127,7 @@ function UserMessageBubbleInner({
   ) : (
     !!guidanceLabel && (
       <SignpostIcon
-        size={11}
+        size={10}
         weight={guidanceStatus === 'applied' ? 'fill' : 'regular'}
         className={styles.guidedInputLabelIcon}
       />
@@ -141,41 +141,35 @@ function UserMessageBubbleInner({
       data-conversation-kind={resolveChatMessageConversationKind(message)}
     >
       <div className={styles.userRow}>
-        {(hasUserActions || statusLabel) && (
-          <div
-            className={cx(
-              'userLeftMeta',
-              optionalWhenLazy(statusLabel, () => 'userLeftMetaWithGuidance')
-            )}
-          >
-            {hasUserActions && (
-              <div className={styles.userCopySlot}>
-                {canShowRewindAction && (
-                  <MessageRewindButton
-                    messageId={message.id}
-                    disabled={!canRewindToMessage}
-                    onRewind={onRewindToMessage}
-                    getRewindPlan={getRewindPlan}
-                  />
-                )}
-                {(!isBlank(clipboardContent.plainText) || !isEmpty(clipboardContent.assets)) && (
-                  <MessageCopyButton
-                    content={clipboardContent}
-                    label={t(isRunGuidance ? 'chat.copyGuidance' : 'chat.copyPrompt')}
-                    copiedLabel={t('chat.codeBlockCopied')}
-                  />
-                )}
-              </div>
-            )}
-            {statusLabel && (
-              <div className={styles.guidedInputLabel} title={statusLabel}>
-                {statusIcon}
-                <Text>{statusLabel}</Text>
-              </div>
-            )}
+        {statusLabel && (
+          <div className={styles.userLeftMeta}>
+            <div className={styles.guidedInputLabel} title={statusLabel}>
+              {statusIcon}
+              <Text>{statusLabel}</Text>
+            </div>
           </div>
         )}
         <div className={styles.userBubble}>
+          {hasUserActions && (
+            <div className={styles.userCopySlot}>
+              {canShowRewindAction && (
+                <MessageRewindButton
+                  messageId={message.id}
+                  disabled={!canRewindToMessage}
+                  onRewind={onRewindToMessage}
+                  getRewindPlan={getRewindPlan}
+                />
+              )}
+              {(!isBlank(clipboardContent.plainText) || !isEmpty(clipboardContent.assets)) && (
+                <MessageCopyButton
+                  content={clipboardContent}
+                  label={t(isRunGuidance ? 'chat.copyGuidance' : 'chat.copyPrompt')}
+                  copiedLabel={t('chat.codeBlockCopied')}
+                />
+              )}
+            </div>
+          )}
+          <MessageTimestamp timestamp={message.timestamp} locale={locale} variant="user" />
           <div className={styles.userBubbleInner}>
             <UserAttachmentGallery
               attachments={attachments}
@@ -233,7 +227,6 @@ function UserMessageBubbleInner({
             )}
           </div>
         </div>
-        <MessageTimestamp timestamp={message.timestamp} locale={locale} variant="user" />
         <ImagePreviewDialog
           items={previewItems}
           openIndex={previewOpenIndex}

@@ -531,7 +531,7 @@ void test('普通消息收到上下文回执时保持普通消息语义和展示
       ) as ReactElement
     )
     assert.match(markup, new RegExp(`data-conversation-kind="${kind}"`))
-    assert.doesNotMatch(markup, /chat\.guidanceApplied|已纳入执行上下文|复制引导/)
+    assert.doesNotMatch(markup, /chat\.guidanceApplied|已生效|复制引导/)
   }
 })
 

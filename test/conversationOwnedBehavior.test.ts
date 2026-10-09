@@ -336,35 +336,15 @@ void describe('Platform-owned conversation composer behavior', () => {
     )
   })
 
-  void test('keeps consecutive short user messages and their actions separate in narrow panes', () => {
+  void test('keeps user actions and timestamps out of message layout at every pane width', () => {
     const styles = readFileSync(
-      new URL(
-        '../src/conversation/blocks/MessageBubble.module.css',
-        import.meta.url
-      ),
+      new URL('../src/conversation/blocks/MessageBubble.module.css', import.meta.url),
       'utf8'
     ).replace(/\r\n?/gu, '\n')
-    const narrowLayout =
-      styles.match(
-        /@container chat-conversation-body \(max-width: 520px\) \{(?<body>[\s\S]*?)\n\}\n\n@media/u
-      )?.groups?.body ?? ''
-
-    assert.match(
-      narrowLayout,
-      /\.userRow\s*\{[\s\S]*?display: grid;[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto;/u
-    )
-    assert.match(
-      narrowLayout,
-      /\.userBubble\s*\{[\s\S]*?grid-column: 1 \/ -1;[\s\S]*?grid-row: 1;/u
-    )
-    assert.match(
-      narrowLayout,
-      /\.userLeftMeta\s*\{[\s\S]*?grid-column: 1;[\s\S]*?grid-row: 2;/u
-    )
-    assert.match(
-      narrowLayout,
-      /\.userMessageTimestamp\s*\{[\s\S]*?position: static;[\s\S]*?grid-column: 2;[\s\S]*?grid-row: 2;/u
-    )
+    assert.match(styles, /\.userCopySlot\s*\{[\s\S]*?position: absolute;/u)
+    assert.match(styles, /\.userMessageTimestamp\s*\{[\s\S]*?position: absolute;/u)
+    const narrowLayout = styles.slice(styles.indexOf('@container chat-conversation-body'))
+    assert.doesNotMatch(narrowLayout, /position: static;/u)
   })
 
   void test('shows the context distill progress note with a fact fallback', () => {

@@ -15,7 +15,7 @@ void test('active task with a draft exposes send, empty draft exposes stop', () 
   assert.equal(resolveChatInputPrimaryActionState({ ...running, canSendDuringRun: true }).kind, 'stop')
 })
 
-void test('sending attachments can guide an active task', () => {
+void test('attachments expose the send action for queuing during an active task', () => {
   assert.equal(resolveChatInputPrimaryActionState({ ...running, fileCount: 1, canSendDuringRun: true }).kind, 'send')
 })
 

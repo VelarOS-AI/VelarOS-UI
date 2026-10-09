@@ -4,8 +4,6 @@ import type { RunProfileSelectionId } from "#contracts";
 import type { ReasoningLevel } from "#contracts";
 
 export interface ChatInputSendDraft {
-  /** 当前任务指导为默认；用户显式选择后才排到当前任务之后。 */
-  delivery?: "current" | "after-current";
   value?: string;
   files?: File[];
   virtualPasteReferences?: ChatVirtualPasteReference[];

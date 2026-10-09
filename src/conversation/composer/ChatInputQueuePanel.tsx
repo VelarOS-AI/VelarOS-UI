@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react'
+import React, { memo, useEffect, useRef, useState } from 'react'
 import {
   ArrowUpIcon,
   DotsSixVerticalIcon,
@@ -26,8 +26,6 @@ import { isBlank, isEmpty,toNullable } from '#internal/runtime'
 
 export interface ChatInputQueuePanelProps {
   errorMessage?: LooseOptional<string>
-  isPaused?: boolean
-  onResume?: () => void | Promise<void>
   queuedDrafts: ChatInputQueuedDraft[]
   drainingId?: LooseOptional<string>
   isQueueDraining: boolean
@@ -35,7 +33,8 @@ export interface ChatInputQueuePanelProps {
   onQueuedDraftMove?: (id: string, direction: 'up' | 'down') => void
   onQueuedDraftRemove?: (id: string) => void
   onQueuedDraftGuide?: (id: string) => void | Promise<void>
-  onQueuedDraftReturnToInput?: (id: string) => void
+  onQueuedDraftUpdate?: (id: string, value: string) => void
+  onQueuedDraftEditingChange?: (id: Nullable<string>) => void
   onQueuedDraftRunNow?: (id: string) => void | Promise<void>
 }
 
@@ -44,8 +43,6 @@ const QueuedDraftDragMimeType = 'application/x-velaros-queued-draft'
 
 export const ChatInputQueuePanel = memo(function ChatInputQueuePanel({
   errorMessage,
-  isPaused = false,
-  onResume,
   queuedDrafts,
   isQueueDraining,
   drainingId,
@@ -53,10 +50,32 @@ export const ChatInputQueuePanel = memo(function ChatInputQueuePanel({
   onQueuedDraftMove,
   onQueuedDraftRemove,
   onQueuedDraftGuide,
-  onQueuedDraftReturnToInput,
+  onQueuedDraftUpdate,
+  onQueuedDraftEditingChange,
   onQueuedDraftRunNow,
 }: ChatInputQueuePanelProps): Nullable<ReactElement> {
   const { t } = useConversationI18n()
+  const [editingDraft, setEditingDraft] = useState<Nullable<{ id: string; value: string }>>(null)
+  const editingInput = useRef<HTMLInputElement>(null)
+  const editingId = toNullable(editingDraft?.id)
+  useEffect(() => {
+    if (editingId) {
+      editingInput.current?.focus()
+      const length = editingInput.current?.value.length ?? 0
+      editingInput.current?.setSelectionRange(length, length)
+    }
+    onQueuedDraftEditingChange?.(editingId)
+    return () => onQueuedDraftEditingChange?.(null)
+  }, [editingId, onQueuedDraftEditingChange])
+  useEffect(() => {
+    if (editingId && !queuedDrafts.some((draft) => draft.id === editingId)) setEditingDraft(null)
+  }, [editingId, queuedDrafts])
+
+  function finishEditing(save: boolean): void {
+    if (!editingDraft) return
+    if (save) onQueuedDraftUpdate?.(editingDraft.id, editingDraft.value)
+    setEditingDraft(null)
+  }
   const [draggedQueuedDraftId, setDraggedQueuedDraftId] = useState<Nullable<string>>(null)
   const [dragOverQueuedDraft, setDragOverQueuedDraft] =
     useState<Nullable<{ id: string; placement: QueuedDraftDropPlacement }>>(null)
@@ -66,7 +85,7 @@ export const ChatInputQueuePanel = memo(function ChatInputQueuePanel({
     !!onQueuedDraftRemove ||
     !!onQueuedDraftGuide ||
     !!onQueuedDraftRunNow ||
-    !!onQueuedDraftReturnToInput
+    !!onQueuedDraftUpdate
 
   function clearQueuedDraftDragState(): void {
     setDraggedQueuedDraftId(null)
@@ -127,22 +146,6 @@ export const ChatInputQueuePanel = memo(function ChatInputQueuePanel({
   return (
     <div className={styles.queuePanel}>
       {errorMessage && <Paragraph spacing="none" role="alert">{errorMessage}</Paragraph>}
-      {isPaused && (
-        <div className={styles.queueItem} role="status">
-          <Paragraph spacing="none" className={styles.queueText}>{t('chat.queuedInputsPaused')}</Paragraph>
-          {onResume && (
-            <IconButton
-              size="icon-sm"
-              label={t('chat.resumeQueuedInputs')}
-              title={t('chat.resumeQueuedInputs')}
-              disabled={isQueueDraining || isStreaming}
-              onClick={() => { void onResume() }}
-            >
-              <PlayIcon size={14} />
-            </IconButton>
-          )}
-        </div>
-      )}
       <div className={styles.queueList}>
         {queuedDrafts.map((item, index) => {
           const isFirst = index === 0
@@ -201,9 +204,28 @@ export const ChatInputQueuePanel = memo(function ChatInputQueuePanel({
               )}
 
               <div className={styles.queueItemMain}>
-                <Paragraph spacing="none" className={styles.queueText} title={displayText}>
-                  {displayText}
-                </Paragraph>
+                {editingDraft?.id === item.id ? (
+                  <input
+                    ref={editingInput}
+                    className={styles.queueEditInput}
+                    aria-label={t('chat.composerQueueEdit')}
+                    value={editingDraft.value}
+                    onChange={(event) => setEditingDraft({ id: item.id, value: event.target.value })}
+                    onBlur={() => finishEditing(true)}
+                    onKeyDown={(event) => {
+                      if (event.nativeEvent.isComposing || event.keyCode === 229) return
+                      if (event.key === 'Enter' || event.key === 'Escape') {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        finishEditing(event.key === 'Enter')
+                      }
+                    }}
+                  />
+                ) : (
+                  <Paragraph spacing="none" className={styles.queueText} title={displayText}>
+                    {displayText}
+                  </Paragraph>
+                )}
               </div>
 
               {hasQueuedDraftActions && (
@@ -233,14 +255,14 @@ export const ChatInputQueuePanel = memo(function ChatInputQueuePanel({
                       <ArrowUpIcon size={13} weight="bold" />
                     </IconButton>
                   )}
-                  {onQueuedDraftReturnToInput && (
+                  {onQueuedDraftUpdate && (
                     <IconButton
                       size="icon-sm"
                       className={styles.queueActionButton}
                       title={t('chat.composerQueueEdit')}
                       label={t('chat.composerQueueEdit')}
                       disabled={isQueueDraining}
-                      onClick={() => onQueuedDraftReturnToInput(item.id)}
+                      onClick={() => setEditingDraft({ id: item.id, value: item.value })}
                     >
                       <PencilSimpleIcon size={13} />
                     </IconButton>
