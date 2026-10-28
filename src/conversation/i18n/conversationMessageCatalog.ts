@@ -248,6 +248,7 @@ export const conversationZhCNMessages = {
     statusRunning: '运行中',
     statusSucceeded: '已完成',
     statusWriting: '编写中',
+    statusQueued: '排队中',
   },
   interaction: {
     answerPlaceholder: '写下你的回答，回车发送',
@@ -644,6 +645,7 @@ export const conversationEnUSMessages = {
     statusRunning: 'Running',
     statusSucceeded: 'Done',
     statusWriting: 'Writing',
+    statusQueued: 'Queued',
   },
   interaction: {
     answerPlaceholder: 'Type your answer, Enter to send',

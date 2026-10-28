@@ -32,7 +32,7 @@ const FocusWithinAllowed = new Set([
 void describe("keyboard focus reveal", () => {
   void test("only input controls react to :focus-within", () => {
     const offenders = listStylesheets(uiSource)
-      .map((path) => relative(uiSource, path))
+      .map((path) => relative(uiSource, path).replaceAll('\\', '/'))
       .filter((path) => !FocusWithinAllowed.has(path))
       .filter((path) =>
         readStyles(path)

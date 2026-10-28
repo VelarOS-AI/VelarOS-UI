@@ -36,6 +36,7 @@ const StepIconSize = 13
 
 const ScriptStatusMessageKeys = {
   writing: 'executionStep.statusWriting',
+  queued: 'executionStep.statusQueued',
   running: 'executionStep.statusRunning',
   succeeded: 'executionStep.statusSucceeded',
   failed: 'executionStep.statusFailed',
@@ -70,7 +71,7 @@ function ScriptExecutionCardInner({ block }: ScriptExecutionCardProps): ReactEle
       live={optionalWhen(block.status === 'running', live)}
       meta={block.status === 'running'
         ? <ScriptExecutionLiveDuration key={`${block.id}:${block.startedAt ?? ''}`} startedAt={block.startedAt} />
-        : duration}
+        : block.status === 'queued' ? t('executionStep.statusQueued') : duration}
       renderDetails={() => <ScriptExecutionDetails block={block} />}
     />
   )

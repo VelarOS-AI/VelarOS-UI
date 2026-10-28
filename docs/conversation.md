@@ -224,3 +224,7 @@ React Provider 的生命周期归宿主装配根。卸载会话面之前:取消�
 ```
 
 文件链接通过 `onOpenProjectPath` 交给宿主校验与预览；网页通过 `onOpenBrowserLink` 打开，并提供外部打开控件。文件 URI 使用绝对路径与 UTF-8 百分号编码，路径只解码一次。行内代码保持代码样式，流式链接闭合后启用点击。
+
+脚本卡由宿主保留 `writing → queued → running → succeeded/failed/cancelled` 的真实执行状态。
+`queued` 表示尚在等待执行槽，显示“排队中”，不启动执行耗时、不展示运行输出；进入 `running`
+后才开始实时计时。宿主须在恢复与取消时处理排队卡，不能把排队状态改写为编写或已运行。

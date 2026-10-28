@@ -31,7 +31,7 @@ void test(
     try {
       await writeFile(
         join(directory, 'index.html'),
-        `<html><body><div id="root"></div><script type="module" src="${join(root, 'test/fixtures/processedActivityLifecycle.tsx')}"></script></body></html>`
+        `<html><body><div id="root"></div><script type="module" src="${join(root, 'test/fixtures/processedActivityLifecycle.tsx').replaceAll('\\', '/')}"></script></body></html>`
       )
       await build({
         configFile: false,

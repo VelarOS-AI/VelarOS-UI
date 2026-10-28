@@ -22,7 +22,15 @@ app.whenReady().then(async () => {
     for (const type of ['keyDown', 'keyUp']) window.webContents.sendInputEvent({ type, keyCode: 'Escape' })
     await wait(70)
   }
-  const expect = async (expression, message) => assert.equal(await run(expression), true, message)
+  // 动画退出与锁释放按帧完成；等待可观察结果，不把固定 70ms 当作完成回执。
+  const expect = async (expression, message) => {
+    const deadline = Date.now() + 1500
+    while (Date.now() < deadline) {
+      if (await run(expression)) return
+      await wait(25)
+    }
+    assert.equal(await run(expression), true, message)
+  }
   window.webContents.on('console-message', (event) => { if (event.level === 'error') report.errors.push(event.message) })
   try {
     for (const mode of ['eager', 'lazy']) {
@@ -34,11 +42,21 @@ app.whenReady().then(async () => {
       await click('#git button[data-state]')
       await wait(250)
       await expect('document.activeElement === document.querySelector(".velar-popover-content input")', `${mode}: Git search autofocus`)
+      // 隐藏 Windows 窗口不保证鼠标悬停同步；只在外观采样时固定同一伪状态。
+      if (!window.webContents.debugger.isAttached()) window.webContents.debugger.attach('1.3')
+      await window.webContents.debugger.sendCommand('DOM.enable')
+      await window.webContents.debugger.sendCommand('CSS.enable')
+      const { root } = await window.webContents.debugger.sendCommand('DOM.getDocument')
+      const { nodeId } = await window.webContents.debugger.sendCommand('DOM.querySelector', { nodeId: root.nodeId, selector: '#git button[data-state]' })
+      await window.webContents.debugger.sendCommand('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: ['hover'] })
+      await run(`document.querySelector('#git button[data-state]').style.transition='none'`)
       const appearance = await run(`(() => {const button=document.querySelector('#git button[data-state]');return Object.fromEntries([['button',button],['frame',button.closest('.velar-topbar-control-frame')],['popover',document.querySelector('.velar-popover-content')]].map(([key,element])=>{const style=getComputedStyle(element);return [key,Object.fromEntries(['borderWidth','borderColor','borderRadius','backgroundColor','boxShadow','padding','width','height','webkitAppRegion'].map(property=>[property,style[property]]))]}))})()`)
       assert.equal(appearance.button.borderWidth, '0px', `${mode}: trigger border`)
       assert.equal(appearance.frame.backgroundColor, 'rgba(0, 0, 0, 0)', `${mode}: frame background`)
       assert.equal(appearance.popover.webkitAppRegion, 'no-drag', `${mode}: popover drag exclusion`)
       fs.writeFileSync(path.join(directory, `${mode}.png`), (await window.webContents.capturePage()).toPNG())
+      await run(`document.querySelector('#git button[data-state]').style.removeProperty('transition')`)
+      await window.webContents.debugger.sendCommand('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: [] })
       await click('.velar-popover-content input')
       await window.webContents.insertText('feature')
       await wait(70)

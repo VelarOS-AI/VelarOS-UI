@@ -526,3 +526,18 @@ void describe('脚本执行块的分发', () => {
     assert.doesNotMatch(markup, /已编辑|已探索|条命令/u)
   })
 })
+
+void test('排队卡明确显示排队状态，不启动运行计时或显示运行输出', () => {
+  liveOutputs.set('queued-script', 'must not appear before execution')
+  const markup = render(createElement(ScriptExecutionCard, {
+    block: script({ id: 'queued-script', status: 'queued', startedAt: 1, durationMs: null }),
+  }))
+  assert.match(markup, /排队中/u)
+  assert.doesNotMatch(markup, /execution-step-elapsed|must not appear before execution/u)
+  assert.equal(resolveScriptExecutionTone('queued'), 'running')
+  const running = render(createElement(ScriptExecutionCard, {
+    block: script({ id: 'queued-script', status: 'running', durationMs: null }),
+  }))
+  assert.match(running, /execution-step-elapsed/u)
+  liveOutputs.delete('queued-script')
+})

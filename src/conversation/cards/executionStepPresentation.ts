@@ -33,6 +33,7 @@ const ToolCallPayloadMaxChars = DEFAULT_TOOL_JSON_PREVIEW_MAX_CHARS
 
 const ScriptExecutionToneByStatus = {
   writing: 'running',
+  queued: 'running',
   running: 'running',
   succeeded: 'success',
   failed: 'error',

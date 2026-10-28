@@ -29,7 +29,7 @@ try {
     cwd: packageDirectory,
     operation: `List ${manifest.name} package tarball`,
   })
-  const entries = new Set(stdout.split('\n').filter(Boolean))
+  const entries = new Set(stdout.split(/\r?\n/u).map((entry) => entry.replaceAll('\\', '/')).filter(Boolean))
   for (const requiredFile of ['package/package.json', 'package/README.md']) {
     if (!entries.has(requiredFile)) {
       throw new Error(`${manifest.name} tarball is missing ${requiredFile}`)
