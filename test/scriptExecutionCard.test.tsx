@@ -136,6 +136,13 @@ function countMatches(markup: string, pattern: RegExp): number {
   return [...markup.matchAll(pattern)].length
 }
 
+test('execution control titles explain wait and stop while preserving authored titles', () => {
+  const labels = { wait: '等待程序完成', stop: '停止指定程序' }
+  assert.equal(resolveScriptExecutionTitle(script({ title: 'executions · wait' }), labels), labels.wait)
+  assert.equal(resolveScriptExecutionTitle(script({ title: '', calls: [call({ module: 'velaros:executions', operation: 'stop' })] }), labels), labels.stop)
+  assert.equal(resolveScriptExecutionTitle(script({ title: '等待构建完成' }), labels), '等待构建完成')
+})
+
 /** 去掉标签后的正文：着色与否只差 span，断言正文时不看它。 */
 function textOf(markup: string): string {
   return markup

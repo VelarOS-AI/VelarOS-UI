@@ -9,16 +9,27 @@ import { Streamdown } from 'streamdown'
 import { MessageMarkdownRuntimeProvider, useMessageMarkdownComponents } from '../src/conversation/blocks/useMessageMarkdownComponents'
 import { resolveMessageMarkdownHrefTarget } from '../src/conversation/markdown/messageMarkdownLinks.utils'
 import { STREAMDOWN_MARKDOWN_REHYPE_PLUGINS, transformMessageMarkdownUrl } from '../src/conversation/markdown/streamdownMarkdown.config'
+import { prepareStreamdownMarkdownText } from '../src/conversation/markdown/streamdownMarkdownSource.utils'
 import { FileTypeIcon } from '../src/primitives/display/FileTypeIcon'
 
 function MarkdownProbe({ text, streaming = false, host = true }: { text: string; streaming?: boolean; host?: boolean }): ReactElement {
   const { components, runtime } = useMessageMarkdownComponents(undefined, host ? async () => {} : undefined)
   return createElement(MessageMarkdownRuntimeProvider, { runtime },
-    createElement(Streamdown, { components, rehypePlugins: STREAMDOWN_MARKDOWN_REHYPE_PLUGINS, urlTransform: transformMessageMarkdownUrl, mode: streaming ? 'streaming' : 'static', remend: { linkMode: 'text-only' } }, text))
+    createElement(Streamdown, { components, rehypePlugins: STREAMDOWN_MARKDOWN_REHYPE_PLUGINS, urlTransform: transformMessageMarkdownUrl, mode: streaming ? 'streaming' : 'static', remend: { linkMode: 'text-only' } }, prepareStreamdownMarkdownText(text)))
 }
 const render = (text: string, streaming = false, host = true) => renderToStaticMarkup(createElement(MarkdownProbe, { text, streaming, host }))
 
 void describe('explicit Markdown link protocols', () => {
+  void test('bold web addresses exclude Markdown delimiters from the clickable URL', () => {
+    for (const streaming of [false, true]) {
+      const markup = render('地址是 **http://localhost:3000/**。', streaming)
+      assert.match(markup, /href="http:\/\/localhost:3000\/"/u)
+      assert.doesNotMatch(markup, /localhost:3000\/\*\*/u)
+      assert.match(markup, /data-streamdown="strong"|<strong>/u)
+    }
+    for (const text of ['`**http://localhost:3000/**`', '```js\n"**http://localhost:3000/**"\n```', '[pattern](https://example.com/**)'])
+      assert.equal(prepareStreamdownMarkdownText(text), text)
+  })
   void test('file URI uses UTF-8 and decodes exactly once without requiring an extension', () => {
     for (const [uri, path] of [
       ['file:///tmp/README', '/tmp/README'],

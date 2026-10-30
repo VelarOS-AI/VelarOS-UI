@@ -25,6 +25,7 @@ import {
   resolveScriptExecutionTone,
   resolveScriptPayloadLanguage,
 } from './executionStepPresentation'
+import { formatScriptSource } from './formatScriptSource'
 
 import styles from './ExecutionStep.module.css'
 
@@ -53,7 +54,10 @@ function ScriptExecutionCardInner({ block }: ScriptExecutionCardProps): ReactEle
   const live = useConversationBlockHooks().useScriptLiveOutput(block.id)
   const observe = block.kind === 'observe'
   const title =
-    resolveScriptExecutionTitle(block) ??
+    resolveScriptExecutionTitle(block, {
+      wait: t('scriptExecution.waitTitle'),
+      stop: t('scriptExecution.stopTitle'),
+    }) ??
     t(observe ? 'scriptExecution.observeTitle' : 'scriptExecution.executeTitle')
   const duration =
     isPresent(block.durationMs) && Math.round(block.durationMs) > 0
@@ -97,11 +101,20 @@ function ScriptExecutionLiveDuration({ startedAt }: { startedAt?: number }): Rea
 export function ScriptExecutionDetails({ block }: { block: ScriptExecutionBlock }): ReactElement {
   const { t } = useConversationI18n()
   const error = trimmedStringOrEmpty(block.error)
+  const [formatted, setFormatted] = useState({ source: '', text: '' })
+  useEffect(() => {
+    if (block.status === 'writing') return
+    let cancelled = false
+    void formatScriptSource(block.source).then((text) => {
+      if (!cancelled) setFormatted({ source: block.source, text })
+    })
+    return () => { cancelled = true }
+  }, [block.source, block.status])
 
   return (
     <>
       {isNonBlankString(block.source) ? (
-        <ExecutionStepPayload text={block.source} language="typescript" />
+        <ExecutionStepPayload text={formatted.source === block.source ? formatted.text : block.source} language="typescript" />
       ) : (
         <p className={styles.note}>
           {t(block.status === 'writing' ? 'scriptExecution.sourceWriting' : 'scriptExecution.sourceEmpty')}

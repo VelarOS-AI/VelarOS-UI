@@ -128,7 +128,11 @@ function prepareInlineMarkdownText(markdown: string): string {
   return result
 }
 
-function guardLiteralDollars(text: string): string {
+function guardLiteralDollars(source: string): string {
+  // GFM 的裸链接会吞掉紧邻 URL 的强调闭合符；只把成对强调中的网址改成标准自动链接。
+  // 本函数只接收行内代码和围栏以外的正文，原始消息及代码内容保持不变。
+  const text = source.replace(/(\*{1,3}|_{1,3})(https?:\/\/[^\s<>]*?)\1/gu,
+    (matched, delimiter: string, url: string) => URL.canParse(url) ? `${delimiter}<${url}>${delimiter}` : matched)
   let result = ''
   let index = 0
 

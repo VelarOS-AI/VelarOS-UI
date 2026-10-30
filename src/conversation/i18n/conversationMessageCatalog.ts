@@ -280,6 +280,8 @@ export const conversationZhCNMessages = {
   },
   scriptExecution: {
     executeTitle: '执行脚本',
+    waitTitle: '等待程序完成',
+    stopTitle: '停止指定程序',
     observeTitle: '持续观察',
     sourceEmpty: '没有源码。',
     sourceWriting: '正在编写…',
@@ -678,6 +680,8 @@ export const conversationEnUSMessages = {
   scriptExecution: {
     executeTitle: 'Run script',
     observeTitle: 'Keep watching',
+    waitTitle: 'Wait for program completion',
+    stopTitle: 'Stop the specified program',
     sourceEmpty: 'No source.',
     sourceWriting: 'Writing…',
   },

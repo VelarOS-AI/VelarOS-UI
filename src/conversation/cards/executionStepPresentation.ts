@@ -62,12 +62,19 @@ export function formatScriptCallLabel(call: Pick<ScriptExecutionCall, 'module' |
  * 连调用都还没有时返回 null，由卡片给「执行脚本」。
  */
 export function resolveScriptExecutionTitle(
-  block: Pick<ScriptExecutionBlock, 'title' | 'calls'>
+  block: Pick<ScriptExecutionBlock, 'title' | 'calls'>,
+  controlLabels?: { wait: string; stop: string }
 ): Nullable<string> {
   const title = trimmedStringOrEmpty(block.title)
+  const control = /^(?:velaros:)?executions\s*[·.]\s*(wait|stop)$/u.exec(title)
+  if (control && controlLabels) return control[1] === 'wait' ? controlLabels.wait : controlLabels.stop
   if (title) return title
 
   const [firstCall] = block.calls
+  if (firstCall?.module === 'velaros:executions' && controlLabels) {
+    if (firstCall.operation === 'wait') return controlLabels.wait
+    if (firstCall.operation === 'stop') return controlLabels.stop
+  }
   return firstCall ? formatScriptCallLabel(firstCall) : null
 }
 
