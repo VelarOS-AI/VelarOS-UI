@@ -9,7 +9,8 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 app.whenReady().then(async () => {
   const window = new BrowserWindow({ width: 900, height: 600, show: false, frame: false,
-    webPreferences: { backgroundThrottling: false, nodeIntegration: false, contextIsolation: true, sandbox: true } })
+    // Windows 隐藏窗口可能停止绘制，动画停在 0ms 时弹层尚不可点；离屏绘制保留真实帧而不抢用户屏幕。
+    webPreferences: { backgroundThrottling: false, offscreen: true, nodeIntegration: false, contextIsolation: true, sandbox: true } })
   const report = { results: [], errors: [] }
   const run = (source) => window.webContents.executeJavaScript(source)
   const click = async (selector) => {
@@ -159,6 +160,7 @@ app.whenReady().then(async () => {
     console.log('Popover runtime: eager/lazy appearance, focus, Select and modal dismissal, nested ownership, and outside click recovery passed.')
   } catch (error) {
     report.failure = error.stack
+    report.dismissalState = await run(`({pointerEvents:document.body.style.pointerEvents,layers:[...document.querySelectorAll('[data-slot="select-content"], [data-slot="dialog-content"], [data-slot="dialog-overlay"]')].map(e=>({slot:e.dataset.slot,state:e.dataset.state,animation:getComputedStyle(e).animationName,playState:getComputedStyle(e).animationPlayState,visibility:getComputedStyle(e).visibility})),animations:document.getAnimations().map(a=>({state:a.playState,time:a.currentTime}))})`)
     fs.writeFileSync(path.join(directory, 'failure.png'), (await window.webContents.capturePage()).toPNG())
     console.error(error)
     process.exitCode = 1

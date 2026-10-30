@@ -1,4 +1,5 @@
 import {
+  type RefCallback,
   type RefObject,
   useCallback,
   useEffect,
@@ -64,7 +65,7 @@ export interface UseScrollToBottomOptions {
 export interface UseScrollToBottomReturn<T extends HTMLElement> {
   /** 强制持续跟随；普通的默认贴底不需要开启这一位。 */
   followLocked: boolean
-  scrollRef: RefObject<Nullable<T>>
+  scrollRef: RefObject<Nullable<T>> & RefCallback<T>
   setFollowLocked: (locked: boolean) => void
 }
 
@@ -85,7 +86,20 @@ export function useScrollToBottom<T extends HTMLElement>(
   resetKey: unknown = trigger,
   options: UseScrollToBottomOptions = {}
 ): UseScrollToBottomReturn<T> {
-  const ref = useRef<T>(null)
+  const [scrollElement, setScrollElement] = useState<Nullable<T>>(null)
+  // 宿主 hook 可比异步会话壳活得更久。回调 ref 把实际容器的挂载/替换纳入生命周期，
+  // 同时保留 current 给导航与跟随上下文读取，避免终态刷新后仍监听已卸载的容器。
+  const ref = useMemo<RefObject<Nullable<T>> & RefCallback<T>>(() => {
+    const viewportRef = Object.assign(
+      (element: Nullable<T>): void => {
+        viewportRef.current = element
+        setScrollElement(element)
+      },
+      { current: null as Nullable<T> }
+    )
+    return viewportRef
+  }, [])
+  const lastScrollElementRef = useRef<Nullable<T>>(null)
   const followLockedRef = useRef(false)
   const [followLocked, setFollowLockedState] = useState(false)
   const shouldStickToBottomRef = useRef(true)
@@ -104,7 +118,7 @@ export function useScrollToBottom<T extends HTMLElement>(
     []
   )
 
-  useLayoutEffect(() => registerConversationScrollFollow(ref, scrollFollow), [scrollFollow])
+  useLayoutEffect(() => registerConversationScrollFollow(ref, scrollFollow), [ref, scrollFollow])
 
   const isNearBottom = useCallback(
     (element: T): boolean =>
@@ -236,6 +250,7 @@ export function useScrollToBottom<T extends HTMLElement>(
   }, [
     isNearBottom,
     persistScrollTop,
+    ref,
     restorePendingScrollTop,
     scrollToBottom,
     settleScrollClampGuard,
@@ -258,27 +273,33 @@ export function useScrollToBottom<T extends HTMLElement>(
     shouldStickToBottomRef.current = false
     lastScrollTopRef.current = element.scrollTop
     persistScrollTop(element, element.scrollTop)
-  }, [cancelPendingScroll, persistScrollTop])
+  }, [cancelPendingScroll, persistScrollTop, ref])
 
-  const handleWheel = useCallback((event: WheelEvent): void => {
-    const decision = resolveAutoScrollWheelDecision(followLockedRef.current, event.deltaY)
+  const handleWheel = useCallback(
+    (event: WheelEvent): void => {
+      const decision = resolveAutoScrollWheelDecision(followLockedRef.current, event.deltaY)
 
-    if (decision.shouldPreventDefault) {
-      event.preventDefault()
-      event.stopImmediatePropagation()
-      return
-    }
+      if (decision.shouldPreventDefault) {
+        event.preventDefault()
+        event.stopImmediatePropagation()
+        return
+      }
 
-    if (!decision.shouldSuspendAutoScroll) return
-    ref.current?.dispatchEvent(new Event(AutoScrollSuspendEventName, { bubbles: true }))
-  }, [])
+      if (!decision.shouldSuspendAutoScroll) return
+      ref.current?.dispatchEvent(new Event(AutoScrollSuspendEventName, { bubbles: true }))
+    },
+    [ref]
+  )
 
-  const handlePointerDown = useCallback((event: PointerEvent): void => {
-    if (followLockedRef.current) return
-    // 触摸/笔势在 scroll 之前到达；鼠标仅在直接抓取滚动面（含滚动条）时视为滚动意图。
-    if (event.pointerType === 'mouse' && event.target !== ref.current) return
-    ref.current?.dispatchEvent(new Event(AutoScrollSuspendEventName, { bubbles: true }))
-  }, [])
+  const handlePointerDown = useCallback(
+    (event: PointerEvent): void => {
+      if (followLockedRef.current) return
+      // 触摸/笔势在 scroll 之前到达；鼠标仅在直接抓取滚动面（含滚动条）时视为滚动意图。
+      if (event.pointerType === 'mouse' && event.target !== ref.current) return
+      ref.current?.dispatchEvent(new Event(AutoScrollSuspendEventName, { bubbles: true }))
+    },
+    [ref]
+  )
 
   const updatePinnedState = useCallback((): void => {
     const element = ref.current
@@ -321,16 +342,16 @@ export function useScrollToBottom<T extends HTMLElement>(
     persistScrollTop(element, currentScrollTop)
     // 读者上滑时占位随之缩小；滚完余量回到底部即恢复跟随，占位清零。
     settleScrollClampGuard(element, 'reader-scroll')
-  }, [isAtBottom, isNearBottom, persistScrollTop, settleScrollClampGuard])
+  }, [isAtBottom, isNearBottom, persistScrollTop, ref, settleScrollClampGuard])
 
-  useEventListener('scroll', updatePinnedState, { target: ref, passive: true })
+  useEventListener('scroll', updatePinnedState, { target: () => ref.current, passive: true })
   useEventListener('wheel', handleWheel, {
-    target: ref,
+    target: () => ref.current,
     capture: true,
     passive: false,
   })
-  useEventListener('pointerdown', handlePointerDown, { target: ref, capture: true })
-  useEventListener(AutoScrollSuspendEventName, suspendAutoScroll, { target: ref })
+  useEventListener('pointerdown', handlePointerDown, { target: () => ref.current, capture: true })
+  useEventListener(AutoScrollSuspendEventName, suspendAutoScroll, { target: () => ref.current })
 
   const setFollowLocked = useCallback(
     (locked: boolean): void => {
@@ -345,18 +366,15 @@ export function useScrollToBottom<T extends HTMLElement>(
       cancelPendingScroll()
       scrollToBottom(element)
     },
-    [cancelPendingScroll, scrollToBottom]
+    [cancelPendingScroll, ref, scrollToBottom]
   )
-
-  useEffect(() => {
-    const element = ref.current
-    if (!element) return
-    shouldStickToBottomRef.current = true
-    lastScrollTopRef.current = element.scrollTop
-  }, [])
 
   useLayoutEffect(() => {
     const element = ref.current
+    if (!element) return
+    const viewportChanged = lastScrollElementRef.current !== element
+    const replacingViewport = viewportChanged && !!lastScrollElementRef.current
+    lastScrollElementRef.current = element
     const resetKeyChanged = !Object.is(lastResetKeyRef.current, resetKey)
     const restoreKeyChanged = !Object.is(lastRestoreKeyRef.current, restoreKey)
     lastResetKeyRef.current = resetKey
@@ -368,7 +386,6 @@ export function useScrollToBottom<T extends HTMLElement>(
       resetKeyChanged,
     })
 
-    if (!element) return
     // 换会话或发出新消息：上一段内容撑出来的占位作废，恢复位置与贴底都按真实内容算。
     if (resetKeyChanged || restoreKeyChanged) writeScrollClampGuardPx(element, 0)
 
@@ -380,7 +397,14 @@ export function useScrollToBottom<T extends HTMLElement>(
       return
     }
 
-    if (restoreKeyChanged && restoreScrollTop(element)) return
+    if ((restoreKeyChanged || (viewportChanged && !replacingViewport)) && restoreScrollTop(element))
+      return
+    if (replacingViewport && !resetKeyChanged && !restoreKeyChanged) {
+      cancelPendingScroll()
+      if (shouldStickToBottomRef.current) scrollToBottom(element)
+      else applyRestoredScrollTop(element, lastScrollTopRef.current)
+      return
+    }
     if (restorePendingScrollTop(element)) return
     if (!shouldStickToBottomRef.current) return
 
@@ -408,13 +432,15 @@ export function useScrollToBottom<T extends HTMLElement>(
       const latestElement = ref.current
       if (!latestElement) return
 
-      if (shouldCommitScheduledAutoScroll({
-        pinned: shouldStickToBottomRef.current,
-        scheduledScrollTop,
-        currentScrollTop: latestElement.scrollTop,
-        isNearBottom: isNearBottom(latestElement),
-        movementTolerancePx: ContentGrowthUpwardTolerancePx,
-      })) {
+      if (
+        shouldCommitScheduledAutoScroll({
+          pinned: shouldStickToBottomRef.current,
+          scheduledScrollTop,
+          currentScrollTop: latestElement.scrollTop,
+          isNearBottom: isNearBottom(latestElement),
+          movementTolerancePx: ContentGrowthUpwardTolerancePx,
+        })
+      ) {
         scrollToBottom(latestElement)
         return
       }
@@ -426,15 +452,18 @@ export function useScrollToBottom<T extends HTMLElement>(
 
     return cancelPendingScroll
   }, [
+    applyRestoredScrollTop,
     cancelPendingScroll,
     followLocked,
     isNearBottom,
     persistScrollTop,
+    ref,
     resetKey,
     restoreKey,
     restorePendingScrollTop,
     restoreScrollTop,
     scrollTimers,
+    scrollElement,
     scrollToBottom,
     trigger,
   ])
@@ -450,7 +479,7 @@ export function useScrollToBottom<T extends HTMLElement>(
     if (contentElement) observer.observe(contentElement)
 
     return () => observer.disconnect()
-  }, [resetKey, scrollToBottomIfPinned, trigger])
+  }, [ref, resetKey, scrollElement, scrollToBottomIfPinned, trigger])
 
   return { followLocked, scrollRef: ref, setFollowLocked }
 }

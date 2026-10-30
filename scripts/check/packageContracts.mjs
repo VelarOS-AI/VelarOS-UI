@@ -141,24 +141,13 @@ async function verifyExternalConsumer() {
       path.join(temporary, "package.json"),
       `${JSON.stringify({ private: true, type: "module" }, null, 2)}\n`,
     );
-    await writeFile(
-      path.join(temporary, ".npmrc"),
-      [
-        "@velaros-ai:registry=https://npm.pkg.github.com",
-        "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}",
-        "",
-      ].join("\n"),
-    );
-    const npmCli = path.join(path.dirname(process.execPath), "node_modules", "npm", "bin", "npm-cli.js");
+    // 本地归档与公开依赖不需要私有 registry 凭据；核验与开发使用同一个 Bun 安装器。
     capture(
-      process.platform === "win32" ? process.execPath : "npm",
+      "bun",
       [
-        ...(process.platform === "win32" ? [npmCli] : []),
-        "install",
+        "add",
         "--ignore-scripts",
-        "--no-audit",
-        "--no-fund",
-        "--no-package-lock",
+        "--no-save",
         ...installTargets,
         "@types/react@^19.0.0",
         "@types/react-dom@^19.0.0",
@@ -333,9 +322,10 @@ function capture(command, args, cwd) {
     cwd,
     encoding: "utf8",
     env: process.env,
+    timeout: 180_000,
   });
   if (result.status !== 0) {
-    const output = [result.stdout, result.stderr]
+    const output = [result.stdout, result.stderr, result.error?.message]
       .filter(Boolean)
       .join("\n")
       .trim();

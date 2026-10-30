@@ -1577,6 +1577,13 @@
 
 .velar-session-sticky-dock-side {
   --sticky-dock-pane-top-padding: 1rem;
+  /* 侧栏抵消消息阅读栏的左右留白，让幕布铺满滚动视口。 */
+  width: calc(100% + 2rem);
+  margin-inline: -1rem;
+}
+
+.velar-session-sticky-dock-side .velar-session-sticky-dock-fabric-inner {
+  padding-inline: 0;
 }
 
 /*

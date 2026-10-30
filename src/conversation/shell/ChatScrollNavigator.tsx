@@ -171,7 +171,7 @@ function ChatScrollNavigatorInner({
   const scheduleRefresh = useRafSchedule(refreshState)
 
   useEventListener('resize', scheduleRefresh)
-  useEventListener('scroll', scheduleRefresh, { target: scrollRef, passive: true })
+  useEventListener('scroll', scheduleRefresh, { target: () => scrollRef.current, passive: true })
 
   useEffect(() => {
     const scrollEl = scrollRef.current
