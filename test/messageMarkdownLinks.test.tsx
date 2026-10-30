@@ -31,7 +31,7 @@ void describe('explicit Markdown link protocols', () => {
     }
   })
   void test('paths, unsupported schemes and invalid local URIs stay text', () => {
-    for (const href of ['/tmp/app.ts', 'src/app.ts', '~/app.ts', 'C:\\app.ts', 'file:relative',
+    for (const href of ['src/app.ts', '~/app.ts', 'C:app.ts', '//server/share', '\\\\server\\share', 'x://host/path', 'file:relative',
       'file://server/share/a', 'file:////server/share/a', 'file:///tmp/a%2fb', 'file:///tmp/a%5cb', 'file:///tmp/%00',
       'file:///tmp/%ZZ', 'file:///tmp/%FF', 'file:///tmp/a?x=1', 'file:///tmp/a#part',
       'file:///tmp/a b', 'file:///tmp/a\\b', 'javascript:alert(1)', 'data:text/html,test',
@@ -51,16 +51,54 @@ void describe('explicit Markdown link protocols', () => {
     assert.match(render('[报告](file:///tmp/report "model title")'), /title="file:\/\/\/tmp\/report"/u)
     assert.doesNotMatch(render('[报告](file:///tmp/report)', false, false), /<a\b/u)
   })
-  void test('absolute paths and inline code have no file-opening behavior', () => {
-    for (const source of ['[代码](/tmp/a.ts)', '`/tmp/a.ts`', '`file:///tmp/a.ts`', '[代码](src/a.ts)'])
+  void test('inline code, plain paths and relative links have no file-opening behavior', () => {
+    for (const source of ['D:/work/a.ts', '`D:/work/a.ts`', '`/tmp/a.ts`', '`file:///tmp/a.ts`', '[代码](src/a.ts)'])
       assert.doesNotMatch(render(source), /<a\b/u, source)
   })
+  void test('absolute path targets normalize to host file controls in static and streaming replies', () => {
+    for (const [href, path] of [
+      ['D:/work/evidence/', 'D:/work/evidence/'],
+      ['C:\\work\\report.txt', 'C:/work/report.txt'],
+      ['/tmp/报告%20final.txt', '/tmp/报告 final.txt'],
+      ['D:/work/报告 #100%.txt', 'D:/work/报告 #100%.txt'],
+      ['D:/work/%2520.txt', 'D:/work/%20.txt'],
+    ]) {
+      const result = resolveMessageMarkdownHrefTarget(href)
+      assert.equal(result.kind, 'file', href)
+      assert.equal(result.kind === 'file' && result.path, path)
+    }
+    for (const streaming of [false, true])
+      for (const source of [
+        '[evidence 目录](D:/Projects/VelarOS-Desktop/workspace/evidence/)',
+        '[previews 目录](C:/work/previews/)',
+        '[报告](</tmp/报告 final.txt>)',
+        '[报告](<D:/work/报告 #100%.txt>)',
+      ]) {
+        const markup = render(source, streaming)
+        assert.match(markup, /href="file:\/\/\//u, source)
+        assert.doesNotMatch(markup, /\[blocked\]/u, source)
+        assert.doesNotMatch(render(source, streaming, false), /<a\b/u, source)
+      }
+  })
+  void test('unsupported links degrade to their label without leaking a blocked marker', () => {
+    for (const streaming of [false, true])
+      for (const source of [
+        '[普通标签](src/evidence/)',
+        '[普通标签](x://host/path)',
+        '[普通标签](javascript:alert%281%29)',
+        '[普通标签](file://server/share/a)',
+      ]) {
+        const markup = render(source, streaming)
+        assert.doesNotMatch(markup, /\[blocked\]|<a\b/u, source)
+        assert.match(markup, /目录|普通标签/u)
+      }
+  })
   void test('HTML and image filtering still rejects active content and local image sources', () => {
-    const markup = render('<script>alert(1)</script>\n\n[bad](javascript:alert(1))\n\n![local](file:///tmp/secret.png)\n\n<img src="https://example.com/a.png" onerror="alert(1)" />')
-    assert.doesNotMatch(markup, /<script|onerror=|href="javascript:|src="file:/u)
+    const markup = render('<script>alert(1)</script>\n\n[bad](javascript:alert(1))\n\n![local](file:///tmp/secret.png)\n\n![local](D:/work/secret.png)\n\n<img src="https://example.com/a.png" onerror="alert(1)" />')
+    assert.doesNotMatch(markup, /<script|onerror=|href="javascript:|src="(?:file:|D:)/u)
   })
   void test('streaming links become interactive only when their target is complete', () => {
-    for (const source of ['[报告](file:///tmp/report', '[网页](https://example.com'])
+    for (const source of ['[报告](file:///tmp/report', '[报告](D:/work/report', '[网页](https://example.com'])
       assert.doesNotMatch(render(source, true), /<a\b/u, source)
     assert.match(render('[报告](file:///tmp/report)', true), /<a\b/u)
     assert.match(render('[网页](https://example.com)', true), /<a\b/u)

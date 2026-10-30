@@ -52,6 +52,7 @@ const [sanitize, sanitizeOptions] = defaultRehypePlugins.sanitize as RehypePlugi
 const sanitizeSchema = sanitizeOptions as { protocols?: Record<string, string[]> }
 export const STREAMDOWN_MARKDOWN_REHYPE_PLUGINS = [
   defaultRehypePlugins.raw,
+  rehypeMessageFileLinks,
   [sanitize, {
     ...sanitizeSchema,
     protocols: {
@@ -77,6 +78,18 @@ interface LinkNode {
   children?: LinkNode[]
 }
 
+/** 在 sanitizer 把 Windows 盘符误当未知 scheme 丢弃前，归一化有效文件目标。 */
+function rehypeMessageFileLinks() {
+  return function visit(node: LinkNode): void {
+    const href = node.properties?.href
+    if (node.tagName === 'a' && isString(href)) {
+      const target = resolveMessageMarkdownHrefTarget(href)
+      if (target.kind === 'file') node.properties!.href = target.uri
+    }
+    node.children?.forEach(visit)
+  }
+}
+
 /** 文件控件交给宿主打开，其他节点继续使用上游过滤链路。 */
 function rehypeMessageLinkHardening() {
   const [harden, options] = defaultRehypePlugins.harden as RehypePluginTuple
@@ -85,9 +98,16 @@ function rehypeMessageLinkHardening() {
     const files: LinkNode[] = []
     const visit = (node: LinkNode): void => {
       const href = node.properties?.href
-      if (node.tagName === 'a' && isString(href) && resolveMessageMarkdownHrefTarget(href).kind === 'file') {
-        files.push(node)
-        node.tagName = 'span'
+      if (node.tagName === 'a') {
+        const target = isString(href) ? resolveMessageMarkdownHrefTarget(href) : null
+        if (!target || target.kind === 'text') {
+          // sanitizer 可能已移除不支持的 href；明确降级成文本，不让上游注入 [blocked]。
+          node.tagName = 'span'
+          node.properties = {}
+        } else if (target.kind === 'file') {
+          files.push(node)
+          node.tagName = 'span'
+        }
       }
       node.children?.forEach(visit)
     }
