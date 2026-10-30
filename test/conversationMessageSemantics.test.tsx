@@ -500,6 +500,43 @@ void test('真实长任务在下一轮开始后即使漏存完成 marker 也生�
   assert.match(markup, /最终总结留在已处理外面。/)
 })
 
+void test('连续追加引导后唯一运行状态立即位于最新引导下方，不等待下一条助手消息', () => {
+  for (const status of ['等待模型响应', '正在执行核算']) {
+    const entries = [
+      message('turn', 'user', 'turn-input'),
+      message('assistant-first', 'assistant'),
+      message('guidance-first', 'user', 'run-guidance'),
+      message('assistant-next', 'assistant'),
+      message('guidance-latest', 'user', 'run-guidance'),
+    ]
+    for (const count of [3, 5]) {
+      const activeId = count === 3 ? 'assistant-first' : 'assistant-next'
+      const latestGuidance = count === 3 ? 'guidance-first' : 'guidance-latest'
+      const markup = renderToStaticMarkup(
+        createElement(
+          ConversationLocalizationProvider,
+          { value: localization },
+          createElement(
+            ConversationBlockHooksProvider,
+            { value: blockHooks },
+            createElement(ChatTranscript, {
+              messages: entries.slice(0, count),
+              sessionId: 'session',
+              getIsStreaming: (entry) => entry.id === activeId,
+              getInlineNotice: (entry) =>
+                entry.id === activeId ? { tone: 'running', text: status } : null,
+            })
+          )
+        ) as ReactElement
+      )
+      assert.ok(markup.lastIndexOf(status) > markup.indexOf(`data-chat-message="${latestGuidance}"`))
+      // title 与可见正文各出现一次；后续片段不能再各画一条状态。
+      assert.equal(markup.split(`>${status}<`).length - 1, 1)
+      assert.ok(markup.indexOf(`title="${status}"`) > markup.indexOf(`data-chat-message="${latestGuidance}"`))
+    }
+  }
+})
+
 void test('运行内引导复用气泡视觉，但展示自己的标签和复制语义', () => {
   const markup = renderToStaticMarkup(
     createElement(

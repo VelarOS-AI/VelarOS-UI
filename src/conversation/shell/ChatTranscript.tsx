@@ -242,10 +242,24 @@ function ChatTranscriptInner({
       presentation?: ChatTranscriptMessagePresentation
     } = {}
   ): ReactElement => {
-    const inlineNotice = toNullable(getInlineNotice?.(message))
+    const ownInlineNotice = toNullable(getInlineNotice?.(message))
     const forceActivityFlat = !!options.forceActivityFlat
     const activityLeadingMessages = options.presentation?.activityLeadingMessages ?? []
     const activityTrailingMessages = options.presentation?.activityTrailingMessages ?? []
+    // 运行状态属于整轮：引导追加后立即随活动尾部移动，子片段不重复显示。
+    const groupedRunningNotice = [
+      ...activityLeadingMessages,
+      message,
+      ...activityTrailingMessages,
+    ].reduce<Nullable<ChatInlineNoticeMeta>>((notice, activityMessage) => {
+      const nextNotice = toNullable(getInlineNotice?.(activityMessage))
+      return nextNotice?.tone === 'running' ? nextNotice : notice
+    }, null)
+    const inlineNotice = forceActivityFlat
+      ? ownInlineNotice?.tone === 'running'
+        ? null
+        : ownInlineNotice
+      : groupedRunningNotice ?? ownInlineNotice
     const groupedRunIsStreaming = [
       message,
       ...activityLeadingMessages,
