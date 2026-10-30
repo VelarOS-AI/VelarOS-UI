@@ -17,7 +17,6 @@ import { StyleUtils } from '@velaros-ai/ui'
 
 import { useConversationI18n } from '../i18n'
 import { AutoScrollSuspendEventName } from '../react-hooks/scrollBehavior'
-import { useDisclosurePresence } from '../react-hooks/useDisclosurePresence'
 
 import {
   type ExecutionStepCodeLanguage,
@@ -25,7 +24,7 @@ import {
   highlightedTokenStyle,
   useHighlightedCode,
 } from './executionStepHighlight'
-import { type ExecutionFrameTone, isLongExecutionPayload } from './executionStepPresentation'
+import { type ExecutionFrameTone, executionPayloadPreview,isLongExecutionPayload } from './executionStepPresentation'
 import { ExpandableContentControls } from './ExpandableContentControls'
 
 import styles from './ExecutionStep.module.css'
@@ -78,7 +77,6 @@ export function ExecutionStepFrame({
   renderDetails,
 }: ExecutionStepFrameProps): ReactElement {
   const [expanded, setExpanded] = useState(false)
-  const { mounted, visible } = useDisclosurePresence(expanded)
   const detailsId = useId()
   const previewLines = live ? liveOutputLines(live) : []
 
@@ -93,7 +91,7 @@ export function ExecutionStepFrame({
       type="button"
       className={styles.header}
       aria-expanded={expanded}
-      aria-controls={optionalWhen(mounted, detailsId)}
+      aria-controls={optionalWhen(expanded, detailsId)}
       onClick={handleToggle}
     >
       <span className={styles.icon} aria-hidden="true">
@@ -126,8 +124,8 @@ export function ExecutionStepFrame({
   return (
     <div className={styles.root} data-slot={slot} data-tone={tone}>
       {header}
-      {mounted && (
-        <div id={detailsId} className={cx('detailsShell', visible && 'detailsShellVisible')}>
+      {expanded && (
+        <div id={detailsId} className={styles.detailsShell}>
           <div className={styles.detailsFrame}>
             <div className={styles.details}>{renderDetails()}</div>
           </div>
@@ -166,7 +164,9 @@ export function ExecutionStepPayload({
   const { t } = useConversationI18n()
   const [expanded, setExpanded] = useState(false)
   const foldable = isLongExecutionPayload(text)
-  const highlighted = useHighlightedCode(text, optionalWhen(tone !== 'error', language))
+  // 折叠时只构建可见预览；完整原文留在数据层，展开后再渲染。
+  const visibleText = foldable && !expanded ? executionPayloadPreview(text) : text
+  const highlighted = useHighlightedCode(visibleText, optionalWhen(tone !== 'error', language))
 
   return (
     <div className={cx('payload', !label && 'payloadBare')}>
@@ -179,7 +179,7 @@ export function ExecutionStepPayload({
             foldable && !expanded && 'payloadTextFolded'
           )}
         >
-          {highlighted ? <HighlightedLines code={highlighted} /> : text}
+          {highlighted ? <HighlightedLines code={highlighted} /> : visibleText}
         </pre>
         {foldable && (
           <ExpandableContentControls

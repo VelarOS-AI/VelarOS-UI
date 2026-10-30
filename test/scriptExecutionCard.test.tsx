@@ -12,7 +12,7 @@ import { MessageBubble } from '../src/conversation/blocks/MessageBubble'
 import { buildMessageRenderSegments } from '../src/conversation/blocks/messageBubbleRenderModel'
 import { MessageContentBlock } from '../src/conversation/blocks/MessageContentBlock'
 import { ToolActivityDisclosure } from '../src/conversation/blocks/MessageToolActivity'
-import { HighlightedLines } from '../src/conversation/cards/ExecutionStepFrame'
+import { ExecutionStepPayload, HighlightedLines } from '../src/conversation/cards/ExecutionStepFrame'
 import {
   type HighlightedCode,
   highlightedTokenStyle,
@@ -136,7 +136,26 @@ function countMatches(markup: string, pattern: RegExp): number {
   return [...markup.matchAll(pattern)].length
 }
 
-test('execution control titles explain wait and stop while preserving authored titles', () => {
+void test('folded payload renders a bounded preview instead of hidden full output', () => {
+  const source = `${'const value = 1;\n'.repeat(2000)}END_OF_ORIGINAL`
+  const markup = render(createElement(ExecutionStepPayload, { text: source, language: 'typescript' }))
+  assert.ok(markup.length < 5000)
+  assert.ok(markup.includes('const value = 1;'))
+  assert.ok(!markup.includes('END_OF_ORIGINAL'))
+  assert.ok(markup.includes('data-expanded="false"'))
+})
+
+void test('blobs have a distinct source-text card and retain literal contents', () => {
+  const block = script({ kind: 'blobs', title: '', calls: [], source: 'literal ${value} **text** <script>', sourceTruncated: true })
+  const card = render(createElement(ScriptExecutionCard, { block }))
+  assert.ok(card.includes('绑定原文'))
+  assert.ok(!card.includes('执行脚本'))
+  const details = render(createElement(ScriptExecutionDetails, { block }))
+  assert.ok(details.includes('literal ${value} **text** &lt;script&gt;'))
+  assert.ok(details.includes('仅显示部分内容'))
+})
+
+void test('execution control titles explain wait and stop while preserving authored titles', () => {
   const labels = { wait: '等待程序完成', stop: '停止指定程序' }
   assert.equal(resolveScriptExecutionTitle(script({ title: 'executions · wait' }), labels), labels.wait)
   assert.equal(resolveScriptExecutionTitle(script({ title: '', calls: [call({ module: 'velaros:executions', operation: 'stop' })] }), labels), labels.stop)

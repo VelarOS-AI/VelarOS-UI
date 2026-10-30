@@ -1,8 +1,20 @@
 import { Log } from '#internal/runtime'
 
+/** 合并并发排版，反复开合复用结果；限制条目和单条源码，避免会话越长缓存越大。 */
+const formattedSources = new Map<string, Promise<string>>()
+
 /** 只在用户展开详情时加载排版器；超大或未完成的源码保持原文，执行与存档不受影响。 */
 export async function formatScriptSource(source: string): Promise<string> {
   if (!source.trim() || source.length > 100_000) return source
+  const cached = formattedSources.get(source)
+  if (cached) return cached
+  const result = formatSource(source)
+  formattedSources.set(source, result)
+  if (formattedSources.size > 16) formattedSources.delete(formattedSources.keys().next().value!)
+  return result
+}
+
+async function formatSource(source: string): Promise<string> {
   try {
     const [prettier, babel, estree] = await Promise.all([
       import('prettier/standalone'), import('prettier/plugins/babel'), import('prettier/plugins/estree'),

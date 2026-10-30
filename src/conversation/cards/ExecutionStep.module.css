@@ -181,19 +181,9 @@
   transform: rotate(90deg);
 }
 
-/* 详情展开：行高从 0 过渡到内容高度，收起动画期间内容仍挂着。 */
+/* 长结果不参与高度动画：一次布局即可，收起立即卸载；箭头仍保留轻量转动。 */
 .detailsShell {
-  display: grid;
-  grid-template-rows: 0fr;
-  opacity: 0;
-  transition:
-    grid-template-rows 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity 160ms ease;
-}
-
-.detailsShellVisible {
-  grid-template-rows: 1fr;
-  opacity: 1;
+  min-width: 0;
 }
 
 .detailsFrame {

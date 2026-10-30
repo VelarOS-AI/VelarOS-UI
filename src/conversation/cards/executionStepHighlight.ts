@@ -2,8 +2,12 @@
  * 执行步骤卡里代码与返回值的语法着色：与聊天正文的代码块共用同一个 Shiki 高亮器（`@streamdown/code`）
  * 和主题。高亮器第一次用到某种语言要异步加载语法，加载好之前返回 null，调用方先按纯文本显示。
  */
-import { type CSSProperties, useEffect, useMemo, useState } from 'react'
+import { type CSSProperties, useEffect, useState } from 'react'
 import { code as codeHighlighter, type HighlightResult } from '@streamdown/code'
+
+import { useTimerScope } from '../react-hooks/useTimerScope'
+
+const HighlightMaxChars = 20_000
 
 /** 执行步骤卡用到的语言：脚本源码是 TypeScript，调用的返回值是 JSON。 */
 export type ExecutionStepCodeLanguage = 'typescript' | 'json'
@@ -49,17 +53,21 @@ export function useHighlightedCode(
   text: string,
   language: LooseOptional<ExecutionStepCodeLanguage>
 ): Nullable<HighlightedCode> {
-  const ready = useMemo(() => (language ? highlight(text, language) : null), [text, language])
+  const timers = useTimerScope('execution-step-highlight')
   const [loaded, setLoaded] = useState<
     Nullable<{ text: string; language: ExecutionStepCodeLanguage; code: HighlightedCode }>
   >(null)
 
   useEffect(() => {
-    if (ready || !language) return
-    return requestHighlight(text, language, (code) => setLoaded({ text, language, code }))
-  }, [ready, text, language])
+    // 先显示正文，不在 React 渲染期间同步分词。超长正文保留可读纯文本。
+    if (!language || text.length > HighlightMaxChars) return
+    let cancel: (() => void) | undefined
+    const timer = timers.after(0, () => {
+      cancel = requestHighlight(text, language, (code) => setLoaded({ text, language, code }))
+    })
+    return () => { timer.cancel(); cancel?.() }
+  }, [text, language, timers])
 
-  if (ready) return ready
   return loaded && loaded.text === text && loaded.language === language ? loaded.code : null
 }
 

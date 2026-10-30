@@ -6,6 +6,7 @@
  * 不走旧工具卡的分类，也不进「调用了 N 次工具」的折叠。
  */
 import { memo, type ReactElement, useEffect, useMemo, useState } from 'react'
+import { FileTextIcon } from '@phosphor-icons/react'
 
 import { useConversationBlockHooks } from '../blocks/conversationBlockHooks'
 import {
@@ -53,12 +54,13 @@ function ScriptExecutionCardInner({ block }: ScriptExecutionCardProps): ReactEle
   const translatorRuntime = useConversationTranslatorRuntime()
   const live = useConversationBlockHooks().useScriptLiveOutput(block.id)
   const observe = block.kind === 'observe'
+  const blobs = block.kind === 'blobs'
   const title =
     resolveScriptExecutionTitle(block, {
       wait: t('scriptExecution.waitTitle'),
       stop: t('scriptExecution.stopTitle'),
     }) ??
-    t(observe ? 'scriptExecution.observeTitle' : 'scriptExecution.executeTitle')
+    t(blobs ? 'scriptExecution.blobsTitle' : observe ? 'scriptExecution.observeTitle' : 'scriptExecution.executeTitle')
   const duration =
     isPresent(block.durationMs) && Math.round(block.durationMs) > 0
       ? formatToolDurationMs(block.durationMs, locale, translatorRuntime)
@@ -69,7 +71,7 @@ function ScriptExecutionCardInner({ block }: ScriptExecutionCardProps): ReactEle
       slot="script-execution"
       tone={resolveScriptExecutionTone(block.status)}
       statusLabel={t(ScriptStatusMessageKeys[block.status])}
-      icon={toolLeadingPhosphorIcon(observe ? 'search' : 'command', StepIconSize)}
+      icon={blobs ? <FileTextIcon size={StepIconSize} /> : toolLeadingPhosphorIcon(observe ? 'search' : 'command', StepIconSize)}
       title={title}
       reason={resolveScriptExecutionFailureReason(block)}
       live={optionalWhen(block.status === 'running', live)}
@@ -103,23 +105,24 @@ export function ScriptExecutionDetails({ block }: { block: ScriptExecutionBlock 
   const error = trimmedStringOrEmpty(block.error)
   const [formatted, setFormatted] = useState({ source: '', text: '' })
   useEffect(() => {
-    if (block.status === 'writing') return
+    if (block.status === 'writing' || block.kind === 'blobs') return
     let cancelled = false
     void formatScriptSource(block.source).then((text) => {
       if (!cancelled) setFormatted({ source: block.source, text })
     })
     return () => { cancelled = true }
-  }, [block.source, block.status])
+  }, [block.source, block.status, block.kind])
 
   return (
     <>
       {isNonBlankString(block.source) ? (
-        <ExecutionStepPayload text={formatted.source === block.source ? formatted.text : block.source} language="typescript" />
+        <ExecutionStepPayload text={formatted.source === block.source ? formatted.text : block.source} language={block.kind === 'blobs' ? undefined : 'typescript'} />
       ) : (
         <p className={styles.note}>
           {t(block.status === 'writing' ? 'scriptExecution.sourceWriting' : 'scriptExecution.sourceEmpty')}
         </p>
       )}
+      {block.sourceTruncated && <p className={styles.note}>{t('scriptExecution.sourceTruncated')}</p>}
       {block.calls.map(
         (call, index) =>
           // 调用只会按发出顺序往后追加，序号就是它的身份；还没有返回的调用先不占位置。

@@ -28,6 +28,11 @@ export type ExecutionFrameTone = ExecutionStepTone | 'waiting'
 const FoldedPayloadMaxLines = 8
 const FoldedPayloadMaxChars = 600
 
+/** 折叠预览有界，避免仅靠 CSS 隐藏整份长结果；展开仍使用完整原文。 */
+export function executionPayloadPreview(text: string): string {
+  return text.slice(0, FoldedPayloadMaxChars).split('\n').slice(0, FoldedPayloadMaxLines).join('\n').replace(/[\uD800-\uDBFF]$/u, '')
+}
+
 /** 旧工具调用的参数、结果最多展示这么多字符，与原来的通用工具卡一致。 */
 const ToolCallPayloadMaxChars = DEFAULT_TOOL_JSON_PREVIEW_MAX_CHARS
 

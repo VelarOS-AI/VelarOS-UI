@@ -391,8 +391,8 @@ export interface ScriptExecutionBlock {
   type: 'script-execution'
   /** 稳定身份，同一张卡的更新按它原位替换。 */
   id: string
-  /** 哪种程序声明：execute 这一轮执行一次；observe 登记持续观察，从下一回合起每帧运行。 */
-  kind: 'execute' | 'observe'
+  /** execute 执行一次，observe 登记持续观察，blobs 只绑定原文。 */
+  kind: 'execute' | 'observe' | 'blobs'
   /** 一句话说明这一步做什么；可能为空串，此时界面按模块与操作兜底。 */
   title: string
   status: 'writing' | 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled'
