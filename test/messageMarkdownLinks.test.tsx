@@ -3,11 +3,13 @@ import { describe, test } from 'node:test'
 
 import { createElement, type ReactElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { FolderIcon } from '@phosphor-icons/react'
 import { Streamdown } from 'streamdown'
 
 import { MessageMarkdownRuntimeProvider, useMessageMarkdownComponents } from '../src/conversation/blocks/useMessageMarkdownComponents'
 import { resolveMessageMarkdownHrefTarget } from '../src/conversation/markdown/messageMarkdownLinks.utils'
 import { STREAMDOWN_MARKDOWN_REHYPE_PLUGINS, transformMessageMarkdownUrl } from '../src/conversation/markdown/streamdownMarkdown.config'
+import { FileTypeIcon } from '../src/primitives/display/FileTypeIcon'
 
 function MarkdownProbe({ text, streaming = false, host = true }: { text: string; streaming?: boolean; host?: boolean }): ReactElement {
   const { components, runtime } = useMessageMarkdownComponents(undefined, host ? async () => {} : undefined)
@@ -54,6 +56,20 @@ void describe('explicit Markdown link protocols', () => {
   void test('inline code, plain paths and relative links have no file-opening behavior', () => {
     for (const source of ['D:/work/a.ts', '`D:/work/a.ts`', '`/tmp/a.ts`', '`file:///tmp/a.ts`', '[代码](src/a.ts)'])
       assert.doesNotMatch(render(source), /<a\b/u, source)
+  })
+  void test('local links use file-type icons and keep directory descriptions outside the link', () => {
+    const svg = (markup: string) => markup.match(/<svg\b[\s\S]*?<\/svg>/u)?.[0].replace(/ class="[^"]*"/u, '')
+    for (const streaming of [false, true]) {
+      for (const name of ['report.docx', 'report.xlsx', 'slides.pptx', 'report.pdf', 'image.png', 'app.ts', 'README']) {
+        assert.equal(svg(render(`[文件](D:/work/${name})`, streaming)),
+          svg(renderToStaticMarkup(createElement(FileTypeIcon, { fileName: name, size: 14, 'aria-hidden': true }))))
+      }
+      const folder = render('[evidence 目录](D:/work/evidence/)', streaming)
+      assert.equal(svg(folder), svg(renderToStaticMarkup(createElement(FolderIcon, { size: 14, 'aria-hidden': true }))))
+      assert.match(folder, /evidence<\/a> 目录/u)
+      assert.match(render('[文件 目录](D:/work/目录.txt)', streaming), /文件 目录<\/a>/u)
+      assert.match(render('[目录](D:/work/目录/)', streaming), /目录<\/a>/u)
+    }
   })
   void test('absolute path targets normalize to host file controls in static and streaming replies', () => {
     for (const [href, path] of [

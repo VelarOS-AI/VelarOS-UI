@@ -13,7 +13,7 @@ import {
   ArrowSquareOutIcon,
   CodeIcon,
   EyeIcon,
-  FileIcon,
+  FolderIcon,
 } from '@phosphor-icons/react'
 import { useMemoizedFn } from 'ahooks'
 import {
@@ -24,6 +24,7 @@ import {
 } from 'streamdown'
 
 import { IconButton } from '@velaros-ai/ui/primitives/buttons/IconButton'
+import { FileTypeIcon } from '@velaros-ai/ui/primitives/display/FileTypeIcon'
 import { Link } from '@velaros-ai/ui/primitives/display/Link'
 
 import { ExpandableContentControls } from '../cards/ExpandableContentControls'
@@ -537,7 +538,11 @@ function MarkdownLink({
         }}
         onAuxClick={(event) => event.preventDefault()}
       >
-        <FileIcon aria-hidden size={14} className={styles.markdownFileIcon} />{' '}
+        {linkTarget.path.endsWith('/') ? (
+          <FolderIcon aria-hidden size={14} className={styles.markdownFileIcon} />
+        ) : (
+          <FileTypeIcon fileName={linkTarget.path} aria-hidden size={14} className={styles.markdownFileIcon} />
+        )}{' '}
         {props.children}
       </Link>
     )

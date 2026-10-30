@@ -73,6 +73,7 @@ export const transformMessageMarkdownUrl: UrlTransform = (url, key, node) => {
 
 interface LinkNode {
   type: string
+  value?: string
   tagName?: string
   properties?: Record<string, unknown>
   children?: LinkNode[]
@@ -86,7 +87,18 @@ function rehypeMessageFileLinks() {
       const target = resolveMessageMarkdownHrefTarget(href)
       if (target.kind === 'file') node.properties!.href = target.uri
     }
-    node.children?.forEach(visit)
+    node.children = node.children?.flatMap((child) => {
+      visit(child)
+      const href = child.properties?.href
+      const target = child.tagName === 'a' && isString(href)
+        ? resolveMessageMarkdownHrefTarget(href)
+        : null
+      const tail = child.children?.at(-1)
+      const suffix = tail?.type === 'text' ? tail.value?.match(/\s+目录$/u)?.[0] : null
+      if (target?.kind !== 'file' || !target.path.endsWith('/') || !suffix) return [child]
+      tail!.value = tail!.value!.slice(0, -suffix.length)
+      return [child, { type: 'text', value: suffix }]
+    })
   }
 }
 
