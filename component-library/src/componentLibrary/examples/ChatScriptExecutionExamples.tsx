@@ -233,11 +233,11 @@ const legacyToolCallMessage: ChatMessage = {
       startedAt: FixtureTimestamp + 2_000,
       finishedAt: FixtureTimestamp + 6_100,
     },
-    { type: 'text', text: '旧会话里的工具调用仍收在「调用了 N 次工具」里，每一步是通用的「工具名 + 状态」卡。' },
+    { type: 'text', text: '工具和脚本默认收在状态摘要里，点击展开详情；失败状态在收起时也能看到。' },
   ],
 }
 
-/** 放进消息里：同一条消息的脚本卡直接纵向排列，不进工具活动折叠；旧会话的工具调用换成通用卡。 */
+/** 放进消息里：连续脚本和工具默认折叠，标题展示当前动作及异常状态。 */
 export function ScriptExecutionTranscriptExample(): ReactElement {
   return (
     <div data-library-chat-sample>

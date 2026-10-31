@@ -3,25 +3,28 @@ import {
   type ReactElement,
   type ReactNode,
   useEffect,
+  useId,
   useState,
 } from "react";
-import { CaretRightIcon } from "@phosphor-icons/react";
+import { CaretRightIcon, WrenchIcon } from "@phosphor-icons/react";
 
 import { StyleUtils } from "@velaros-ai/ui";
 
-import { type ConversationI18nContextValue, useConversationI18n } from "../i18n";
+import { useConversationI18n, useConversationTranslatorRuntime } from "../i18n";
 import { useConversationScrollFollow } from "../react-hooks/conversationScrollFollow";
 import { AutoScrollSuspendEventName } from "../react-hooks/scrollBehavior";
 import { useDisclosurePresence } from "../react-hooks/useDisclosurePresence";
 import { useTimerScope } from "../react-hooks/useTimerScope";
 
+import { getToolActivityDisclosureSummary } from "./toolActivityDisclosurePresentation";
+
 import styles from "./MessageBubble.module.css";
 
-import type { ToolCallBlock as ToolCallBlockType } from "#contracts";
+import type { ConversationStepBlock } from "#contracts";
 import { isEmpty, isFunction } from "#internal/runtime";
 
 const cx = StyleUtils.bindCx(styles);
-const EmptyToolActivityBlocks: ToolCallBlockType[] = [];
+const EmptyToolActivityBlocks: ConversationStepBlock[] = [];
 
 export function shouldInitiallyExpandToolActivityDisclosure({
   autoCollapseAfterPaint,
@@ -32,20 +35,7 @@ export function shouldInitiallyExpandToolActivityDisclosure({
   defaultExpanded: boolean;
   hasRunningTool: boolean;
 }): boolean {
-  return autoCollapseAfterPaint || defaultExpanded || hasRunningTool;
-}
-
-/** 一组工具调用折起来时的标题：只数调用次数，不再按工具分类拼「已编辑 / 已探索 / 运行命令」。 */
-export function getToolActivityCountLabel(
-  count: number,
-  t: ConversationI18nContextValue["t"],
-): string {
-  return t(
-    count === 1
-      ? "toolSummary.activityUsedToolCountOne"
-      : "toolSummary.activityUsedToolCountMany",
-    { count },
-  );
+  return defaultExpanded || (autoCollapseAfterPaint && !hasRunningTool);
 }
 
 export function ToolActivityDisclosure({
@@ -55,19 +45,28 @@ export function ToolActivityDisclosure({
   defaultExpanded = false,
   isRunning,
   label,
+  formatPathForDisplay,
 }: {
-  blocks?: ToolCallBlockType[];
+  blocks?: ConversationStepBlock[];
   /** 传函数时只在展开期间渲染：收着的折叠不必先把里面的卡全画一遍。 */
   children: ReactNode | (() => ReactNode);
   autoCollapseAfterPaint?: boolean;
   defaultExpanded?: boolean;
   isRunning?: boolean;
   label?: string;
+  formatPathForDisplay?: (path: string) => string;
 }): ReactElement {
-  const { t } = useConversationI18n();
+  const { t, locale } = useConversationI18n();
+  const translator = useConversationTranslatorRuntime();
+  const bodyId = useId();
   const activityBlocks = blocks ?? EmptyToolActivityBlocks;
-  const hasRunningTool =
-    isRunning ?? activityBlocks.some((block) => block.isRunning);
+  const summary = getToolActivityDisclosureSummary(
+    activityBlocks,
+    locale,
+    translator,
+    formatPathForDisplay,
+  );
+  const hasRunningTool = isRunning ?? summary.isRunning;
   const shouldAutoCollapseAfterPaint =
     autoCollapseAfterPaint && !hasRunningTool;
   // 完成信号可能在容器已经挂载后到达。信号保持实时，先呈现展开态，再在浏览器绘制后
@@ -77,18 +76,15 @@ export function ToolActivityDisclosure({
     defaultExpanded,
     hasRunningTool,
   });
-  // 与 ThinkingBlock 一致：运行态只决定初始展开；挂载后由用户点击独占 expanded，
-  // 后续工具进度/运行状态更新不得把已收起的内容强行展开。
+  // 工具与脚本默认收起；进度更新只改摘要，用户点击独占展开状态。
+  // 整轮完成容器仍可显式请求绘制后收起。
   const [expanded, setExpanded] = useState(shouldInitiallyExpand);
   const timers = useTimerScope("ToolActivityDisclosure");
   const scrollFollow = useConversationScrollFollow();
   const { mounted: isMounted, visible: isVisible } =
     useDisclosurePresence(expanded);
   const displayLabel =
-    label ||
-    (isEmpty(activityBlocks)
-      ? t("chat.toolCalls")
-      : getToolActivityCountLabel(activityBlocks.length, t));
+    label || (isEmpty(activityBlocks) ? t("chat.toolCalls") : summary.label);
 
   useEffect(() => {
     if (!shouldAutoCollapseAfterPaint) return;
@@ -124,7 +120,10 @@ export function ToolActivityDisclosure({
   };
 
   return (
-    <div className={styles.toolActivityDisclosure} data-slot="tool-activity-disclosure">
+    <div
+      className={styles.toolActivityDisclosure}
+      data-slot="tool-activity-disclosure"
+    >
       <button
         type="button"
         className={cx(
@@ -132,11 +131,15 @@ export function ToolActivityDisclosure({
           hasRunningTool && "toolActivityToggleRunning",
         )}
         aria-expanded={expanded}
+        aria-controls={bodyId}
         title={displayLabel}
         onClick={handleToggleClick}
       >
         {hasRunningTool && (
           <span className={styles.runningStatusDot} aria-hidden="true" />
+        )}
+        {!hasRunningTool && !label && (
+          <WrenchIcon size={14} aria-hidden="true" />
         )}
         <span className={styles.toolActivityLabel}>{displayLabel}</span>
         <CaretRightIcon
@@ -155,11 +158,15 @@ export function ToolActivityDisclosure({
             "toolActivityBodyShell",
             expanded && isVisible && "toolActivityBodyShellExpanded",
           )}
+          id={bodyId}
           aria-hidden={!isVisible}
+          inert={!isVisible}
         >
           <div className={styles.toolActivityBodyFrame}>
             <div className={styles.toolActivityBody}>
-              {isFunction(children) ? (children as () => ReactNode)() : children}
+              {isFunction(children)
+                ? (children as () => ReactNode)()
+                : children}
             </div>
           </div>
         </div>

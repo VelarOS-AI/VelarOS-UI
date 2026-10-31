@@ -41,7 +41,6 @@ import { isBlank, isEmpty, isPresent } from '#internal/runtime'
 
 interface MessageSegmentSuffixState {
   hasStartedTextAfter: boolean
-  hasStartedThinkingAfter: boolean
   hasStartedToolActivityAfter: boolean
 }
 
@@ -49,7 +48,6 @@ type ActivitySegmentRenderer = () => Nullable<ReactElement>
 
 const EmptyMessageSegmentSuffixState: MessageSegmentSuffixState = {
   hasStartedTextAfter: false,
-  hasStartedThinkingAfter: false,
   hasStartedToolActivityAfter: false,
 }
 
@@ -91,21 +89,18 @@ function buildMessageSegmentSuffixStates(
 ): MessageSegmentSuffixState[] {
   const suffixStates: MessageSegmentSuffixState[] = []
   let hasStartedTextAfter = false
-  let hasStartedThinkingAfter = false
   let hasStartedToolActivityAfter = false
 
   for (let index = segments.length - 1; index >= 0; index -= 1) {
     const segment = segments[index]
     suffixStates[index] = {
       hasStartedTextAfter,
-      hasStartedThinkingAfter,
       hasStartedToolActivityAfter,
     }
 
     if (!segment) continue
 
     hasStartedTextAfter ||= messageSegmentStartsText(segment)
-    hasStartedThinkingAfter ||= messageSegmentStartsThinking(segment)
     hasStartedToolActivityAfter ||= messageSegmentStartsToolActivity(segment)
   }
 
@@ -113,16 +108,15 @@ function buildMessageSegmentSuffixStates(
 }
 
 export function shouldRenderActivityGroupDisclosure(
-  segment: MessageRenderSegment,
-  isStreaming: boolean
+  segment: MessageRenderSegment
 ): boolean {
-  return !isStreaming && segment.kind === 'activity-group' && !isEmpty(segment.blocks)
+  return segment.kind === 'activity-group' && !isEmpty(segment.blocks)
 }
 
 /** 完成态「已处理」内部只有真正的折叠项参与连续横排；正文和卡片仍各自占行。 */
 export function shouldGroupProcessedActivityDisclosure(segment: MessageRenderSegment): boolean {
   return (
-    shouldRenderActivityGroupDisclosure(segment, false) || messageSegmentStartsThinking(segment)
+    shouldRenderActivityGroupDisclosure(segment) || messageSegmentStartsThinking(segment)
   )
 }
 
@@ -160,7 +154,7 @@ function collectToolCallBlocksFromMessageRenderSegment(
   blocks: ToolCallBlockType[]
 ): void {
   if (segment.kind === 'activity-group') {
-    blocks.push(...segment.blocks)
+    blocks.push(...segment.blocks.filter((block) => block.type === 'tool-call'))
     return
   }
 
@@ -375,7 +369,7 @@ function AssistantMessageSegmentsInner({
       block={segment.block}
       blockAnimationKey={segment.key}
       animateLiveToolActivity={animateLiveToolActivity}
-      isStreaming={isStreaming}
+      isStreaming={isStreaming && (segment.block.type !== 'thinking' || segment.key === visibleMessageRenderSegments.at(-1)?.key)}
       thinkingDefaultExpanded={holdExpandedForReader}
       animateStreamingText={shouldRevealStreamingText && segment.key === streamingTextSegmentKey}
       sessionId={sessionId}
@@ -397,8 +391,7 @@ function AssistantMessageSegmentsInner({
 
     if (isStreaming && messageSegmentStartsThinking(segment)) return false
 
-    if (segment.kind === 'activity-group')
-      return !isStreaming || suffixState.hasStartedTextAfter || suffixState.hasStartedThinkingAfter
+    if (segment.kind === 'activity-group') return false
 
     return (
       messageSegmentStartsThinking(segment) &&
@@ -412,24 +405,14 @@ function AssistantMessageSegmentsInner({
     const renderActivityGroupChildren = (): ReactNode[] =>
       segment.segments.map((childSegment) => renderToolRenderSegment(childSegment))
 
-    if (isStreaming)
-      return (
-        <div key={segment.key} className={styles.liveToolActivityGroup}>
-          {renderActivityGroupChildren()}
-        </div>
-      )
-
-    return shouldRenderActivityGroupDisclosure(segment, isStreaming) ? (
+    return (
       <ToolActivityDisclosure
         key={segment.key}
         blocks={segment.blocks}
-        autoCollapseAfterPaint={shouldAutoCollapseProcessedActivity}
-        defaultExpanded={holdExpandedForReader}
+        formatPathForDisplay={formatPathForDisplay}
       >
         {() => renderActivityGroupChildren()}
       </ToolActivityDisclosure>
-    ) : (
-      <React.Fragment key={segment.key}>{renderActivityGroupChildren()}</React.Fragment>
     )
   }
 

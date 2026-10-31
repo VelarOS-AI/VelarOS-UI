@@ -11,7 +11,6 @@ import {
   shouldRequestProcessedActivityAutoCollapse,
 } from '../src/conversation/blocks/AssistantMessageSegments'
 import type { MessageRenderSegment } from '../src/conversation/blocks/messageBubbleRenderModel'
-import { shouldRenderThinkingAsFlat } from '../src/conversation/blocks/MessageMarkdownBlocks'
 import { shouldInitiallyExpandToolActivityDisclosure } from '../src/conversation/blocks/MessageToolActivity'
 import { planStreamFade, splitStreamFadeText } from '../src/conversation/blocks/streamTextFade'
 import {
@@ -128,12 +127,11 @@ void describe('live chat activity presentation', () => {
     assert.equal(shouldGroupProcessedActivityDisclosure(textSegment), false)
   })
 
-  void test('keeps thinking and tool activity flat while the message is streaming', () => {
+  void test('keeps tool activity collapsed while streaming', () => {
     const block = toolBlock('tool-1')
 
-    assert.equal(shouldRenderThinkingAsFlat({ autoCollapse: false, isStreaming: true }), true)
-    assert.equal(shouldRenderActivityGroupDisclosure(activitySegment(block), true), false)
-    assert.equal(shouldRenderActivityGroupDisclosure(activitySegment(block), false), true)
+    assert.equal(shouldRenderActivityGroupDisclosure(activitySegment(block)), true)
+    assert.equal(shouldRenderActivityGroupDisclosure(activitySegment(block)), true)
     assert.equal(
       shouldAnimateLiveToolActivity({
         armedMessageId: null,

@@ -123,7 +123,9 @@ void describe('processed conversation cards', () => {
       ],
       true
     )
-    assert.doesNotMatch(markup, /data-slot="tool-activity-disclosure"/u)
+    assert.equal(markup.match(/data-slot="tool-activity-disclosure"/gu)?.length, 1)
+    assert.doesNotMatch(markup, /data-slot="script-execution"/u)
+    assert.match(markup, /aria-expanded="false"/u)
     assert.match(markup, /子 Agent 卡标记/u)
     assert.match(markup, /批准命令标记/u)
   })
@@ -138,7 +140,10 @@ void describe('processed conversation cards', () => {
       false,
       'awaiting-confirmation'
     )
-    assert.doesNotMatch(markup, /data-slot="tool-activity-disclosure"/u)
-    assert.match(markup, /批准命令标记|子 Agent 卡标记/u)
+    assert.equal(markup.match(/data-slot="tool-activity-disclosure"/gu)?.length, 1)
+    assert.doesNotMatch(markup, /data-slot="script-execution"/u)
+    assert.match(markup, /aria-expanded="false"/u)
+    assert.match(markup, /批准命令标记/u)
+    assert.match(markup, /子 Agent 卡标记/u)
   })
 })

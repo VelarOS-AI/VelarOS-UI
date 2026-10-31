@@ -427,10 +427,8 @@ void describe("reader-stable auto-collapse wiring", () => {
       thinking,
       /autoCollapse && scrollFollow\.isFollowingBottom\(\)/u,
     );
-    assert.match(
-      thinking,
-      /wasStreaming && !isStreaming && scrollFollow\.isFollowingBottom\(\)/u,
-    );
+    assert.match(thinking, /useState\(defaultExpanded\)/u);
+    assert.doesNotMatch(thinking, /wasStreamingRef/u);
 
     const segments = readSource(
       "src/conversation/blocks/AssistantMessageSegments.tsx",
@@ -438,7 +436,7 @@ void describe("reader-stable auto-collapse wiring", () => {
     assert.match(segments, /useConversationAutoCollapseHold\(!isStreaming\)/u);
     assert.equal(
       segments.match(/defaultExpanded=\{holdExpandedForReader\}/gu)?.length,
-      3,
+      2,
     );
     assert.match(
       segments,

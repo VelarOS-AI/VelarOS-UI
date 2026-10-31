@@ -1,0 +1,79 @@
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.trigger:hover,
+.trigger[data-hover-card-open='true'] {
+  background: var(--background-muted);
+  color: var(--foreground);
+}
+.trigger:focus-visible {
+  outline: 2px solid var(--chat-task-usage-color, var(--primary));
+  outline-offset: 2px;
+}
+.panel {
+  width: 216px;
+  max-width: 100%;
+  font-size: 11px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+}
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.metrics > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.metrics span {
+  color: var(--muted-foreground);
+}
+.metrics strong {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+.cacheTrack {
+  height: 3px;
+  margin-top: 10px;
+  border-radius: var(--ui-radius-round);
+  overflow: hidden;
+  background: color-mix(in srgb, var(--chat-task-usage-color, var(--primary)) 12%, transparent);
+}
+.cacheTrack > span {
+  display: block;
+  width: var(--task-cache-fill);
+  height: 100%;
+  border-radius: inherit;
+  background: var(--chat-task-usage-color, var(--primary));
+}
+.cacheTrack[data-unknown='true'] {
+  background: repeating-linear-gradient(
+    120deg,
+    var(--background-muted),
+    var(--background-muted) 4px,
+    var(--border) 4px,
+    var(--border) 6px
+  );
+}
+.meta {
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--muted-foreground);
+  text-align: right;
+}

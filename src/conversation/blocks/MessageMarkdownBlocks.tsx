@@ -9,6 +9,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -41,6 +42,7 @@ import { useConversationScrollFollow } from '../react-hooks/conversationScrollFo
 import { AutoScrollSuspendEventName } from '../react-hooks/scrollBehavior'
 import { useDisclosurePresence } from '../react-hooks/useDisclosurePresence'
 import { useTimerScope } from '../react-hooks/useTimerScope'
+import { getThinkingStageLabel } from '../status/thinkingStageLabel'
 
 import { useConversationBlockHooks } from './conversationBlockHooks'
 import type { SettledRunMarker } from './messageBubbleRenderModel'
@@ -243,13 +245,11 @@ function ThinkingBlockInner({
   const { useAutoTranslateThinkingEnabled } = useConversationBlockHooks()
   const autoTranslateThinking = useAutoTranslateThinkingEnabled()
   const scrollFollow = useConversationScrollFollow()
-  const [expanded, setExpanded] = useState(
-    () => (isStreaming && !autoCollapse) || defaultExpanded
-  )
+  const [expanded, setExpanded] = useState(defaultExpanded)
+  const bodyId = useId()
   const [isTranslating, setIsTranslating] = useState(false)
   const [translateError, setTranslateError] = useState<Nullable<string>>(null)
   const autoTranslateRequestKeyRef = useRef<Nullable<string>>(null)
-  const wasStreamingRef = useRef(isStreaming)
   const { mounted: isMounted, visible: isVisible } = useDisclosurePresence(expanded)
   const fullDisplayText = getThinkingBlockDisplayText(block, locale)
   const thinkingText = readThinkingHeadings(fullDisplayText)
@@ -266,18 +266,12 @@ function ThinkingBlockInner({
   const canTranslate =
     !isStreaming && !!onTranslateThinkingBlock && isPresent(blockIndex) && buttonKind !== 'hidden'
 
-  // 两处自动收起都只在读者跟随底部时发生：读者已上滑解除跟随时，他可能正读着这段思考。
+  // 只有显式收起请求可改变用户的选择；流式进度和结束不会重置展开状态。
   useEffect(() => {
     if (autoCollapse && scrollFollow.isFollowingBottom()) {
       setExpanded(false)
     }
   }, [autoCollapse, scrollFollow])
-
-  useEffect(() => {
-    const wasStreaming = wasStreamingRef.current
-    wasStreamingRef.current = isStreaming
-    if (wasStreaming && !isStreaming && scrollFollow.isFollowingBottom()) setExpanded(false)
-  }, [isStreaming, scrollFollow])
 
   useEffect(() => {
     if (buttonKind !== 'translate') {
@@ -331,7 +325,9 @@ function ThinkingBlockInner({
 
   if (isBlank(fullDisplayText)) return null
 
-  const label = t('chat.thinkingProcess')
+  const label = isStreaming && !autoCollapse
+    ? `${t('chat.thinkingProcess')} · ${getThinkingStageLabel(fullDisplayText) ?? t('status.phaseResearching')}`
+    : t('chat.thinkingProcess')
   const translateButtonLabel =
     buttonKind === 'show-original'
       ? t('chat.thinkingShowOriginal')
@@ -367,16 +363,8 @@ function ThinkingBlockInner({
     </>
   )
 
-  if (shouldRenderThinkingAsFlat({ autoCollapse, isStreaming }))
-    return (
-      <div className={styles.liveThinkingBlock} data-thinking-presentation="flat">
-        <div className={styles.liveThinkingLabel}>{label}</div>
-        {thinkingContent}
-      </div>
-    )
-
   return (
-    <div className={cx('toolActivityDisclosure', 'thinkingBlock')}>
+    <div className={cx('toolActivityDisclosure', 'thinkingBlock')} data-thinking-presentation="disclosure">
       <button
         type="button"
         className={cx(
@@ -384,6 +372,7 @@ function ThinkingBlockInner({
           isStreaming && !autoCollapse && 'toolActivityToggleRunning'
         )}
         aria-expanded={expanded}
+        aria-controls={bodyId}
         title={label}
         onClick={(event) => {
           event.currentTarget.dispatchEvent(
@@ -392,6 +381,7 @@ function ThinkingBlockInner({
           setExpanded((value) => !value)
         }}
       >
+        {isStreaming && !autoCollapse && <span className={styles.runningStatusDot} aria-hidden="true" />}
         <span className={styles.toolActivityLabel}>{label}</span>
         <CaretRightIcon
           size={14}
@@ -406,7 +396,9 @@ function ThinkingBlockInner({
             'toolActivityBodyShell',
             expanded && isVisible && 'toolActivityBodyShellExpanded'
           )}
+          id={bodyId}
           aria-hidden={!isVisible}
+          inert={!isVisible}
         >
           <div className={styles.toolActivityBodyFrame}>
             <div className={styles.toolActivityBody}>{thinkingContent}</div>
@@ -449,16 +441,6 @@ function renderThinkingText(
   }
   push(cursor, end, false)
   return pieces
-}
-
-export function shouldRenderThinkingAsFlat({
-  autoCollapse,
-  isStreaming,
-}: {
-  autoCollapse: boolean
-  isStreaming: boolean
-}): boolean {
-  return isStreaming && !autoCollapse
 }
 
 export const ThinkingBlock = memo(ThinkingBlockInner)

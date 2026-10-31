@@ -499,7 +499,7 @@ void describe('脚本执行块的分发', () => {
     assert.doesNotMatch(markup, /data-slot="tool-activity-disclosure"/)
   })
 
-  void test('脚本卡各自成段、按身份取 key；旧工具调用一次一段、按发生顺序进同一个活动组', () => {
+  void test('连续脚本和工具按发生顺序进入同一个活动组', () => {
     const blocks: ContentBlock[] = [
       { type: 'thinking', text: '先看看。' },
       script({ id: 'a' }),
@@ -513,11 +513,11 @@ void describe('脚本执行块的分发', () => {
 
     assert.deepEqual(
       segments.map((segment) => (segment.kind === 'activity-group' ? segment.segments.map((child) => child.key) : segment.key)),
-      ['thinking:0', 'script:a', 'script:b', ['tool:read-1', 'tool:run-1', 'tool:read-2'], 'text:6']
+      ['thinking:0', ['script:a', 'script:b', 'tool:read-1', 'tool:run-1', 'tool:read-2'], 'text:6']
     )
   })
 
-  void test('消息里的脚本卡纵向平铺在活动折叠外，折叠只数旧工具调用的次数', () => {
+  void test('消息里的连续脚本和工具默认收起，正文保持可见', () => {
     const message: ChatMessage = {
       id: 'assistant-1',
       role: 'assistant',
@@ -532,15 +532,14 @@ void describe('脚本执行块的分发', () => {
     }
     const markup = render(createElement(MessageBubble, { message, sessionId: 'session' }))
 
-    assert.equal(countMatches(markup, /data-slot="script-execution"/gu), 2)
-    assert.ok(markup.indexOf('第一步') < markup.indexOf('第二步'))
-    assert.match(markup, /data-slot="tool-activity-disclosure"[\s\S]*>调用了 2 次工具</)
-    assert.doesNotMatch(markup, /已探索|运行 \d+ 条命令/u)
-    // 折叠收着：旧工具调用的卡不在标记里，脚本卡却在，说明脚本卡不在折叠里面。
+    assert.equal(countMatches(markup, /data-slot="script-execution"/gu), 0)
+    assert.equal(countMatches(markup, /data-slot="tool-activity-disclosure"/gu), 1)
+    assert.match(markup, /已完成 2 项操作/u)
+    assert.match(markup, /收尾。/u)
     assert.doesNotMatch(markup, /data-slot="tool-call-step"/)
   })
 
-  void test('旧工具调用的折叠标题只数次数，不再按分类拼「已编辑 / 已探索」', () => {
+  void test('完成工具折叠显示已执行的活动摘要', () => {
     const markup = render(
       createElement(ToolActivityDisclosure, {
         blocks: [toolCall('read-1', 'project:read'), toolCall('edit-1', 'project:edit'), toolCall('run-1', 'project:run')],
@@ -548,8 +547,8 @@ void describe('脚本执行块的分发', () => {
       })
     )
 
-    assert.match(markup, />调用了 3 次工具</)
-    assert.doesNotMatch(markup, /已编辑|已探索|条命令/u)
+    assert.match(markup, /运行 1 条命令/u)
+    assert.match(markup, /aria-expanded="false"/u)
   })
 })
 

@@ -326,10 +326,6 @@
   max-width: 100%;
 }
 
-.liveToolActivityGroup {
-  @apply flex w-full min-w-0 max-w-full flex-col gap-2;
-}
-
 .toolActivityMotion {
   position: relative;
   width: 100%;
@@ -1791,18 +1787,6 @@
 .thinkingHeading {
   color: var(--foreground-secondary);
   font-weight: 600;
-}
-
-.liveThinkingBlock {
-  @apply flex w-full min-w-0 max-w-full flex-col gap-1;
-  padding-block: 2px;
-}
-
-.liveThinkingLabel {
-  color: var(--foreground-tertiary);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 18px;
 }
 
 .thinkingTranslateRow {

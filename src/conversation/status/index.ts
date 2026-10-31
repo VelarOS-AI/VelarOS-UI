@@ -1,4 +1,5 @@
 export * from './ChatContextUsageGauge'
 export * from './chatStatus'
+export * from './ChatTaskUsagePopover'
 export * from './readConversationLiveActivity'
 export * from './thinkingStageLabel'

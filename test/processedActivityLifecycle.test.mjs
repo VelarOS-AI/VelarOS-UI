@@ -81,6 +81,32 @@ void test(
         'readerHoldSurvivesUpdates',
       ])
         assert.equal(report[key].expanded, 'true', key)
+      for (const key of ['liveInitiallyCollapsed', 'liveManualCollapseSurvives', 'liveSettledCollapsed']) {
+        assert.equal(report[key].expanded, 'false', key)
+        assert.equal(report[key].cards, 0, key)
+        assert.equal(report[key].groups, 1, key)
+      }
+      assert.match(report.liveInitiallyCollapsed.label, /运行中.*运行检查 0/u)
+      assert.match(report.liveManualCollapseSurvives.label, /运行中.*运行检查 2/u)
+      assert.match(report.liveSettledCollapsed.label, /1 项失败.*1 项已取消/u)
+      for (const [key, cards] of [['liveExpanded', 2], ['liveAppendPreservesExpansion', 3], ['settledExpanded', 3]]) {
+        assert.equal(report[key].expanded, 'true', key)
+        assert.equal(report[key].cards, cards, key)
+      }
+      assert.equal(report.liveAppendPreservesExpansion.hasText, true)
+      assert.equal(report.liveSettledCollapsed.hasText, true)
+      for (const key of ['thinkingInitiallyCollapsed', 'thinkingStageCollapsed', 'thinkingManuallyCollapsed', 'thinkingBeforeTool']) {
+        assert.equal(report[key].expanded, 'false', key)
+        assert.equal(report[key].text, null, key)
+      }
+      assert.match(report.thinkingInitiallyCollapsed.label, /思考中/u)
+      assert.match(report.thinkingStageCollapsed.label, /检查配置/u)
+      assert.doesNotMatch(report.thinkingStageCollapsed.label, /思考正文/u)
+      for (const key of ['thinkingExpandedUpdates', 'thinkingExpandedAfterEnd']) {
+        assert.equal(report[key].expanded, 'true', key)
+        assert.match(report[key].text, /思考正文/u)
+      }
+      assert.equal(report.thinkingBeforeTool.label, '思考过程')
     } finally {
       clearTimeout(timeout)
       if (child && child.exitCode === null && child.signalCode === null) child.kill('SIGKILL')

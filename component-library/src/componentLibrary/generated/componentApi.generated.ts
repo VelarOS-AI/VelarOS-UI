@@ -1676,6 +1676,26 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "ChatComposerDensity"
     }
   ],
+  ChatTaskUsagePopover: [
+    {
+      "name": "ChatTaskUsagePopover.total",
+      "description": "Auto-generated from TypeScript props.",
+      "type": "ChatTaskUsageTotals",
+      "recommended": "Required"
+    },
+    {
+      "name": "ChatTaskUsagePopover.locale",
+      "description": "Auto-generated from TypeScript props.",
+      "type": "string",
+      "recommended": "Required"
+    },
+    {
+      "name": "ChatTaskUsagePopover.labels",
+      "description": "Auto-generated from TypeScript props.",
+      "type": "{ title: string; requests: string; input: string; output: string; cache: string; }",
+      "recommended": "Required"
+    }
+  ],
   ChatTranscript: [
     {
       "name": "ChatTranscript.browserScreenshotDisplayMode",

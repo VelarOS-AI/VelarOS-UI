@@ -19,6 +19,7 @@ import type {
   ChatAttachmentMeta,
   ChatMessage,
   ContentBlock,
+  ConversationStepBlock,
   SerializedImageAttachment,
   TextBlock,
   ToolCallBlock as ToolCallBlockType,
@@ -43,7 +44,7 @@ export type MessageRenderSegment =
       kind: 'activity-group'
       key: string
       segments: ToolRenderSegment[]
-      blocks: ToolCallBlockType[]
+      blocks: ConversationStepBlock[]
     }
   | { kind: 'segment'; key: string; segment: ToolRenderSegment }
 
@@ -366,12 +367,13 @@ export function getLastTextSegmentKey(segments: readonly ToolRenderSegment[]): s
   return undefined
 }
 
-/** 能进「调用了 N 次工具」活动组的段：没被摘出来单独展示的工具调用。脚本执行卡从不进组。 */
+/** 连续工具与脚本共用轻量活动组；需要单独展示的交互、计划和成品仍留在外面。 */
 function getGroupedToolBlock(
   segment: ToolRenderSegment,
   isExcludedToolCall: ToolActivitySummaryExclusionPredicate
-): Nullable<ToolCallBlockType> {
+): Nullable<ConversationStepBlock> {
   const { block } = segment
+  if (block.type === 'script-execution') return block
   return block.type === 'tool-call' && !isExcludedToolCall(block) ? block : null
 }
 
@@ -381,7 +383,7 @@ export function buildMessageRenderSegments(
 ): MessageRenderSegment[] {
   const messageSegments: MessageRenderSegment[] = []
   let pendingSegments: ToolRenderSegment[] = []
-  let pendingBlocks: ToolCallBlockType[] = []
+  let pendingBlocks: ConversationStepBlock[] = []
   const isExcludedToolCall =
     options.isToolActivitySummaryExcludedToolCall ?? isToolActivitySummaryExcludedToolCall
 
@@ -390,7 +392,7 @@ export function buildMessageRenderSegments(
 
     messageSegments.push({
       kind: 'activity-group',
-      key: `activity:${pendingBlocks[0]?.toolCallId ?? pendingSegments[0].key}`,
+      key: `activity:${pendingBlocks[0].type === 'tool-call' ? pendingBlocks[0].toolCallId : pendingSegments[0].key}`,
       segments: pendingSegments,
       blocks: pendingBlocks,
     })
