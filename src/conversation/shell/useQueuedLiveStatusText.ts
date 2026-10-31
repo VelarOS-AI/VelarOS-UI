@@ -97,7 +97,8 @@ export function useQueuedLiveStatusText(
     const lastQueuedValue = optionalWhen(hasQueuedValue, last(queueRef.current))
 
     if (!hasQueuedValue || !Object.is(nextValue, lastQueuedValue)) {
-      queueRef.current.push(nextValue)
+      // 状态行只描述现在：最短展示时间内仅保留最新值，不重放过期的活动。
+      queueRef.current = [nextValue]
     }
 
     flushQueue()

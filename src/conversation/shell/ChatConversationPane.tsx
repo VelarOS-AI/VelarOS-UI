@@ -234,7 +234,13 @@ export function ChatConversationPane({
     return () => observer.disconnect()
   }, [])
 
-  const liveStatusResetKey = [sessionId, runtime.lastRunStartedAt ?? ''].join(':')
+  const liveStatusResetKey = [
+    sessionId,
+    runtime.lastRunStartedAt ?? '',
+    runtime.status,
+    runtime.teamPhase ?? '',
+    runtime.connectionRetryAttempt ?? '',
+  ].join(':')
   const displayedLiveTraceSummary = useQueuedLiveStatusText(
     liveTraceSummary,
     isRunActive,
