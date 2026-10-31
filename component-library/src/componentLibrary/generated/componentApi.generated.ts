@@ -1692,7 +1692,7 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
     {
       "name": "ChatTaskUsagePopover.labels",
       "description": "Auto-generated from TypeScript props.",
-      "type": "{ title: string; requests: string; input: string; output: string; cache: string; }",
+      "type": "{ title: string; requests: string; input: string; output: string; cache: string; cacheKnown: string; coverage: string; }",
       "recommended": "Required"
     }
   ],

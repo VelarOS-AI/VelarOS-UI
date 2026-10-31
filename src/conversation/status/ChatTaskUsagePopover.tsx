@@ -4,6 +4,8 @@ import { ChartBarIcon } from '@phosphor-icons/react'
 import { isNull } from '../../lib/runtime'
 import { HoverCard } from '../../primitives/overlays/HoverCard'
 
+import { resolveTaskUsageCache } from './taskUsagePresentation'
+
 import styles from './ChatTaskUsagePopover.module.css'
 
 /** 宿主提供去重后的计量；缺失计数单独报告，不能画成零命中。 */
@@ -14,6 +16,12 @@ export interface ChatTaskUsageTotals {
   cacheReadTokens: number
   incompleteRequests: number
   cacheMissingRequests: number
+  /** 同时具有可信输入量与缓存读取量的请求数；包含真实零命中，排除未知及进行中请求。 */
+  cacheKnownRequests: number
+  /** 仅累加 cacheKnownRequests 对应请求的输入量，不得混入缓存字段缺失的请求。 */
+  cacheKnownInputTokens: number
+  /** 与 cacheKnownInputTokens 相同请求集合的缓存读取量。 */
+  cacheKnownReadTokens: number
 }
 
 export interface ChatTaskUsagePopoverProps {
@@ -25,6 +33,8 @@ export interface ChatTaskUsagePopoverProps {
     input: string
     output: string
     cache: string
+    cacheKnown: string
+    coverage: string
   }
 }
 
@@ -39,13 +49,10 @@ export function ChatTaskUsagePopover({
     notation: 'compact',
     maximumFractionDigits: 1,
   })
-  const cachePercent = (value: ChatTaskUsageTotals): Nullable<number> =>
-    value.inputTokens > 0 && value.cacheMissingRequests === 0 && value.incompleteRequests === 0
-      ? Math.min(100, Math.max(0, (value.cacheReadTokens / value.inputTokens) * 100))
-      : null
   const percentLabel = (value: Nullable<number>): string =>
     isNull(value) ? '—' : `${value.toFixed(1)}%`
-  const totalPercent = cachePercent(total)
+  const cache = resolveTaskUsageCache(total)
+  const totalPercent = cache.percent
   return (
     <HoverCard
       align="end"
@@ -63,9 +70,9 @@ export function ChatTaskUsagePopover({
               <strong>{compact.format(total.outputTokens)}</strong>
             </div>
             <div
-              title={`${exact.format(total.cacheReadTokens)} / ${exact.format(total.inputTokens)}`}
+              title={`${exact.format(total.cacheKnownReadTokens)} / ${exact.format(total.cacheKnownInputTokens)}`}
             >
-              <span>{labels.cache}</span>
+              <span>{cache.partial ? labels.cacheKnown : labels.cache}</span>
               <strong>{percentLabel(totalPercent)}</strong>
             </div>
           </div>
@@ -74,6 +81,7 @@ export function ChatTaskUsagePopover({
           </div>
           <div className={styles.meta}>
             {labels.requests} {exact.format(total.requests)}
+            {cache.partial && <> · {labels.coverage} {exact.format(total.cacheKnownRequests)}/{exact.format(total.requests)}</>}
           </div>
         </section>
       }

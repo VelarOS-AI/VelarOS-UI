@@ -396,7 +396,7 @@ export interface ScriptExecutionBlock {
   /** 一句话说明这一步做什么；可能为空串，此时界面按模块与操作兜底。 */
   title: string
   status: 'writing' | 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled'
-  /** 本次执行开始的时间戳，用于运行期间实时计时。 */
+  /** 宿主记录的本次执行开始时间戳；缺失时只显示运行状态，不以组件挂载时间代替。 */
   startedAt?: number
   /** 脚本源码（有界）；writing 阶段可能为空。 */
   source: string

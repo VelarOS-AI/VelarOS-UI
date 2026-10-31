@@ -1,0 +1,21 @@
+/* 执行代码沿用 GitHub Light/Dark 语法配色；Lezer 只输出语义令牌，主题切换无需重新分词。 */
+:root,
+[data-theme="light"] {
+  --syntax-execution-foreground: #24292e;
+  --syntax-execution-keyword: #d73a49;
+  --syntax-execution-string: #032f62;
+  --syntax-execution-literal: #005cc5;
+  --syntax-execution-comment: #6a737d;
+  --syntax-execution-function: #6f42c1;
+  --syntax-execution-type: #e36209;
+}
+
+[data-theme="dark"] {
+  --syntax-execution-foreground: #e1e4e8;
+  --syntax-execution-keyword: #f97583;
+  --syntax-execution-string: #9ecbff;
+  --syntax-execution-literal: #79b8ff;
+  --syntax-execution-comment: #6a737d;
+  --syntax-execution-function: #b392f0;
+  --syntax-execution-type: #ffab70;
+}

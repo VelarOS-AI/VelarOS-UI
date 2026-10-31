@@ -8,7 +8,10 @@ import {
 } from '../../src/conversation/blocks/conversationBlockHooks'
 import { MessageBubble } from '../../src/conversation/blocks/MessageBubble'
 import { ThinkingBlock } from '../../src/conversation/blocks/MessageMarkdownBlocks'
-import type { ChatMessage, ContentBlock } from '../../src/conversation/contracts'
+import { ToolActivityDisclosure } from '../../src/conversation/blocks/MessageToolActivity'
+import { type HighlightedCode,requestHighlight } from '../../src/conversation/cards/executionStepHighlight'
+import { ScriptExecutionCard } from '../../src/conversation/cards/ScriptExecutionCard'
+import type { ChatMessage, ContentBlock, ScriptExecutionBlock } from '../../src/conversation/contracts'
 import {
   ConversationLocalizationProvider,
   conversationZhCNMessages,
@@ -243,6 +246,49 @@ function read(): { expanded: string | null; hasSummary: boolean } {
   }
 }
 
+function renderTimedScript(startedAt?: number, status: ScriptExecutionBlock['status'] = 'running'): void {
+  const block: ScriptExecutionBlock = {
+    type: 'script-execution', id: 'timed-script', kind: 'execute', title: '计时回归',
+    source: '', sourceTruncated: false, calls: [], startedAt, status,
+    durationMs: status === 'succeeded' ? 2_100 : null,
+  }
+  renderMessage(
+    { id: 'timer-proof', role: 'assistant', timestamp: 1, blocks: [] },
+    status === 'running',
+    false,
+    <ToolActivityDisclosure defaultExpanded blocks={[block]}>
+      <ScriptExecutionCard block={block} />
+    </ToolActivityDisclosure>
+  )
+}
+
+function readTimedScript(): { elapsed: string | null; cardText: string | null; cards: number } {
+  return {
+    elapsed: container.querySelector('[data-slot="execution-step-elapsed"]')?.textContent ?? null,
+    cardText: container.querySelector('[data-slot="script-execution"]')?.textContent ?? null,
+    cards: container.querySelectorAll('[data-slot="script-execution"]').length,
+  }
+}
+
+const realNow = Date.now
+
+async function measureExecutionHighlight(): Promise<{ coldMs: number; fullMs: number; cachedMs: number; preserved: boolean }> {
+  const source = 'const count: number = 42; console.log("咖啡", count);\n'.repeat(400)
+  const request = (text: string): Promise<HighlightedCode> => new Promise((resolve) => requestHighlight(text, 'typescript', resolve))
+  const start = performance.now()
+  await request(source.slice(0, 600))
+  const loaded = performance.now()
+  const full = await request(source.slice(0, 20_000))
+  const parsed = performance.now()
+  await request(source.slice(0, 20_000))
+  return {
+    coldMs: loaded - start,
+    fullMs: parsed - loaded,
+    cachedMs: performance.now() - parsed,
+    preserved: full.tokens.map((line) => line.map((token) => token.content).join('')).join('\n') === source.slice(0, 20_000),
+  }
+}
+
 Object.assign(window, {
   processedActivityProof: {
     render,
@@ -259,6 +305,15 @@ Object.assign(window, {
     readSteps,
     flushFrames,
     read,
+    renderTimedScript,
+    measureExecutionHighlight,
+    readTimedScript,
+    setClock: (now: number): void => { Date.now = () => now },
+    restoreClock: (): void => { Date.now = realNow },
+    toggleScript: (): void => {
+      const button = container.querySelector<HTMLButtonElement>('[data-slot="script-execution"] > button')!
+      flushSync(() => button.click())
+    },
     follow: (value: boolean): void => {
       following = value
     },

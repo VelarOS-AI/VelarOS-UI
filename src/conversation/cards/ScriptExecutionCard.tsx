@@ -31,7 +31,7 @@ import { formatScriptSource } from './formatScriptSource'
 import styles from './ExecutionStep.module.css'
 
 import type { ScriptExecutionBlock, ScriptExecutionCall } from '#contracts'
-import { isNonBlankString, isPresent, optionalWhen, trimmedStringOrEmpty } from '#internal/runtime'
+import { isFiniteNumber, isNonBlankString, isPresent, optionalWhen, trimmedStringOrEmpty } from '#internal/runtime'
 
 /** 标题行图标的尺寸，与原来的工具行一致。 */
 const StepIconSize = 13
@@ -76,26 +76,27 @@ function ScriptExecutionCardInner({ block }: ScriptExecutionCardProps): ReactEle
       reason={resolveScriptExecutionFailureReason(block)}
       live={optionalWhen(block.status === 'running', live)}
       meta={block.status === 'running'
-        ? <ScriptExecutionLiveDuration key={`${block.id}:${block.startedAt ?? ''}`} startedAt={block.startedAt} />
+        ? isFiniteNumber(block.startedAt)
+          ? <ScriptExecutionLiveDuration key={`${block.id}:${block.startedAt}`} startedAt={block.startedAt} />
+          : t('executionStep.statusRunning')
         : block.status === 'queued' ? t('executionStep.statusQueued') : duration}
       renderDetails={() => <ScriptExecutionDetails block={block} />}
     />
   )
 }
 
-/** 只有运行中的卡订阅时钟；状态落定后卸载，右侧改读最终耗时。 */
-function ScriptExecutionLiveDuration({ startedAt }: { startedAt?: number }): ReactElement {
+/** 只从宿主提供的执行起点计时；折叠卸载后重开仍包含隐藏期间，缺失起点时不伪造耗时。 */
+function ScriptExecutionLiveDuration({ startedAt }: { startedAt: number }): ReactElement {
   const { locale } = useConversationI18n()
   const translatorRuntime = useConversationTranslatorRuntime()
   const timers = useTimerScope('ScriptExecutionLiveDuration')
-  const [mountedAt] = useState(Date.now)
   const [now, setNow] = useState(Date.now)
   useEffect(() => {
     const clock = timers.every(1000, () => setNow(Date.now()))
     return () => { clock.cancel() }
   }, [timers])
   return <span data-slot="execution-step-elapsed">{
-    formatToolDurationMs(Math.max(0, now - (startedAt ?? mountedAt)), locale, translatorRuntime)
+    formatToolDurationMs(Math.max(0, now - startedAt), locale, translatorRuntime)
   }</span>
 }
 

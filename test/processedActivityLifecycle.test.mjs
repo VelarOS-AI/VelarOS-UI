@@ -107,6 +107,18 @@ void test(
         assert.match(report[key].text, /思考正文/u)
       }
       assert.equal(report.thinkingBeforeTool.label, '思考过程')
+      assert.equal(report.timerInitiallyExpanded.elapsed, '1分3秒')
+      assert.equal(report.timerAfterDetailsToggle.elapsed, '1分3秒')
+      assert.equal(report.timerCollapsed.cards, 0, '折叠应真正卸载卡片，而不是保活来掩盖计时问题')
+      assert.equal(report.timerReopened.elapsed, '2分9秒', '重挂载后继续从真实执行起点计时，包含折叠期间')
+      assert.equal(report.timerMissingStart.elapsed, null)
+      assert.match(report.timerMissingStart.cardText, /运行中/u)
+      assert.equal(report.timerQueued.elapsed, null)
+      assert.match(report.timerQueued.cardText, /排队中/u)
+      assert.equal(report.timerCompleted.elapsed, null)
+      assert.match(report.timerCompleted.cardText, /2秒/u)
+      assert.equal(report.highlightPerformance.preserved, true)
+      console.info('Execution highlight timings (ms):', JSON.stringify(report.highlightPerformance))
     } finally {
       clearTimeout(timeout)
       if (child && child.exitCode === null && child.signalCode === null) child.kill('SIGKILL')

@@ -13,7 +13,6 @@ import { StyleUtils } from "@velaros-ai/ui";
 import { useConversationI18n, useConversationTranslatorRuntime } from "../i18n";
 import { useConversationScrollFollow } from "../react-hooks/conversationScrollFollow";
 import { AutoScrollSuspendEventName } from "../react-hooks/scrollBehavior";
-import { useDisclosurePresence } from "../react-hooks/useDisclosurePresence";
 import { useTimerScope } from "../react-hooks/useTimerScope";
 
 import { getToolActivityDisclosureSummary } from "./toolActivityDisclosurePresentation";
@@ -81,8 +80,6 @@ export function ToolActivityDisclosure({
   const [expanded, setExpanded] = useState(shouldInitiallyExpand);
   const timers = useTimerScope("ToolActivityDisclosure");
   const scrollFollow = useConversationScrollFollow();
-  const { mounted: isMounted, visible: isVisible } =
-    useDisclosurePresence(expanded);
   const displayLabel =
     label || (isEmpty(activityBlocks) ? t("chat.toolCalls") : summary.label);
 
@@ -152,15 +149,14 @@ export function ToolActivityDisclosure({
           aria-hidden="true"
         />
       </button>
-      {isMounted && (
+      {/* 长工具组直接挂卸载；逐帧动画高度会反复触发整段会话布局与滚动测量。 */}
+      {expanded && (
         <div
           className={cx(
             "toolActivityBodyShell",
-            expanded && isVisible && "toolActivityBodyShellExpanded",
+            "toolActivityBodyShellExpanded",
           )}
           id={bodyId}
-          aria-hidden={!isVisible}
-          inert={!isVisible}
         >
           <div className={styles.toolActivityBodyFrame}>
             <div className={styles.toolActivityBody}>

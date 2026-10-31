@@ -9,6 +9,8 @@ const labels = {
   input: '输入',
   output: '输出',
   cache: '缓存命中',
+  cacheKnown: '缓存·已知',
+  coverage: '数据覆盖',
 }
 const total = {
   requests: 51,
@@ -17,6 +19,9 @@ const total = {
   cacheReadTokens: 2040960,
   incompleteRequests: 0,
   cacheMissingRequests: 0,
+  cacheKnownRequests: 51,
+  cacheKnownInputTokens: 2270595,
+  cacheKnownReadTokens: 2040960,
 }
 export default defineComponentLibraryEntry({
   ...componentLibraryRegistrySections.chatConversation,
@@ -46,7 +51,7 @@ export default defineComponentLibraryEntry({
         node: (
           <ChatTaskUsagePopover
             locale="zh-CN"
-            total={{ ...total, cacheMissingRequests: 1 }}
+            total={{ ...total, requests: 53, incompleteRequests: 2, cacheMissingRequests: 2 }}
             labels={labels}
           />
         ),
@@ -64,6 +69,9 @@ export default defineComponentLibraryEntry({
               cacheReadTokens: 0,
               incompleteRequests: 0,
               cacheMissingRequests: 0,
+              cacheKnownRequests: 0,
+              cacheKnownInputTokens: 0,
+              cacheKnownReadTokens: 0,
             }}
             labels={labels}
           />

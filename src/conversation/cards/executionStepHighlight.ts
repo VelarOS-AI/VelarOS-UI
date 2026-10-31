@@ -1,11 +1,13 @@
 /**
- * 执行步骤卡里代码与返回值的语法着色：与聊天正文的代码块共用同一个 Shiki 高亮器（`@streamdown/code`）
- * 和主题。高亮器第一次用到某种语言要异步加载语法，加载好之前返回 null，调用方先按纯文本显示。
+ * 执行步骤卡里代码与返回值的语法着色：按需加载编辑器同源 Lezer，保留 GitHub 明暗主题色。
+ * 先展示纯文本，避免 TextMate 冷语法初始化阻塞工具卡的展开与收起。
  */
 import { type CSSProperties, useEffect, useState } from 'react'
-import { code as codeHighlighter, type HighlightResult } from '@streamdown/code'
+import type { HighlightResult } from '@streamdown/code'
 
 import { useTimerScope } from '../react-hooks/useTimerScope'
+
+import { Log } from '#internal/runtime'
 
 const HighlightMaxChars = 20_000
 
@@ -13,25 +15,15 @@ const HighlightMaxChars = 20_000
 export type ExecutionStepCodeLanguage = 'typescript' | 'json'
 
 /** 一段代码的分词结果。 */
-export type HighlightedCode = HighlightResult
+export type HighlightedCode = Pick<HighlightResult, 'tokens'>
 
 type HighlightedToken = HighlightResult['tokens'][number][number]
 
-function highlight(
-  text: string,
-  language: ExecutionStepCodeLanguage,
-  callback?: (result: HighlightedCode) => void
-): Nullable<HighlightedCode> {
-  return codeHighlighter.highlight(
-    { code: text, language, themes: codeHighlighter.getThemes() },
-    callback
-  )
-}
+const highlights = new Map<string, HighlightedCode>()
+const pendingHighlights = new Map<string, Promise<HighlightedCode>>()
 
 /**
- * 要一段文字的着色结果：高亮器已经算好的当场交给 onReady，还没算好的等它算好再交；交回取消函数，取消之后不再交。
- * 高亮器命中缓存时直接返回结果、不登记回调，只靠回调就会把这种情况漏掉——高亮器热起来以后，
- * 渲染时发起的那次计算在副作用登记回调之前就算完了，卡片会一直停在纯文本。
+ * 缓存命中同步交回；冷请求合并计算，取消后不向已卸载组件交付。缓存按完整正文区分，最多保留32段。
  */
 export function requestHighlight(
   text: string,
@@ -39,10 +31,28 @@ export function requestHighlight(
   onReady: (code: HighlightedCode) => void
 ): () => void {
   let live = true
-  const cached = highlight(text, language, (code) => {
-    if (live) onReady(code)
+  const key = `${language}:${text}`
+  const cached = highlights.get(key)
+  if (cached) {
+    onReady(cached)
+    return () => { live = false }
+  }
+  let pending = pendingHighlights.get(key)
+  if (!pending) {
+    pending = import('./executionStepTokenize').then(({ tokenizeExecutionStep }) => {
+      const code = tokenizeExecutionStep(text, language)
+      highlights.set(key, code)
+      if (highlights.size > 32) highlights.delete(highlights.keys().next().value!)
+      return code
+    })
+    pendingHighlights.set(key, pending)
+    void pending.finally(() => pendingHighlights.delete(key)).catch((error: unknown) => {
+      Log.tag('execution-highlight').debug('分词器不可用，保留纯文本', { reason: error instanceof Error ? error.message : String(error) })
+    })
+  }
+  void pending.then((code) => { if (live) onReady(code) }).catch((error: unknown) => {
+    Log.tag('execution-highlight').debug('高亮结果未交付，保留纯文本', { reason: error instanceof Error ? error.message : String(error) })
   })
-  if (cached) onReady(cached)
   return () => {
     live = false
   }

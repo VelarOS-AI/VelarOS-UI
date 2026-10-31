@@ -397,29 +397,13 @@
 }
 
 .toolActivityBodyShell {
-  display: grid;
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  grid-template-rows: 0fr;
-  overflow: hidden;
-  opacity: 0;
-  transform: translateY(-4px);
-  visibility: hidden;
-  transition:
-    grid-template-rows 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity 160ms ease,
-    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  pointer-events: none;
 }
 
 .toolActivityBodyShellExpanded {
-  grid-template-rows: 1fr;
   overflow: visible;
-  opacity: 1;
-  transform: translateY(0);
-  visibility: visible;
-  pointer-events: auto;
 }
 
 .toolActivityBodyShellExpanded .toolActivityBodyFrame {

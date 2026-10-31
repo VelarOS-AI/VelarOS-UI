@@ -345,6 +345,16 @@ void describe('ScriptExecutionCard', () => {
     }
   })
 
+  void test('缺失或无效的执行起点只显示运行状态，不用挂载时间伪造耗时', () => {
+    for (const startedAt of [undefined, Number.NaN, Number.POSITIVE_INFINITY]) {
+      const markup = render(createElement(ScriptExecutionCard, {
+        block: script({ status: 'running', startedAt, durationMs: null }),
+      }))
+      assert.doesNotMatch(markup, /execution-step-elapsed/)
+      assert.match(markup, /运行中/u)
+    }
+  })
+
   void test('观察卡与执行卡只靠图标区分，不写方法名；观察卡没有标题时是「持续观察」', () => {
     const iconOf = (markup: string) => /<svg[\s\S]*?<\/svg>/u.exec(markup)?.[0]
     const observed = render(
@@ -397,12 +407,12 @@ void describe('ScriptExecutionCard', () => {
 })
 
 void describe('语法着色', () => {
-  void test('高亮器已经算好的（命中缓存）当场交回，不只等回调；还没算好的等算好再交；取消之后不再交', async () => {
+  void test('冷请求异步交回，命中缓存同步交回；取消之后不再交', async () => {
     const text = 'const warm = 1'
     const first = await new Promise<HighlightedCode>((resolve) => {
       requestHighlight(text, 'typescript', resolve)
     })
-    // 热起来以后同一段文字命中缓存：高亮器直接返回结果、不再调回调，只等回调就永远等不到。
+    // 重新展开同一段代码直接复用缓存，不再启动语法分析。
     const delivered: HighlightedCode[] = []
     requestHighlight(text, 'typescript', (code) => delivered.push(code))
     assert.equal(delivered.length, 1)
@@ -416,6 +426,30 @@ void describe('语法着色', () => {
       requestHighlight('const cold = 2', 'json', resolve)
     })
     assert.deepEqual(cancelled, [])
+  })
+
+  void test('Lezer 保留 TypeScript 与 JSON 全文和换行，并给关键字、字符串、数字提供明暗颜色', async () => {
+    for (const [language, text] of [
+      ['typescript', '/* 说明 */\nconst value: number = 42\nconsole.log("中文", value)\n'],
+      ['json', '{\n  "品牌": "咖啡",\n  "price": 123.5, "valid": true\n}\n'],
+    ] as const) {
+      const code = await new Promise<HighlightedCode>((resolve) => requestHighlight(text, language, resolve))
+      assert.equal(code.tokens.map((line) => line.map((token) => token.content).join('')).join('\n'), text)
+      assert.ok(new Set(code.tokens.flat().map((token) => token.color)).size >= 3)
+      assert.ok(code.tokens.flat().every((token) => token.htmlStyle?.['--shiki-dark']))
+    }
+  })
+
+  void test('相同前后缀与长度的不同正文不复用错误的高亮缓存', async () => {
+    const prefix = `/*${'p'.repeat(120)}*/\n`
+    const suffix = `\n/*${'s'.repeat(120)}*/`
+    const first = `${prefix}const first = 1${suffix}`
+    const second = `${prefix}const other = 2${suffix}`
+    assert.equal(first.length, second.length)
+    for (const text of [first, second]) {
+      const code = await new Promise<HighlightedCode>((resolve) => requestHighlight(text, 'typescript', resolve))
+      assert.equal(code.tokens.map((line) => line.map((token) => token.content).join('')).join('\n'), text)
+    }
   })
 
   void test('浅色主题的颜色放进 --sdm-c，暗色主题的变量原样带上，底色不要', () => {
@@ -561,7 +595,7 @@ void test('排队卡明确显示排队状态，不启动运行计时或显示运
   assert.doesNotMatch(markup, /execution-step-elapsed|must not appear before execution/u)
   assert.equal(resolveScriptExecutionTone('queued'), 'running')
   const running = render(createElement(ScriptExecutionCard, {
-    block: script({ id: 'queued-script', status: 'running', durationMs: null }),
+    block: script({ id: 'queued-script', status: 'running', startedAt: Date.now(), durationMs: null }),
   }))
   assert.match(running, /execution-step-elapsed/u)
   liveOutputs.delete('queued-script')
