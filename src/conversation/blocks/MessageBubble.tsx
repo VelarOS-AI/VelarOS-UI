@@ -124,7 +124,7 @@ function MessageBubbleInner(props: MessageBubbleProps): Nullable<ReactElement> {
 }
 
 function renderMessageBubbleContent(props: MessageBubbleProps): ReactElement {
-  if (isSystemNoticeMessage(props.message)) return <SystemNoticeMessageRow message={props.message} />
+  if (isSystemNoticeMessage(props.message) && !props.message.peerOrigin) return <SystemNoticeMessageRow message={props.message} />
 
   return props.message.role === 'user' ? (
     <UserMessageBubble

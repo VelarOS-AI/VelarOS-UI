@@ -133,7 +133,7 @@ function appendTurnPresentations(
 
   turnMessages.forEach((message, index) => {
     if (index === anchorIndex) return
-    if (isConversationTurnInputMessage(message)) return
+    if (isConversationTurnInputMessage(message) || message.peerOrigin) return
 
     // 一次真正的 turn-input 之间只存在同一轮执行的内部状态：assistant 片段、run-guidance、
     // interaction-reply 与 system-notice 都维持原顺序进入活动容器；数据本身不合并、不改 role。

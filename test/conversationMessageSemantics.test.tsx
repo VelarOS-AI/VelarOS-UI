@@ -585,3 +585,29 @@ void test('真正的运行中引导在回执后显示已纳入状态', () => {
   )
   assert.match(markup, /chat\.guidanceApplied/)
 })
+
+void test('同伴通知显示独立署名气泡且不进入已处理折叠', () => {
+  const peer: ChatMessage = {
+    ...message('peer-answer', 'user', 'system-notice'),
+    peerOrigin: { sessionId: 'peer', title: '同伴', folderId: 'folder' },
+    blocks: [{ type: 'text', text: '独立通信正文' }],
+  }
+  const messages = [...guidanceTranscriptMessages(), peer]
+  const markup = renderToStaticMarkup(createElement(
+    ConversationLocalizationProvider, { value: localization },
+    createElement(ConversationBlockHooksProvider, { value: blockHooks },
+      createElement(ChatTranscript, {
+        messages, sessionId: 'session',
+        getRunMarker: (entry) => entry.id === 'assistant-after-guidance'
+          ? { messageId: entry.id, status: 'completed', detail: null, turnCount: 1, turnKind: 'turn', timestamp: 2 }
+          : null,
+      })
+    )
+  ) as ReactElement)
+  assert.match(markup, /独立通信正文/)
+  assert.match(markup, /chat\.peerMessageFrom/)
+  assert.match(markup, /data-chat-message="peer-answer"/)
+  const grouped = buildChatTranscriptMessagePresentations(messages)
+  assert.ok(grouped.some(entry => entry.message === peer))
+  assert.ok(grouped.every(entry => !entry.activityLeadingMessages.includes(peer) && !entry.activityTrailingMessages.includes(peer)))
+})

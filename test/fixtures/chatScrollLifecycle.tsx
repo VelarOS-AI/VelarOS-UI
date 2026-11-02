@@ -31,7 +31,7 @@ function Harness(props: Scene): React.ReactElement {
   lockFollow = setFollowLocked
   return <ConversationLocalizationProvider value={{ locale: 'en-US', t: (key: string) => key }}>{props.visible && <div key={props.generation} ref={scrollRef} id="viewport"
     style={{ width: 400, height: 400, overflow: 'auto' }}>
-    <div><div style={{ height: props.prefix ?? 0 }} /><div data-message-id="transcript" style={{ height: props.height }}>Transcript</div></div>
+    <div><div style={{ height: props.prefix ?? 0 }} /><div data-message-id="transcript" style={{ height: props.height }}>Transcript</div><div style={{ height: "var(--velar-scroll-clamp-guard, 0px)" }} /></div>
   </div>}
     <ConversationViewMemoryProvider sessionId={props.session}><ExpansionProbe key={props.session} /></ConversationViewMemoryProvider>
     <ChatScrollNavigator scrollRef={scrollRef} followLocked={false} onFollowLockedChange={setFollowLocked} />
@@ -143,6 +143,18 @@ Object.assign(window, {
     await render({ prefix: 1400 })
     expectNear(viewport().scrollTop, 800, 'User intent releases restoration anchor')
     passed.push('message anchor survives changed and late layout without stealing user scroll')
+    await render({ session: 'guard-end', prefix: 0, height: 3000, generation: 16 })
+    viewport().dispatchEvent(new Event(AutoScrollSuspendEventName))
+    viewport().scrollTop = 2500
+    await settle()
+    await render({ height: 2700 })
+    expectNear(viewport().scrollTop, 2500, 'Shrink preserves active reading position')
+    const bottomButton = document.querySelector<HTMLButtonElement>('[aria-label="chat.scrollToBottom"]')!
+    bottomButton.click()
+    await settle()
+    expectNear(viewport().scrollTop, 2300, 'Explicit bottom releases guard and reaches natural bottom')
+    expectNear(Number.parseFloat(viewport().style.getPropertyValue('--velar-scroll-clamp-guard')) || 0, 0, 'No guard remains after bottom navigation')
+    passed.push('shrink guard releases on explicit bottom navigation')
     return passed
   },
 })
