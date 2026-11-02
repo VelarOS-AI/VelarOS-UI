@@ -547,7 +547,7 @@ void describe('脚本执行块的分发', () => {
 
     assert.deepEqual(
       segments.map((segment) => (segment.kind === 'activity-group' ? segment.segments.map((child) => child.key) : segment.key)),
-      ['thinking:0', ['script:a', 'script:b', 'tool:read-1', 'tool:run-1', 'tool:read-2'], 'text:6']
+      [['thinking:0', 'script:a', 'script:b', 'tool:read-1', 'tool:run-1', 'tool:read-2'], 'text:6']
     )
   })
 

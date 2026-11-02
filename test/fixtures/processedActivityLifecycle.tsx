@@ -185,7 +185,7 @@ function readSteps(): {
   }
 }
 
-function renderThinking(revision = 0, running = true, withTool = false): void {
+function renderThinking(revision = 0, running = true, withTool = false, unified = false): void {
   const block: ContentBlock = {
     type: 'thinking',
     text: revision === 0 ? '检查' : `检查配置。思考正文 ${revision}`,
@@ -208,7 +208,7 @@ function renderThinking(revision = 0, running = true, withTool = false): void {
     message,
     running,
     false,
-    withTool ? undefined : (
+    withTool || unified ? undefined : (
       <ThinkingBlock
         key="thinking-proof"
         block={block}

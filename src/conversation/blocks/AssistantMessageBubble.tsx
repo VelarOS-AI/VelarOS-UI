@@ -185,7 +185,10 @@ export function AssistantMessageBubble({
       hasVisibleToolBlocks: visibleBlocks.some(
         (block) => block.type === 'tool-call' || block.type === 'script-execution'
       ),
-      hasRenderableContent: nextRenderableSegments.some(hasVisibleSegmentContent),
+      hasRenderableContent: nextRenderableSegments.some(
+        (segment) => hasVisibleSegmentContent(segment) ||
+          (segment.block.type === 'thinking' && segment.block.text.trim().length > 0)
+      ),
       lastTextSegmentKey: getLastTextSegmentKey(nextRenderableSegments),
       streamingTextSegmentKey: getStreamingTextSegmentKey(nextRenderableSegments),
     }

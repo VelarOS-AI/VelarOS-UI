@@ -95,7 +95,7 @@ void test(
       }
       assert.equal(report.liveAppendPreservesExpansion.hasText, true)
       assert.equal(report.liveSettledCollapsed.hasText, true)
-      for (const key of ['thinkingInitiallyCollapsed', 'thinkingStageCollapsed', 'thinkingManuallyCollapsed', 'thinkingBeforeTool']) {
+      for (const key of ['thinkingInitiallyCollapsed', 'thinkingStageCollapsed', 'thinkingManuallyCollapsed']) {
         assert.equal(report[key].expanded, 'false', key)
         assert.equal(report[key].text, null, key)
       }
@@ -106,7 +106,16 @@ void test(
         assert.equal(report[key].expanded, 'true', key)
         assert.match(report[key].text, /思考正文/u)
       }
-      assert.equal(report.thinkingBeforeTool.label, '思考过程')
+      assert.equal(report.thinkingBeforeTool.expanded, 'false')
+      assert.equal(report.thinkingBeforeTool.groups, 1)
+      assert.match(report.thinkingBeforeTool.label, /执行/u)
+      for (const key of ['unifiedExpanded', 'unifiedThinkingAgain']) {
+        assert.equal(report[key].expanded, 'true', key)
+        assert.equal(report[key].groups, 1, key)
+      }
+      assert.equal(report.unifiedExpanded.cards, 1)
+      assert.equal(report.unifiedNoNestedThinking.expanded, null)
+      assert.match(report.unifiedThinkingAgain.label, /思考/u)
       assert.equal(report.timerInitiallyExpanded.elapsed, '1分3秒')
       assert.equal(report.timerAfterDetailsToggle.elapsed, '1分3秒')
       assert.equal(report.timerCollapsed.cards, 0, '折叠应真正卸载卡片，而不是保活来掩盖计时问题')

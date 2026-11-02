@@ -369,7 +369,7 @@ void describe('processed activity', () => {
     const partition = partitionProcessedActivitySummarySegments(segments, 3)
     const types = (list: typeof segments): string[] =>
       list.map((segment) => (segment.kind === 'segment' ? segment.segment.block.type : 'group'))
-    assert.deepEqual(types(partition.processedSegments), ['thinking', 'interaction'])
+    assert.deepEqual(types(partition.processedSegments), ['group', 'interaction'])
     assert.deepEqual(types(partition.outsideSegments), ['widget'])
     assert.deepEqual(types(partition.trailingSegments), ['text'])
   })

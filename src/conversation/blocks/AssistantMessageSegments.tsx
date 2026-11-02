@@ -234,7 +234,7 @@ function AssistantMessageSegmentsInner({
   /** 每一步（工具调用、脚本卡）后面接着画的东西，比如它派出的子 Agent 面板。 */
   renderAfterStep?: (block: ConversationStepBlock) => Nullable<ReactNode>
 }): ReactElement {
-  const { locale } = useConversationI18n()
+  const { locale, t } = useConversationI18n()
   const translatorRuntime = useConversationTranslatorRuntime()
   const recentlyStreamingMessageIdRef = useRef<Nullable<string>>(null)
   // 完成请求锁存到这条消息重新开流或身份变化；动画帧可能因后台窗口而延迟，不能按墙钟撤回。
@@ -363,7 +363,7 @@ function AssistantMessageSegmentsInner({
     })
   }
 
-  const renderToolRenderSegment = (segment: ToolRenderSegment): ReactElement => (
+  const renderToolRenderSegment = (segment: ToolRenderSegment, thinkingInline = false): ReactElement => (
     <MessageContentBlock
       key={segment.key}
       block={segment.block}
@@ -371,6 +371,7 @@ function AssistantMessageSegmentsInner({
       animateLiveToolActivity={animateLiveToolActivity}
       isStreaming={isStreaming && (segment.block.type !== 'thinking' || segment.key === visibleMessageRenderSegments.at(-1)?.key)}
       thinkingDefaultExpanded={holdExpandedForReader}
+      thinkingInline={thinkingInline}
       animateStreamingText={shouldRevealStreamingText && segment.key === streamingTextSegmentKey}
       sessionId={sessionId}
       messageId={messageId}
@@ -403,13 +404,19 @@ function AssistantMessageSegmentsInner({
     if (segment.kind !== 'activity-group') return renderToolRenderSegment(segment.segment)
 
     const renderActivityGroupChildren = (): ReactNode[] =>
-      segment.segments.map((childSegment) => renderToolRenderSegment(childSegment))
+      segment.segments.map((childSegment) => renderToolRenderSegment(childSegment, true))
+
+    if (shouldRenderProcessedActivity) return (
+      <React.Fragment key={segment.key}>{renderActivityGroupChildren()}</React.Fragment>
+    )
 
     return (
       <ToolActivityDisclosure
         key={segment.key}
         viewStateKey={`${messageId}:${segment.key}`}
         blocks={segment.blocks}
+        label={segment.segments.some(({ block }) => block.type === 'thinking') ? (isStreaming ? t(segment.segments.at(-1)?.block.type === 'thinking' ? 'status.phaseResearching' : 'status.phaseExecuting') : getProcessedActivityDisclosureLabel([], locale, { responseDurationMs }, translatorRuntime)) : undefined}
+        isRunning={isStreaming}
         formatPathForDisplay={formatPathForDisplay}
       >
         {() => renderActivityGroupChildren()}

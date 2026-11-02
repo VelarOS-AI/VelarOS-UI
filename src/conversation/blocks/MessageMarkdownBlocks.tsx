@@ -221,6 +221,7 @@ function useStreamFadeTail(streaming: boolean): boolean {
 
 function ThinkingBlockInner({
   block,
+  inline = false,
   isStreaming = false,
   autoCollapse = false,
   defaultExpanded = false,
@@ -229,6 +230,7 @@ function ThinkingBlockInner({
   onTranslateThinkingBlock,
 }: {
   block: ThinkingContentBlock
+  inline?: boolean
   isStreaming?: boolean
   autoCollapse?: boolean
   /** 挂载时展开：流式刚结束、读者不在底部时，完成态重挂的思考块保持他刚才看到的展开形态。 */
@@ -361,6 +363,13 @@ function ThinkingBlockInner({
         </div>
       )}
     </>
+  )
+
+  if (inline) return (
+    <div className={styles.thinkingBlock} data-thinking-presentation="inline">
+      <div className={styles.toolActivityLabel}>{label}</div>
+      {thinkingContent}
+    </div>
   )
 
   return (

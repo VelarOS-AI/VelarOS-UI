@@ -392,7 +392,7 @@ export function buildMessageRenderSegments(
 
     messageSegments.push({
       kind: 'activity-group',
-      key: `activity:${pendingBlocks[0].type === 'tool-call' ? pendingBlocks[0].toolCallId : pendingSegments[0].key}`,
+      key: `activity:${pendingSegments[0].key}`,
       segments: pendingSegments,
       blocks: pendingBlocks,
     })
@@ -403,9 +403,9 @@ export function buildMessageRenderSegments(
   segments.forEach((segment) => {
     const toolBlock = getGroupedToolBlock(segment, isExcludedToolCall)
 
-    if (toolBlock) {
+    if (toolBlock || segment.block.type === 'thinking') {
       pendingSegments.push(segment)
-      pendingBlocks.push(toolBlock)
+      if (toolBlock) pendingBlocks.push(toolBlock)
       return
     }
 
@@ -430,6 +430,7 @@ function messageSegmentHasStartedText(segment: MessageRenderSegment): boolean {
 }
 
 function messageSegmentIsThinking(segment: MessageRenderSegment): boolean {
+  if (segment.kind === 'activity-group') return segment.segments.every(({ block }) => block.type === 'thinking')
   return (
     segment.kind === 'segment' &&
     segment.segment.block.type === 'thinking' &&

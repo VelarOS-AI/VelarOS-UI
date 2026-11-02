@@ -46,8 +46,8 @@ test('keeps the previous turn narration inside processed activity and the final 
     segments,
     getProcessedActivitySummaryBoundaryIndex(segments)
   )
-  expect(partition.processedSegments).toEqual(segments.slice(0, 3))
-  expect(partition.trailingSegments).toEqual(segments.slice(3))
+  expect(partition.processedSegments).toEqual(segments.slice(0, 2))
+  expect(partition.trailingSegments).toEqual(segments.slice(2))
   expect(original.blocks).toHaveLength(4)
 })
 
