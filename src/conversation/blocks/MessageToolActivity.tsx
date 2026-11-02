@@ -4,7 +4,6 @@ import {
   type ReactNode,
   useEffect,
   useId,
-  useState,
 } from "react";
 import { CaretRightIcon, WrenchIcon } from "@phosphor-icons/react";
 
@@ -12,6 +11,7 @@ import { StyleUtils } from "@velaros-ai/ui";
 
 import { useConversationI18n, useConversationTranslatorRuntime } from "../i18n";
 import { useConversationScrollFollow } from "../react-hooks/conversationScrollFollow";
+import { useConversationViewExpansion } from '../react-hooks/conversationViewMemory';
 import { AutoScrollSuspendEventName } from "../react-hooks/scrollBehavior";
 import { useTimerScope } from "../react-hooks/useTimerScope";
 
@@ -38,6 +38,7 @@ export function shouldInitiallyExpandToolActivityDisclosure({
 }
 
 export function ToolActivityDisclosure({
+  viewStateKey,
   blocks,
   children,
   autoCollapseAfterPaint = false,
@@ -46,6 +47,7 @@ export function ToolActivityDisclosure({
   label,
   formatPathForDisplay,
 }: {
+  viewStateKey?: string;
   blocks?: ConversationStepBlock[];
   /** 传函数时只在展开期间渲染：收着的折叠不必先把里面的卡全画一遍。 */
   children: ReactNode | (() => ReactNode);
@@ -77,14 +79,14 @@ export function ToolActivityDisclosure({
   });
   // 工具与脚本默认收起；进度更新只改摘要，用户点击独占展开状态。
   // 整轮完成容器仍可显式请求绘制后收起。
-  const [expanded, setExpanded] = useState(shouldInitiallyExpand);
+  const [expanded, setExpanded, hasSavedExpansion] = useConversationViewExpansion(viewStateKey, shouldInitiallyExpand);
   const timers = useTimerScope("ToolActivityDisclosure");
   const scrollFollow = useConversationScrollFollow();
   const displayLabel =
     label || (isEmpty(activityBlocks) ? t("chat.toolCalls") : summary.label);
 
   useEffect(() => {
-    if (!shouldAutoCollapseAfterPaint) return;
+    if (!shouldAutoCollapseAfterPaint || hasSavedExpansion) return;
 
     let collapseFrame: ReturnType<typeof timers.nextFrame> | undefined;
     const paintedExpandedFrame = timers.nextFrame(
@@ -107,7 +109,7 @@ export function ToolActivityDisclosure({
       paintedExpandedFrame.cancel();
       collapseFrame?.cancel();
     };
-  }, [scrollFollow, shouldAutoCollapseAfterPaint, timers]);
+  }, [hasSavedExpansion, scrollFollow, setExpanded, shouldAutoCollapseAfterPaint, timers]);
 
   const handleToggleClick = (event: MouseEvent<HTMLButtonElement>): void => {
     event.currentTarget.dispatchEvent(

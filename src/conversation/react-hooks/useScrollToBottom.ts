@@ -30,7 +30,7 @@ import {
 } from './scrollBehavior'
 import { useTimerScope } from './useTimerScope'
 
-import { isFiniteNumber, isPresent } from '#internal/runtime'
+import { isFiniteNumber, isPresent, toNullable } from '#internal/runtime'
 import type { TimerLease } from '#internal/timerScope'
 
 const AutoScrollThresholdPx = 24
@@ -39,6 +39,22 @@ const UpwardScrollTolerancePx = 1
 const ContentGrowthUpwardTolerancePx = 48
 const ClampGuardRestoreTolerancePx = 1
 const UnsetRestoreKey = Symbol('unset-scroll-restore-key')
+interface ScrollAnchor { messageId: string; offset: number }
+const rememberedViews = new Map<unknown, { scrollTop: number; following: boolean; anchor: Nullable<ScrollAnchor> }>()
+function readScrollAnchor(element: HTMLElement): Nullable<ScrollAnchor> {
+  const top = element.getBoundingClientRect().top
+  for (const node of element.querySelectorAll<HTMLElement>('[data-message-id]')) {
+    const rect = node.getBoundingClientRect()
+    if (node.getClientRects().length && rect.bottom > top && rect.top < top + element.clientHeight) return { messageId: node.dataset.messageId!, offset: rect.top - top }
+  }
+  return null
+}
+function resolveAnchorTop(element: HTMLElement, anchor: Nullable<ScrollAnchor>): Nullable<number> {
+  if (!anchor) return null
+  const node = element.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(anchor.messageId)}"]`)
+  if (!node?.getClientRects().length) return null
+  return Math.max(0, element.scrollTop + node.getBoundingClientRect().top - element.getBoundingClientRect().top - anchor.offset)
+}
 
 /**
  * 夹底守卫的占位高度以滚动容器上的内联 CSS 变量为唯一事实：容器重挂载后自然归零，
@@ -57,6 +73,7 @@ function writeScrollClampGuardPx(element: HTMLElement, guardPx: number): void {
 }
 
 export interface UseScrollToBottomOptions {
+  rememberView?: boolean
   restoreKey?: unknown
   readScrollTop?: () => Nullable<number>
   writeScrollTop?: (scrollTop: number) => void
@@ -108,8 +125,9 @@ export function useScrollToBottom<T extends HTMLElement>(
   const lastRestoreKeyRef = useRef<unknown>(UnsetRestoreKey)
   const scrollTimers = useTimerScope('useScrollToBottom')
   const scrollFrameRef = useRef<Nullable<TimerLease>>(null)
+  const restoredAnchorRef = useRef<Nullable<ScrollAnchor>>(null)
   const pendingRestoreScrollTopRef = useRef<Nullable<number>>(null)
-  const { readScrollTop, restoreKey, writeScrollTop } = options
+  const { readScrollTop, restoreKey, writeScrollTop, rememberView = false } = options
 
   const scrollFollow = useMemo<ConversationScrollFollow>(
     () => ({
@@ -140,9 +158,16 @@ export function useScrollToBottom<T extends HTMLElement>(
         guardPx > 0
           ? Math.min(scrollTop, element.scrollHeight - element.clientHeight - guardPx)
           : scrollTop
-      writeScrollTop?.(Math.max(0, Math.floor(readerScrollTop)))
+      const savedTop = Math.max(0, Math.floor(readerScrollTop))
+      if (rememberView) {
+        rememberedViews.set(restoreKey, {
+          scrollTop: savedTop,
+          anchor: restoredAnchorRef.current ?? readScrollAnchor(element),
+          following: followLockedRef.current || shouldStickToBottomRef.current,
+        })
+      } else writeScrollTop?.(savedTop)
     },
-    [writeScrollTop]
+    [rememberView, restoreKey, writeScrollTop]
   )
 
   const applyRestoredScrollTop = useCallback(
@@ -168,14 +193,39 @@ export function useScrollToBottom<T extends HTMLElement>(
 
   const restoreScrollTop = useCallback(
     (element: T): boolean => {
+      if (rememberView) {
+        const saved = rememberedViews.get(restoreKey)
+        restoredAnchorRef.current = toNullable(saved?.anchor)
+        if (!saved || saved.following) {
+          restoredAnchorRef.current = null
+          pendingRestoreScrollTopRef.current = null
+          shouldStickToBottomRef.current = true
+          writeScrollClampGuardPx(element, 0)
+          element.scrollTo({ top: element.scrollHeight, behavior: 'auto' })
+          lastScrollTopRef.current = element.scrollTop
+          return true
+        }
+        applyRestoredScrollTop(element, resolveAnchorTop(element, saved.anchor) ?? saved.scrollTop)
+        shouldStickToBottomRef.current = false
+        rememberedViews.set(restoreKey, saved)
+        return true
+      }
       const scrollTop = readScrollTop?.()
       return isPresent(scrollTop) ? applyRestoredScrollTop(element, scrollTop) : false
     },
-    [applyRestoredScrollTop, readScrollTop]
+    [applyRestoredScrollTop, readScrollTop, rememberView, restoreKey]
   )
 
   const restorePendingScrollTop = useCallback(
     (element: T): boolean => {
+      const anchorTop = resolveAnchorTop(element, restoredAnchorRef.current)
+      if (isPresent(anchorTop)) {
+        element.scrollTo({ top: anchorTop, behavior: 'auto' })
+        lastScrollTopRef.current = element.scrollTop
+        pendingRestoreScrollTopRef.current = null
+        shouldStickToBottomRef.current = false
+        return true
+      }
       const scrollTop = pendingRestoreScrollTopRef.current
       return isPresent(scrollTop) ? applyRestoredScrollTop(element, scrollTop) : false
     },
@@ -185,6 +235,7 @@ export function useScrollToBottom<T extends HTMLElement>(
   // 回到底部即恢复跟随：先撤掉占位，底部才是真实内容的底部。
   const scrollToBottom = useCallback(
     (element: T): void => {
+      restoredAnchorRef.current = null
       writeScrollClampGuardPx(element, 0)
       element.scrollTo({ top: element.scrollHeight, behavior: 'auto' })
       lastScrollTopRef.current = element.scrollTop
@@ -267,6 +318,7 @@ export function useScrollToBottom<T extends HTMLElement>(
     const element = ref.current
     if (!element) return
 
+    restoredAnchorRef.current = null
     cancelPendingScroll()
     // 读者要自己滚：还没追到的恢复位置作废，否则下一次内容变化又把他放回那里（常常就是底部）。
     pendingRestoreScrollTopRef.current = null
@@ -330,6 +382,7 @@ export function useScrollToBottom<T extends HTMLElement>(
     }
 
     const currentScrollTop = element.scrollTop
+    if (Math.abs(currentScrollTop - lastScrollTopRef.current) > UpwardScrollTolerancePx) restoredAnchorRef.current = null
     shouldStickToBottomRef.current = resolveAutoScrollPinnedAfterScroll({
       previousPinned: shouldStickToBottomRef.current,
       previousScrollTop: lastScrollTopRef.current,
@@ -380,6 +433,7 @@ export function useScrollToBottom<T extends HTMLElement>(
     lastResetKeyRef.current = resetKey
     lastRestoreKeyRef.current = restoreKey
     // 换会话或发出新消息：之前没追到的恢复位置作废（换会话时下面会按新会话重新读取）。
+    if (resetKeyChanged) restoredAnchorRef.current = null
     if (resetKeyChanged) pendingRestoreScrollTopRef.current = null
     shouldStickToBottomRef.current = resolveAutoScrollPinnedAfterReset({
       currentPinned: shouldStickToBottomRef.current,

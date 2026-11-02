@@ -28,6 +28,7 @@ import { useConversationI18n, useConversationTranslatorRuntime } from '../i18n'
 import type { ConversationView, ConversationWorkerThread } from '../projection'
 import type { ConversationRewindPlan } from '../projection'
 import { ConversationScrollFollowProvider } from '../react-hooks/conversationScrollFollow'
+import { ConversationViewMemoryProvider } from '../react-hooks/conversationViewMemory'
 import { type BrowserScreenshotDisplayMode, useConversationRenderSlots } from '../render-slots'
 import { getChatInlineNoticeMeta } from '../status/chatStatus'
 import {
@@ -635,6 +636,7 @@ export function ChatConversationPane({
   // 自动收起就只在读者跟随底部时发生。
   return (
     <InteractionAnswerProvider value={toNullable(answerInteraction)}>
+      <ConversationViewMemoryProvider sessionId={sessionId}>
       <ConversationScrollFollowProvider scrollRef={scrollRef}>
         <section
           className={cx('chatPane', variant === 'side' && 'chatPaneSide')}
@@ -759,6 +761,7 @@ export function ChatConversationPane({
           </section>
         </section>
       </ConversationScrollFollowProvider>
+      </ConversationViewMemoryProvider>
     </InteractionAnswerProvider>
   )
 }

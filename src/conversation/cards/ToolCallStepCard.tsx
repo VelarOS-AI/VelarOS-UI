@@ -48,6 +48,7 @@ function ToolCallStepCardInner({ block }: ToolCallStepCardProps): ReactElement {
 
   return (
     <ExecutionStepFrame
+      viewStateKey={`tool:${block.toolCallId}`}
       slot="tool-call-step"
       tone={tone}
       statusLabel={t(StatusMessageKeysByTone[tone])}

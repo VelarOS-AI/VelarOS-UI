@@ -68,6 +68,7 @@ function ScriptExecutionCardInner({ block }: ScriptExecutionCardProps): ReactEle
 
   return (
     <ExecutionStepFrame
+      viewStateKey={`step:${block.id}`}
       slot="script-execution"
       tone={resolveScriptExecutionTone(block.status)}
       statusLabel={t(ScriptStatusMessageKeys[block.status])}

@@ -16,6 +16,7 @@ import { CaretRightIcon } from '@phosphor-icons/react'
 import { StyleUtils } from '@velaros-ai/ui'
 
 import { useConversationI18n } from '../i18n'
+import { useConversationViewExpansion } from '../react-hooks/conversationViewMemory'
 import { AutoScrollSuspendEventName } from '../react-hooks/scrollBehavior'
 
 import {
@@ -37,6 +38,7 @@ const cx = StyleUtils.bindCx(styles)
 const LiveOutputLines = 3
 
 export interface ExecutionStepFrameProps {
+  viewStateKey?: string
   /** 写在根节点 `data-slot` 上，宿主与测试据此认出是哪种步骤卡。 */
   slot: 'script-execution' | 'tool-call-step' | 'interaction'
   /** 整张卡的底色跟着它走。 */
@@ -63,6 +65,7 @@ export interface ExecutionStepFrameProps {
 }
 
 export function ExecutionStepFrame({
+  viewStateKey,
   slot,
   tone,
   statusLabel,
@@ -76,7 +79,7 @@ export function ExecutionStepFrame({
   meta,
   renderDetails,
 }: ExecutionStepFrameProps): ReactElement {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useConversationViewExpansion(viewStateKey, false)
   const detailsId = useId()
   const previewLines = live ? liveOutputLines(live) : []
 

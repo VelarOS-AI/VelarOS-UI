@@ -2,6 +2,7 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 
 import { ConversationLocalizationProvider } from '../../src/conversation/i18n'
+import { ConversationViewMemoryProvider, useConversationViewExpansion } from '../../src/conversation/react-hooks/conversationViewMemory'
 import { AutoScrollSuspendEventName } from '../../src/conversation/react-hooks/scrollBehavior'
 import { useScrollToBottom } from '../../src/conversation/react-hooks/useScrollToBottom'
 import { ChatScrollNavigator } from '../../src/conversation/shell/ChatScrollNavigator'
@@ -13,20 +14,26 @@ import '../../src/styles/components/product.css'
 const positions = new Map<string, number>()
 const root = createRoot(document.getElementById('root')!)
 let lockFollow: (locked: boolean) => void
-interface Scene { visible: boolean; generation: number; session: string; height: number }
+interface Scene { visible: boolean; generation: number; session: string; height: number; prefix?: number; remember?: boolean }
 const scene: Scene = { visible: false, generation: 0, session: 'first', height: 3000 }
 
+function ExpansionProbe() {
+  const [expanded, setExpanded] = useConversationViewExpansion('probe', false)
+  return <button id="expansion-probe" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>Toggle</button>
+}
 function Harness(props: Scene): React.ReactElement {
   const { scrollRef, setFollowLocked } = useScrollToBottom(props.height, props.session, {
     restoreKey: props.session,
+    rememberView: props.remember,
     readScrollTop: () => positions.get(props.session) ?? null,
     writeScrollTop: (top) => positions.set(props.session, top),
   })
   lockFollow = setFollowLocked
   return <ConversationLocalizationProvider value={{ locale: 'en-US', t: (key: string) => key }}>{props.visible && <div key={props.generation} ref={scrollRef} id="viewport"
     style={{ width: 400, height: 400, overflow: 'auto' }}>
-    <div style={{ height: props.height }}>Transcript</div>
+    <div><div style={{ height: props.prefix ?? 0 }} /><div data-message-id="transcript" style={{ height: props.height }}>Transcript</div></div>
   </div>}
+    <ConversationViewMemoryProvider sessionId={props.session}><ExpansionProbe key={props.session} /></ConversationViewMemoryProvider>
     <ChatScrollNavigator scrollRef={scrollRef} followLocked={false} onFollowLockedChange={setFollowLocked} />
     <div id="dock-host" style={{ width: 360, boxSizing: 'border-box', padding: '16px', display: 'flex', flexDirection: 'column' }}>
       <SessionStickyDock variant="side" initialCollapsed={false} barLabel="Goal and plan"
@@ -101,6 +108,41 @@ Object.assign(window, {
       if (host.scrollWidth > width) throw Error('Side dock introduces horizontal overflow')
     }
     passed.push('side dock full width at three pane widths')
+    await render({ session: 'memory-a', remember: true, height: 3000, generation: 6 })
+    expectNear(viewport().scrollTop, 2600, 'Unvisited memory session starts at bottom')
+    await render({ session: 'memory-b', height: 2000, generation: 7 })
+    await render({ session: 'memory-a', height: 4000, generation: 8 })
+    expectNear(viewport().scrollTop, 3600, 'Returning pinned session follows new bottom')
+    viewport().dispatchEvent(new Event(AutoScrollSuspendEventName))
+    viewport().scrollTop = 700
+    await settle()
+    await render({ session: 'memory-b', height: 2000, generation: 9 })
+    await render({ session: 'memory-a', height: 4500, generation: 10 })
+    expectNear(viewport().scrollTop, 700, 'Returning reader session preserves position')
+    await render({ height: 4700 })
+    expectNear(viewport().scrollTop, 700, 'Reader remains free after return')
+    document.querySelector<HTMLButtonElement>('#expansion-probe')!.click()
+    await settle()
+    await render({ session: 'memory-b', generation: 11 })
+    if (document.querySelector('#expansion-probe')!.getAttribute('aria-expanded') !== 'false') throw Error('Expansion leaked into other session')
+    await render({ session: 'memory-a', generation: 12 })
+    if (document.querySelector('#expansion-probe')!.getAttribute('aria-expanded') !== 'true') throw Error('Expansion was lost after unmount')
+    passed.push('memory sessions preserve bottom intent, reader position and expansion')
+    await render({ session: 'anchor-a', prefix: 500, height: 3000, generation: 13 })
+    viewport().dispatchEvent(new Event(AutoScrollSuspendEventName))
+    viewport().scrollTop = 700
+    await settle()
+    await render({ session: 'anchor-b', prefix: 0, generation: 14 })
+    await render({ session: 'anchor-a', prefix: 900, generation: 15 })
+    expectNear(viewport().scrollTop, 1100, 'Restores message offset rather than stale pixels')
+    await render({ prefix: 1200 })
+    expectNear(viewport().scrollTop, 1400, 'Late layout preserves restored message offset')
+    viewport().dispatchEvent(new Event(AutoScrollSuspendEventName))
+    viewport().scrollTop = 800
+    await settle()
+    await render({ prefix: 1400 })
+    expectNear(viewport().scrollTop, 800, 'User intent releases restoration anchor')
+    passed.push('message anchor survives changed and late layout without stealing user scroll')
     return passed
   },
 })

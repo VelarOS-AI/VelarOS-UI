@@ -408,6 +408,7 @@ function AssistantMessageSegmentsInner({
     return (
       <ToolActivityDisclosure
         key={segment.key}
+        viewStateKey={`${messageId}:${segment.key}`}
         blocks={segment.blocks}
         formatPathForDisplay={formatPathForDisplay}
       >
@@ -453,6 +454,7 @@ function AssistantMessageSegmentsInner({
         renderedSegments.push(
           <ToolActivityDisclosure
             key={`processed-activity:${key ?? renderedSegments.length}`}
+            viewStateKey={`${messageId}:processed:${key ?? renderedSegments.length}`}
             blocks={blocks}
             autoCollapseAfterPaint={shouldAutoCollapseProcessedActivity}
             defaultExpanded={holdExpandedForReader}
@@ -594,6 +596,7 @@ function AssistantMessageSegmentsInner({
         renderedSegments.push(
           <ToolActivityDisclosure
             key={`processed-activity:${firstProcessedKey}`}
+            viewStateKey={`${messageId}:processed:${firstProcessedKey}`}
             blocks={processedActivityBlocks}
             autoCollapseAfterPaint={shouldAutoCollapseProcessedActivity}
             defaultExpanded={holdExpandedForReader}

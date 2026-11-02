@@ -300,6 +300,7 @@ function SettledInteraction({ block }: InteractionCardProps): ReactElement {
 
   return (
     <ExecutionStepFrame
+      viewStateKey={`step:${block.id}`}
       slot="interaction"
       tone={resolveInteractionTone(block.status)}
       statusLabel={t(resolveInteractionStatusKey(block))}

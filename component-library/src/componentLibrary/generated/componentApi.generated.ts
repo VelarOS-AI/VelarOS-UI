@@ -3437,6 +3437,11 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
   ],
   ExecutionStepFrame: [
     {
+      "name": "ExecutionStepFrame.viewStateKey",
+      "description": "Auto-generated from TypeScript props.",
+      "type": "string"
+    },
+    {
       "name": "ExecutionStepFrame.slot",
       "description": "写在根节点 `data-slot` 上，宿主与测试据此认出是哪种步骤卡。",
       "type": "\"script-execution\" | \"tool-call-step\" | \"interaction\"",
