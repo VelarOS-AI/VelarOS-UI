@@ -142,6 +142,27 @@ app.whenReady().then(async () => {
     }
     await run('processedActivityProof.renderGuidanceRegression(true, false)')
     results.emptyGuidanceGroups = await run(`document.querySelectorAll('[data-slot="tool-activity-disclosure"]').length`)
+    results.peerOrigins = []
+    for (const locale of ['zh-CN', 'en-US']) {
+      for (const parent of [false, true]) {
+        for (const title of [null, '来源标题']) {
+          await run(`processedActivityProof.renderPeerOrigin(${parent}, ${JSON.stringify(locale)}, ${JSON.stringify(title)})`)
+          results.peerOrigins.push({ locale, parent, title, text: await run('document.getElementById("root").textContent') })
+        }
+      }
+    }
+    const fixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'parentChildProjection.json'), 'utf8'))
+    const projectedMessages = fixture.workerThreads[0].messages
+    await run(`processedActivityProof.renderProjectedThread(${JSON.stringify(projectedMessages)})`)
+    await run('processedActivityProof.flushFrames()')
+    results.projectedThread = await run(`({ html: document.getElementById('root').innerHTML, text: document.getElementById('root').textContent, ids: [...document.querySelectorAll('[data-chat-message]')].map(e => e.getAttribute('data-chat-message')) })`)
+    results.projectedThread.expectedIds = projectedMessages.map(message => message.id)
+    results.projectedThread.expectedTexts = projectedMessages.map(message => message.blocks.filter(block => block.type === 'text').map(block => block.text).join(''))
+    if (process.env.VELAROS_UI_PROOF_DIR) {
+      fs.mkdirSync(process.env.VELAROS_UI_PROOF_DIR, { recursive: true })
+      fs.writeFileSync(path.join(process.env.VELAROS_UI_PROOF_DIR, 'parent-child-dom.json'), JSON.stringify(results.projectedThread, null, 2))
+      fs.writeFileSync(path.join(process.env.VELAROS_UI_PROOF_DIR, 'parent-child.png'), (await window.webContents.capturePage()).toPNG())
+    }
     fs.writeFileSync(path.join(directory, 'report.json'), JSON.stringify(results, null, 2))
   } catch (error) {
     console.error(error)

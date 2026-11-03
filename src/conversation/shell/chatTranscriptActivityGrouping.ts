@@ -61,7 +61,7 @@ function appendTurnPresentations(
 ): void {
   const turnMessages = messages.slice(startIndex, endIndex)
   const hasGuidance = turnMessages.some(isRunGuidanceMessage)
-  const turnIsClosed = endIndex < messages.length
+  const turnIsClosed = endIndex < messages.length && isConversationTurnInputMessage(messages[endIndex])
   const completedAnchorIndex = turnMessages.findLastIndex(
     (message) => message.role === 'assistant' && !!options.isCompletedAssistant?.(message)
   )
@@ -171,7 +171,8 @@ export function buildChatTranscriptMessagePresentations(
 
   for (let index = 1; index < messages.length; index += 1) {
     const message = messages[index]
-    if (!message || !isConversationTurnInputMessage(message)) continue
+    // 外部来源消息保持原位，活动分组不能跨过它搬动前后助手正文。
+    if (!message || (!isConversationTurnInputMessage(message) && !message.peerOrigin)) continue
 
     appendTurnPresentations(messages, sectionStartIndex, index, presentations, options)
     sectionStartIndex = index

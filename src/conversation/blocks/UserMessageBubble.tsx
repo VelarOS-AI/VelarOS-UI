@@ -119,7 +119,7 @@ function UserMessageBubbleInner({
   // 作者是谁，再谈它是不是引导。
   const peerOrigin = message.peerOrigin
   const peerLabel = peerOrigin
-    ? t('chat.peerMessageFrom', { name: peerOrigin.title ?? peerOrigin.sessionId })
+    ? t(peerOrigin.relation === 'parent' ? 'chat.parentMessageFrom' : 'chat.peerMessageFrom', { name: peerOrigin.title ?? peerOrigin.sessionId })
     : null
   const statusLabel = peerLabel ?? guidanceLabel
   const statusIcon = peerLabel ? (

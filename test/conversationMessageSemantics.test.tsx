@@ -629,3 +629,28 @@ void test('插入继续前后空思考占位不产生额外已处理入口', () 
     assert.equal(entries[1].blocks.length, 1)
   }
 })
+
+void test('父来源仅改变署名，缺省保持同组来源与原结构边界', () => {
+  for (const relation of [undefined, 'parent'] as const) {
+    for (const kind of ['turn-input', 'run-guidance', 'system-notice'] as const) {
+      const entry: ChatMessage = {
+        ...message('origin', 'user', kind),
+        peerOrigin: { sessionId: 'source-id', title: null, folderId: 'group', relation },
+      }
+      const markup = renderToStaticMarkup(createElement(ConversationLocalizationProvider,
+        { value: localization }, createElement(UserMessageBubble, { message: entry })))
+      assert.match(markup, relation === 'parent' ? /chat.parentMessageFrom/ : /chat.peerMessageFrom/)
+      assert.equal(resolveChatMessageConversationKind(entry), kind)
+      assert.equal(isConversationTurnInputMessage(entry), kind === 'turn-input')
+    }
+  }
+})
+
+void test('真实父子投影保持父消息与子输出交错顺序', async () => {
+  const { readFile } = await import('node:fs/promises')
+  const fixture = JSON.parse(await readFile(new URL('./fixtures/parentChildProjection.json', import.meta.url), 'utf8'))
+  const entries: ChatMessage[] = fixture.workerThreads[0].messages
+  const presentations = buildChatTranscriptMessagePresentations(entries)
+  assert.deepEqual(presentations.map(entry => entry.message.id), entries.map(entry => entry.id))
+  assert.ok(presentations.every(entry => entry.activityLeadingMessages.length === 0 && entry.activityTrailingMessages.length === 0))
+})

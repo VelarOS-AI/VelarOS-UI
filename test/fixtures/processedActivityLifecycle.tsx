@@ -14,6 +14,7 @@ import { ScriptExecutionCard } from '../../src/conversation/cards/ScriptExecutio
 import type { ChatMessage, ContentBlock, ScriptExecutionBlock } from '../../src/conversation/contracts'
 import {
   ConversationLocalizationProvider,
+  conversationMessagesByLocale,
   conversationZhCNMessages,
 } from '../../src/conversation/i18n'
 import {
@@ -304,10 +305,32 @@ function renderGuidanceRegression(withGuidance: boolean, showThinking = true): v
     <ChatTranscript messages={messages} sessionId="guidance-regression" />)
 }
 
+function renderPeerOrigin(parent: boolean, locale: 'zh-CN' | 'en-US', title: string | null): void {
+  const message: ChatMessage = {
+    id: 'origin', role: 'user', conversationKind: 'run-guidance', timestamp: 1,
+    peerOrigin: { sessionId: 'source-id', title, folderId: 'group', ...(parent ? { relation: 'parent' as const } : {}) },
+    blocks: [{ type: 'text', text: '通信正文保留' }],
+  }
+  renderMessage(message, false, false,
+    <ConversationLocalizationProvider value={{ locale, t: (key, params) => {
+      const value = key.split('.').reduce<unknown>((entry, part) => (entry as Record<string, unknown>)?.[part], conversationMessagesByLocale[locale])
+      return String(value ?? key).replace(/\{(\w+)\}/g, (_, token: string) => String(params?.[token] ?? ''))
+    } }}>
+      <ChatTranscript messages={[message]} sessionId="origin-regression" />
+    </ConversationLocalizationProvider>)
+}
+
+function renderProjectedThread(messages: ChatMessage[]): void {
+  renderMessage(messages[0], false, false,
+    <ChatTranscript messages={messages} sessionId="projected-thread" />)
+}
+
 Object.assign(window, {
   processedActivityProof: {
     render,
     renderGuidanceRegression,
+    renderPeerOrigin,
+    renderProjectedThread,
     renderSteps,
     renderThinking,
     readThinking,

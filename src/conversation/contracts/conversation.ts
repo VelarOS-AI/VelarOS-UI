@@ -638,6 +638,8 @@ export interface ChatMessage {
    * 「最近一次用户请求」映射、活动分组的轮次边界——而且一处编译错误都不会有。
    */
   peerOrigin?: {
+    /** 父会话来源；缺省时保持同组会话展示，不影响消息的结构语义。 */
+    relation?: 'parent'
     /** 发信同伴的会话 id。 */
     sessionId: string
     /** 发信同伴的会话标题；未知时为 null。 */

@@ -1,0 +1,158 @@
+{
+  "id": "fixture-parent",
+  "folderId": "session-1793691981026-1",
+  "title": "父会话验收",
+  "isPinned": false,
+  "isMemberPinned": false,
+  "sidebarOrder": null,
+  "space": "system",
+  "rootPath": null,
+  "browserSiteUrl": null,
+  "goalMode": false,
+  "planMode": false,
+  "selectedProvider": null,
+  "selectedModel": "",
+  "workspaceVersion": 0,
+  "createdAt": 1793691981026,
+  "updatedAt": 1793691981030,
+  "messages": [],
+  "messageRunMarkers": [],
+  "isStreaming": false,
+  "runtime": {
+    "status": "idle",
+    "teamPhase": null,
+    "activeTurn": null,
+    "completedTurns": 0,
+    "lastContextUsageEstimate": null,
+    "usageTelemetry": [],
+    "lastError": null,
+    "connectionRetryAttempt": null,
+    "connectionRetryMaxAttempts": null,
+    "connectionRetryMessage": null,
+    "lastRunStartedAt": null,
+    "lastRunFinishedAt": null,
+    "awaitingConfirmationId": null,
+    "awaitingConfirmationExecutionId": null,
+    "awaitingConfirmationMessage": null,
+    "awaitingInputExecutionId": null,
+    "awaitingInputQuestion": null
+  },
+  "nextStepSuggestionCache": null,
+  "trace": [],
+  "turnContexts": [],
+  "debugIpcTrace": [],
+  "workerThreads": [
+    {
+      "threadId": "conversation:agent:fixture:child:0",
+      "activationId": "conversation:agent:fixture:child:0",
+      "taskId": null,
+      "nodeId": null,
+      "title": "父子通信验收",
+      "agentId": "fixture-child",
+      "agentName": "Atlas",
+      "roleId": null,
+      "phase": null,
+      "status": "completed",
+      "workspaceTarget": null,
+      "dag": null,
+      "subagentType": "worker",
+      "mode": null,
+      "model": null,
+      "startedAt": 1000,
+      "updatedAt": 5000,
+      "input": "父子通信验收\n保留正常输出，只显示收到的父消息",
+      "output": "完成",
+      "summary": null,
+      "error": null,
+      "messages": [
+        {
+          "id": "conversation:run:fixture-child-run",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "text",
+              "text": "第一轮子任务正常输出",
+              "segmentId": "conversation:fixture:one",
+              "turnId": "turn-1"
+            }
+          ],
+          "timestamp": 1100
+        },
+        {
+          "id": "conversation:communication:reply:q1",
+          "role": "user",
+          "conversationKind": "run-guidance",
+          "peerOrigin": {
+            "relation": "parent",
+            "sessionId": "fixture-parent",
+            "title": "父会话验收",
+            "folderId": "session-1793691981026-1"
+          },
+          "runId": "fixture-child-run",
+          "turnId": "turn-1",
+          "blocks": [
+            {
+              "type": "text",
+              "text": "父消息一：继续核对"
+            }
+          ],
+          "guidanceStatus": "applied",
+          "timestamp": 1500
+        },
+        {
+          "id": "conversation:run:fixture-child-run:conversation:communication:reply:q1",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "text",
+              "text": "收到父消息一后的输出",
+              "segmentId": "conversation:fixture:two",
+              "turnId": "turn-2"
+            }
+          ],
+          "timestamp": 0
+        },
+        {
+          "id": "conversation:communication:reply:q2",
+          "role": "user",
+          "conversationKind": "run-guidance",
+          "peerOrigin": {
+            "relation": "parent",
+            "sessionId": "fixture-parent",
+            "title": "父会话验收",
+            "folderId": "session-1793691981026-1"
+          },
+          "runId": "fixture-child-run",
+          "turnId": "turn-2",
+          "blocks": [
+            {
+              "type": "text",
+              "text": "父消息二：保留证据"
+            }
+          ],
+          "guidanceStatus": "applied",
+          "timestamp": 2500
+        },
+        {
+          "id": "conversation:run:fixture-child-run:conversation:communication:reply:q2",
+          "role": "assistant",
+          "blocks": [
+            {
+              "type": "text",
+              "text": "收到父消息二后的最终输出",
+              "segmentId": "conversation:fixture:three",
+              "turnId": "turn-3"
+            }
+          ],
+          "timestamp": 0
+        }
+      ]
+    }
+  ],
+  "activeBranchId": "main-1793691981026",
+  "workspaceSourceRoot": null,
+  "messagePaging": {
+    "loadedFromIndex": 0,
+    "totalCount": 0
+  }
+}

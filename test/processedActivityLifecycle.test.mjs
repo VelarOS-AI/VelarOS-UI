@@ -72,6 +72,23 @@ void test(
         assert.doesNotMatch(entry.text, /思考过程/)
       }
       assert.match(report.guidanceRegression[1].text, /继续/)
+      console.info(JSON.stringify(report.peerOrigins))
+      assert.equal(report.peerOrigins.length, 8)
+      for (const entry of report.peerOrigins) {
+        const label = entry.locale === 'zh-CN'
+          ? (entry.parent ? '来自父会话' : '来自同组会话')
+          : (entry.parent ? 'From parent session' : 'From peer session')
+        assert.ok(entry.text.includes(`${label  } ${  entry.title ?? 'source-id'}`))
+        assert.match(entry.text, /通信正文保留/)
+      }
+      assert.deepEqual(report.projectedThread.ids, report.projectedThread.expectedIds)
+      let previousPosition = -1
+      for (const text of report.projectedThread.expectedTexts) {
+        const position = report.projectedThread.text.indexOf(text)
+        assert.ok(position > previousPosition, text)
+        previousPosition = position
+      }
+      assert.equal(report.projectedThread.text.match(/来自父会话/g)?.length, 2)
       assert.deepEqual(report.errors, [])
       for (const key of [
         'completedWithoutInteraction',
