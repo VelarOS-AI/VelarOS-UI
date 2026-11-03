@@ -4378,6 +4378,11 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "boolean"
     },
     {
+      "name": "MessageContentBlock.thinkingInline",
+      "description": "Auto-generated from TypeScript props.",
+      "type": "boolean"
+    },
+    {
       "name": "MessageContentBlock.animateStreamingText",
       "description": "Auto-generated from TypeScript props.",
       "type": "boolean",

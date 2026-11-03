@@ -55,7 +55,9 @@ function ScriptExecutionCardInner({ block }: ScriptExecutionCardProps): ReactEle
   const live = useConversationBlockHooks().useScriptLiveOutput(block.id)
   const observe = block.kind === 'observe'
   const blobs = block.kind === 'blobs'
-  const title =
+  const title = blobs
+    ? [t('scriptExecution.blobsTitle'), block.title.trim()].filter(Boolean).join(' · ')
+    :
     resolveScriptExecutionTitle(block, {
       wait: t('scriptExecution.waitTitle'),
       stop: t('scriptExecution.stopTitle'),

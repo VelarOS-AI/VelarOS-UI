@@ -58,9 +58,19 @@ export function useChatConversationScroll({
     }
   }, [initialBottomScrollKey, initialBottomScrollTimers])
 
+  const observerBinding = useRef<Nullable<{ node: HTMLDivElement; observer: IntersectionObserver }>>(null)
+  useEffect(() => () => {
+    observerBinding.current?.observer.disconnect()
+    observerBinding.current = null
+  }, [initialBottomScrollKey])
+
   useEffect(() => {
     const sentinel = loadMoreSentinelRef.current
-    if (!enableOlderMessageSentinel || !sentinel || !canTriggerOlderLoad) return
+    const target = enableOlderMessageSentinel && canTriggerOlderLoad ? sentinel : null
+    if (observerBinding.current?.node === target) return
+    observerBinding.current?.observer.disconnect()
+    observerBinding.current = null
+    if (!target || !sentinel) return
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -75,8 +85,9 @@ export function useChatConversationScroll({
       }
     )
     observer.observe(sentinel)
-    return () => observer.disconnect()
-  }, [canTriggerOlderLoad, enableOlderMessageSentinel, isLoadingOlderLatest, onLoadOlderLatest])
+    observerBinding.current = { node: sentinel, observer }
+
+  })
 
   return {
     loadMoreSentinelRef,

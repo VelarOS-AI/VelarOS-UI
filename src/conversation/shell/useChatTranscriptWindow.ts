@@ -51,7 +51,7 @@ export interface UseChatTranscriptWindowReturn {
 type PendingScroll =
   | { kind: 'bottom' }
   | { kind: 'top' }
-  | { kind: 'section'; messageId: string }
+  | { kind: 'section'; messageId: string; offset?: number }
 
 interface TranscriptWindowState {
   /** true 时窗口锚定末尾，跟随新消息。 */
@@ -60,6 +60,7 @@ interface TranscriptWindowState {
   anchorIndex: number
   /** 用于强制重跑 pending 滚动副作用（即使窗口边界未变）。 */
   nonce: number
+  anchorMessageId?: string
 }
 
 interface WindowRange {
@@ -220,7 +221,9 @@ export function useChatTranscriptWindow({
   const sectionStarts = useMemo(() => computeChatTranscriptSectionStarts(messages), [messages])
   const range = useMemo(
     () => {
-      const baseRange = deriveWindowRange(messages.length, sectionStarts, state)
+      const identityIndex = state.anchorMessageId ? messages.findIndex(message => message.id === state.anchorMessageId) : -1
+      const baseRange = deriveWindowRange(messages.length, sectionStarts,
+        identityIndex >= 0 ? { ...state, anchorIndex: identityIndex } : state) 
       const pinnedMessageIndex = pinnedMessageId
         ? messages.findIndex((message) => message.id === pinnedMessageId)
         : -1
@@ -259,6 +262,7 @@ export function useChatTranscriptWindow({
               ...current,
               followEnd: false,
               anchorIndex: rangeRef.current.startIndex,
+              anchorMessageId: messagesRef.current[rangeRef.current.startIndex]?.id,
             }
           : current
       )
@@ -271,12 +275,41 @@ export function useChatTranscriptWindow({
         scrollEl.scrollHeight - ScrollEdgeThreshold
       lastScrollTopRef.current = currentScrollTop
 
+      // 两个方向均在一屏余量内准备内容；程序性锚点补偿不再次移动窗口。
+      const { startIndex, endIndex } = rangeRef.current
+      const preloadDistance = Math.max(200, scrollEl.clientHeight)
+      const movingUp = currentScrollTop < previousScrollTop - FollowEndScrollTolerance
+      const movingDown = currentScrollTop > previousScrollTop + FollowEndScrollTolerance
+      const nearTop = currentScrollTop <= preloadDistance
+      const nearBottom = scrollEl.scrollHeight - currentScrollTop - scrollEl.clientHeight <= preloadDistance
+      if ((movingUp && nearTop && startIndex > 0) ||
+          (movingDown && nearBottom && endIndex < messagesRef.current.length)) {
+        const viewportTop = scrollEl.getBoundingClientRect().top
+        const anchor = Array.from(scrollEl.querySelectorAll<HTMLElement>('[data-message-id]'))
+          .find((node) => node.getClientRects().length > 0 && node.getBoundingClientRect().bottom > viewportTop)
+        if (anchor?.dataset.messageId) {
+          const anchorIndex = messagesRef.current.findIndex((message) => message.id === anchor.dataset.messageId)
+          const nextStart = movingUp
+            ? previousSectionStart(sectionStartsRef.current, startIndex)
+            : snapToSectionStart(sectionStartsRef.current, Math.max(startIndex + 1, anchorIndex))
+          if (nextStart !== startIndex) {
+            pendingScrollRef.current = {
+              kind: 'section', messageId: anchor.dataset.messageId,
+              offset: anchor.getBoundingClientRect().top - viewportTop,
+            }
+            setState((current) => ({ followEnd: false, anchorIndex: nextStart, anchorMessageId: messagesRef.current[nextStart]?.id, nonce: current.nonce + 1 }))
+            return
+          }
+        }
+      }
+      if (movingUp && nearTop && startIndex === 0 && hasOlderRef.current) loadOlderRef.current?.()
+
       setState((current) => {
         const followEnd = resolveTranscriptWindowFollowEndAfterScroll({
           currentFollowEnd: current.followEnd,
           previousScrollTop,
           currentScrollTop,
-          isAtBottom,
+          isAtBottom: isAtBottom && rangeRef.current.endIndex === messagesRef.current.length,
           movementTolerancePx: FollowEndScrollTolerance,
         })
         if (followEnd === current.followEnd) return current
@@ -285,6 +318,7 @@ export function useChatTranscriptWindow({
           ...current,
           followEnd,
           anchorIndex: followEnd ? 0 : rangeRef.current.startIndex,
+          anchorMessageId: followEnd ? undefined : messagesRef.current[rangeRef.current.startIndex]?.id,
         }
       })
     }
@@ -296,7 +330,7 @@ export function useChatTranscriptWindow({
       scrollEl.removeEventListener(AutoScrollSuspendEventName, suspendEndFollow)
       scrollEl.removeEventListener('scroll', updateEndFollowAfterScroll)
     }
-  }, [rangeRef, scrollRef])
+  })
 
   const queueScroll = useCallback(
     (pending: PendingScroll, next: Partial<TranscriptWindowState>): void => {
@@ -304,10 +338,11 @@ export function useChatTranscriptWindow({
       setState((current) => ({
         followEnd: next.followEnd ?? current.followEnd,
         anchorIndex: next.anchorIndex ?? current.anchorIndex,
+        anchorMessageId: isNumber(next.anchorIndex) ? messagesRef.current[next.anchorIndex]?.id : current.anchorMessageId,
         nonce: current.nonce + 1,
       }))
     },
-    []
+    [messagesRef]
   )
 
   // 应用窗口切换后的滚动定位。
@@ -334,7 +369,8 @@ export function useChatTranscriptWindow({
     if (!node) return
 
     const top = node.getBoundingClientRect().top - scrollEl.getBoundingClientRect().top + scrollEl.scrollTop
-    scrollEl.scrollTo({ top: Math.max(0, top), behavior: 'auto' })
+    scrollEl.scrollTo({ top: Math.max(0, top - (pending.offset ?? 0)), behavior: 'auto' })
+    lastScrollTopRef.current = scrollEl.scrollTop
   }, [range.startIndex, range.endIndex, state.nonce, scrollRef])
 
   const navigationHandle = useMemo<ChatTranscriptNavigationHandle>(

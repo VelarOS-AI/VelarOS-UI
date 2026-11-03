@@ -135,7 +135,7 @@ export function ToolActivityDisclosure({
         onClick={handleToggleClick}
       >
         {hasRunningTool && (
-          <span className={styles.runningStatusDot} aria-hidden="true" />
+          <span data-slot="activity-running-indicator" className={styles.runningStatusDot} aria-hidden="true" />
         )}
         {!hasRunningTool && !label && (
           <WrenchIcon size={14} aria-hidden="true" />

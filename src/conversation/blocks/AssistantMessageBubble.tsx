@@ -187,7 +187,7 @@ export function AssistantMessageBubble({
       ),
       hasRenderableContent: nextRenderableSegments.some(
         (segment) => hasVisibleSegmentContent(segment) ||
-          (segment.block.type === 'thinking' && segment.block.text.trim().length > 0)
+          (segment.block.type === 'thinking' && !isEmpty(segment.block.text.trim()))
       ),
       lastTextSegmentKey: getLastTextSegmentKey(nextRenderableSegments),
       streamingTextSegmentKey: getStreamingTextSegmentKey(nextRenderableSegments),

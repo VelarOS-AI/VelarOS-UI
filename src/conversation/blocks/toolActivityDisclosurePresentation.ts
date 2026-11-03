@@ -13,12 +13,14 @@ import type { AppLocale, ConversationStepBlock } from '#contracts'
 import { isEmpty } from '#internal/runtime'
 
 export function getToolActivityDisclosureSummary(
-  blocks: readonly ConversationStepBlock[],
+  allBlocks: readonly ConversationStepBlock[],
   locale: AppLocale,
   translator: ConversationTranslator,
   formatPathForDisplay?: (path: string) => string
 ): { label: string; isRunning: boolean } {
   const t = translator.translate.bind(null, locale)
+  const blocks = allBlocks.filter((block) => block.type !== 'script-execution' || block.kind !== 'blobs')
+  if (isEmpty(blocks) && !isEmpty(allBlocks)) return { label: t('scriptExecution.blobsTitle'), isRunning: false }
   const tone = (block: ConversationStepBlock): ExecutionStepTone =>
     block.type === 'script-execution'
       ? resolveScriptExecutionTone(block.status)

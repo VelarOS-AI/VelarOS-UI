@@ -416,7 +416,11 @@ function AssistantMessageSegmentsInner({
         viewStateKey={`${messageId}:${segment.key}`}
         blocks={segment.blocks}
         label={segment.segments.some(({ block }) => block.type === 'thinking') ? (isStreaming ? t(segment.segments.at(-1)?.block.type === 'thinking' ? 'status.phaseResearching' : 'status.phaseExecuting') : getProcessedActivityDisclosureLabel([], locale, { responseDurationMs }, translatorRuntime)) : undefined}
-        isRunning={isStreaming}
+        isRunning={
+          segment.segments.at(-1)?.block.type === 'thinking'
+            ? isStreaming && segment === visibleMessageRenderSegments.at(-1)
+            : undefined
+        }
         formatPathForDisplay={formatPathForDisplay}
       >
         {() => renderActivityGroupChildren()}

@@ -280,7 +280,7 @@ export const conversationZhCNMessages = {
   },
   scriptExecution: {
     executeTitle: '执行脚本',
-    blobsTitle: '绑定原文',
+    blobsTitle: '原始数据',
     sourceTruncated: '仅显示部分内容，完整原文保留在运行记录中。',
     waitTitle: '等待程序完成',
     stopTitle: '停止指定程序',
@@ -685,7 +685,7 @@ export const conversationEnUSMessages = {
   },
   scriptExecution: {
     executeTitle: 'Run script',
-    blobsTitle: 'Bind source text',
+    blobsTitle: 'Raw data',
     sourceTruncated: 'Partial preview. The full text is preserved in the run records.',
     observeTitle: 'Keep watching',
     waitTitle: 'Wait for program completion',
