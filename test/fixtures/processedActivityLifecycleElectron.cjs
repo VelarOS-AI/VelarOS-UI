@@ -128,6 +128,20 @@ app.whenReady().then(async () => {
     results.timerCompleted = await run('processedActivityProof.readTimedScript()')
     await run('processedActivityProof.restoreClock()')
     results.highlightPerformance = await run('processedActivityProof.measureExecutionHighlight()')
+    results.guidanceRegression = []
+    for (const withGuidance of [false, true]) {
+      await run(`processedActivityProof.renderGuidanceRegression(${withGuidance})`)
+      await run('processedActivityProof.flushFrames()')
+      await run('processedActivityProof.toggle()')
+      await run('processedActivityProof.flushFrames()')
+      results.guidanceRegression.push(await run(`({
+        groups: document.querySelectorAll('[data-slot="tool-activity-disclosure"]').length,
+        text: document.getElementById('root').textContent,
+        inlineTitles: [...document.querySelectorAll('[data-thinking-presentation="inline"]')].map(e => e.textContent)
+      })`))
+    }
+    await run('processedActivityProof.renderGuidanceRegression(true, false)')
+    results.emptyGuidanceGroups = await run(`document.querySelectorAll('[data-slot="tool-activity-disclosure"]').length`)
     fs.writeFileSync(path.join(directory, 'report.json'), JSON.stringify(results, null, 2))
   } catch (error) {
     console.error(error)

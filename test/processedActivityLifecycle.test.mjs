@@ -64,6 +64,14 @@ void test(
       })
       assert.equal(code, 0, errors)
       const report = JSON.parse(await readFile(join(directory, 'report.json'), 'utf8'))
+      assert.equal(report.emptyGuidanceGroups, 0)
+      for (const entry of report.guidanceRegression) {
+        assert.equal(entry.groups, 1)
+        assert.match(entry.text, /真实思考正文保留/)
+        assert.match(entry.text, /继续执行正文保留/)
+        assert.doesNotMatch(entry.text, /思考过程/)
+      }
+      assert.match(report.guidanceRegression[1].text, /继续/)
       assert.deepEqual(report.errors, [])
       for (const key of [
         'completedWithoutInteraction',

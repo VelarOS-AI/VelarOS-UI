@@ -367,7 +367,6 @@ function ThinkingBlockInner({
 
   if (inline) return (
     <div className={styles.thinkingBlock} data-thinking-presentation="inline">
-      <div className={styles.toolActivityLabel}>{label}</div>
       {thinkingContent}
     </div>
   )

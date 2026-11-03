@@ -401,6 +401,9 @@ export function buildMessageRenderSegments(
   }
 
   segments.forEach((segment) => {
+    // 空思考占位没有可渲染正文，不能独立生成一个「已处理」入口。
+    if (segment.block.type === 'thinking' && isBlank(segment.block.text)) return
+
     const toolBlock = getGroupedToolBlock(segment, isExcludedToolCall)
 
     if (toolBlock || segment.block.type === 'thinking') {

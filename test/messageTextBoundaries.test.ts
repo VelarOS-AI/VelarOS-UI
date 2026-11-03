@@ -92,3 +92,22 @@ test('keeps error text separate even when its segment matches', () => {
   }]
   expect(getVisibleMessageBlocks(message(blocks), true)).toEqual(blocks)
 })
+
+test('empty thinking placeholders never create an activity disclosure', () => {
+  for (const value of ['', '  \n ']) {
+    const blocks: ContentBlock[] = [{ type: 'thinking', text: value }]
+    expect(buildMessageRenderSegments(buildToolRenderSegments(blocks))).toEqual([])
+    expect(blocks).toHaveLength(1)
+  }
+})
+
+test('empty thinking between real steps does not remove or split execution records', () => {
+  const blocks: ContentBlock[] = [thinking, { type: 'thinking', text: '' }, script]
+  const segments = buildMessageRenderSegments(buildToolRenderSegments(blocks))
+  expect(segments).toHaveLength(1)
+  expect(segments[0].kind).toBe('activity-group')
+  if (segments[0].kind === 'activity-group') {
+    expect(segments[0].segments.map(({ block }) => block)).toEqual([thinking, script])
+    expect(segments[0].blocks).toEqual([script])
+  }
+})

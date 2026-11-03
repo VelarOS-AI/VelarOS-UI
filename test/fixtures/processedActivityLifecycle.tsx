@@ -24,6 +24,7 @@ import {
   ConversationRenderSlotsProvider,
   createConversationRenderSlots,
 } from '../../src/conversation/render-slots'
+import { ChatTranscript } from '../../src/conversation/shell/ChatTranscript'
 
 // 可控绘制队列复现窗口暂停绘制；真正的 React、消息组件和 TimerScope 仍在 Electron 中运行。
 const frames = new Map<number, FrameRequestCallback>()
@@ -289,9 +290,24 @@ async function measureExecutionHighlight(): Promise<{ coldMs: number; fullMs: nu
   }
 }
 
+function renderGuidanceRegression(withGuidance: boolean, showThinking = true): void {
+  const messages: ChatMessage[] = [
+    { id: 'question', role: 'user', timestamp: 1, blocks: [{ type: 'text', text: '检查任务' }] },
+    { id: 'placeholder', role: 'assistant', timestamp: 2, blocks: [{ type: 'thinking', text: ' ' }] },
+    ...(withGuidance ? [{ id: 'continue', role: 'user' as const, timestamp: 3, conversationKind: 'run-guidance' as const, blocks: [{ type: 'text' as const, text: '继续' }] }] : []),
+    { id: 'continuation', role: 'assistant', timestamp: 4, blocks: [
+      ...(showThinking ? [{ type: 'thinking' as const, text: '真实思考正文保留' }] : []),
+      { type: 'text', text: '继续执行正文保留' },
+    ] },
+  ]
+  renderMessage(messages[3] ?? messages[2], false, false,
+    <ChatTranscript messages={messages} sessionId="guidance-regression" />)
+}
+
 Object.assign(window, {
   processedActivityProof: {
     render,
+    renderGuidanceRegression,
     renderSteps,
     renderThinking,
     readThinking,

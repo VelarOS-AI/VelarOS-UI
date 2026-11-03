@@ -611,3 +611,21 @@ void test('同伴通知显示独立署名气泡且不进入已处理折叠', () 
   assert.ok(grouped.some(entry => entry.message === peer))
   assert.ok(grouped.every(entry => !entry.activityLeadingMessages.includes(peer) && !entry.activityTrailingMessages.includes(peer)))
 })
+
+void test('插入继续前后空思考占位不产生额外已处理入口', () => {
+  for (const withGuidance of [false, true]) {
+    const entries: ChatMessage[] = [
+      message('empty-turn', 'user', 'turn-input'),
+      { ...message('empty-process', 'assistant'), blocks: [{ type: 'thinking', text: '  ' }] },
+      ...(withGuidance ? [{ ...message('continue', 'user', 'run-guidance'), blocks: [{ type: 'text' as const, text: '继续' }] }] : []),
+      { ...message('real-answer', 'assistant'), blocks: [{ type: 'text', text: '执行正文保留' }] },
+    ]
+    const markup = renderToStaticMarkup(createElement(ConversationLocalizationProvider, { value: localization },
+      createElement(ConversationBlockHooksProvider, { value: blockHooks },
+        createElement(ChatTranscript, { messages: entries, sessionId: 'empty-guidance' }))))
+    assert.doesNotMatch(markup, /data-slot="tool-activity-disclosure"/)
+    assert.match(markup, /执行正文保留/)
+    if (withGuidance) assert.match(markup, /继续/)
+    assert.equal(entries[1].blocks.length, 1)
+  }
+})
