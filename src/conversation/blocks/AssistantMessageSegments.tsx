@@ -9,6 +9,7 @@ import React, {
   useState,
 } from 'react'
 
+import { ScriptBlobsCard } from '../cards/ScriptExecutionCard'
 import { useConversationI18n, useConversationTranslatorRuntime } from '../i18n'
 import { useConversationAutoCollapseHold } from '../react-hooks/conversationScrollFollow'
 import type { ToolRenderSegment } from '../tool-render/toolCallRenderGrouping'
@@ -35,6 +36,7 @@ import type {
   ChatMessage,
   ContentBlock,
   ConversationStepBlock,
+  ScriptExecutionBlock,
   ToolCallBlock as ToolCallBlockType,
 } from '#contracts'
 import { isBlank, isEmpty, isPresent } from '#internal/runtime'
@@ -403,8 +405,26 @@ function AssistantMessageSegmentsInner({
   const renderMessageRenderSegment = (segment: MessageRenderSegment): Nullable<ReactElement> => {
     if (segment.kind !== 'activity-group') return renderToolRenderSegment(segment.segment)
 
-    const renderActivityGroupChildren = (): ReactNode[] =>
-      segment.segments.map((childSegment) => renderToolRenderSegment(childSegment, true))
+    const renderActivityGroupChildren = (): ReactNode[] => {
+      const children: ReactNode[] = []
+      let blobs: ScriptExecutionBlock[] = []
+      const flushBlobs = (): void => {
+        if (isEmpty(blobs)) return
+        children.push(<ScriptBlobsCard key={`blobs:${blobs[0]!.id}`} blocks={blobs} />)
+        blobs = []
+      }
+      for (const childSegment of segment.segments) {
+        const block = childSegment.block
+        if (block.type === 'script-execution' && block.kind === 'blobs') {
+          blobs.push(block)
+        } else {
+          flushBlobs()
+          children.push(renderToolRenderSegment(childSegment, true))
+        }
+      }
+      flushBlobs()
+      return children
+    }
 
     if (shouldRenderProcessedActivity) return (
       <React.Fragment key={segment.key}>{renderActivityGroupChildren()}</React.Fragment>

@@ -150,6 +150,27 @@ function ScriptExecutionResult({ call }: { call: ScriptExecutionCall }): ReactEl
   )
 }
 
+/** 连续原文字段共用一个折叠，字段正文仍按原文展示。 */
+export function ScriptBlobsCard({ blocks }: { blocks: ScriptExecutionBlock[] }): ReactElement {
+  const { t } = useConversationI18n()
+  return (
+    <ExecutionStepFrame
+      viewStateKey={`blobs:${blocks[0]?.id}`}
+      slot="script-execution"
+      tone="success"
+      statusLabel={t('scriptExecution.blobsTitle')}
+      icon={<FileTextIcon size={StepIconSize} />}
+      title={t('scriptExecution.blobsTitle')}
+      renderDetails={() => blocks.map((block) => (
+        <section key={block.id} data-slot="blob-field">
+          <div className={styles.note}>{block.title}</div>
+          <ScriptExecutionDetails block={block} />
+        </section>
+      ))}
+    />
+  )
+}
+
 export const ScriptExecutionCard = memo(ScriptExecutionCardInner)
 
 ScriptExecutionCard.displayName = 'ScriptExecutionCard'

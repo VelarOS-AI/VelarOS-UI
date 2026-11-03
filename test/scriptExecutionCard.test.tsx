@@ -31,6 +31,7 @@ import {
   resolveToolCallStepTone,
 } from '../src/conversation/cards/executionStepPresentation'
 import {
+  ScriptBlobsCard,
   ScriptExecutionCard,
   ScriptExecutionDetails,
 } from '../src/conversation/cards/ScriptExecutionCard'
@@ -148,7 +149,7 @@ void test('folded payload renders a bounded preview instead of hidden full outpu
 void test('blobs have a distinct source-text card and retain literal contents', () => {
   const block = script({ kind: 'blobs', title: '', calls: [], source: 'literal ${value} **text** <script>', sourceTruncated: true })
   const card = render(createElement(ScriptExecutionCard, { block }))
-  assert.ok(card.includes('原始数据'))
+  assert.ok(card.includes('blobs'))
   assert.ok(!card.includes('执行脚本'))
   const details = render(createElement(ScriptExecutionDetails, { block }))
   assert.ok(details.includes('literal ${value} **text** &lt;script&gt;'))
@@ -620,7 +621,7 @@ void test('整条消息继续流式时，已完成操作组不保留运行圆点
 
 void test('raw data titles show the field name and do not count as executions', () => {
   const data = script({ kind: 'blobs', title: 'patch', calls: [] })
-  assert.ok(render(createElement(ScriptExecutionCard, { block: data })).includes('原始数据 · patch'))
+  assert.ok(render(createElement(ScriptExecutionCard, { block: data })).includes('blobs · patch'))
   for (const status of ['writing', 'queued', 'running', 'succeeded', 'failed', 'cancelled'] as const) {
     const card = render(createElement(ToolActivityDisclosure, { blocks: [script({ status: 'succeeded' }), { ...data, status }], children: null }))
     assert.ok(card.includes('已完成 1 项操作'))
@@ -628,6 +629,17 @@ void test('raw data titles show the field name and do not count as executions', 
     assert.ok(!card.includes('已完成 2 项操作'))
   }
   const onlyData = render(createElement(ToolActivityDisclosure, { blocks: [data], children: null }))
-  assert.ok(onlyData.includes('原始数据'))
+  assert.ok(onlyData.includes('blobs'))
   assert.ok(!onlyData.includes('项操作'))
+})
+
+void test('blob fields share one collapsed frame without eagerly rendering payloads', () => {
+  const blocks = ['list', 'dialog', 'css'].map((title, index) => script({
+    id: `blob-${index}`, kind: 'blobs', title, source: `literal-${title}`, calls: [],
+  }))
+  const markup = render(createElement(ScriptBlobsCard, { blocks }))
+  assert.equal(countMatches(markup, /data-slot="script-execution"/g), 1)
+  assert.ok(markup.includes('blobs'))
+  assert.ok(markup.includes('aria-expanded="false"'))
+  assert.ok(!markup.includes('literal-list'))
 })

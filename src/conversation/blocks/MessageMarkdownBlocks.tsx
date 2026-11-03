@@ -508,12 +508,24 @@ function useMarkdownTailMarkerPortal(
   const hasTailMarker = !!tailMarkerNode
 
   useLayoutEffect(() => {
-    const slot = activateMarkdownTailMarker({
-      container: containerRef.current,
-      inlineSlotSelector: `.${styles.markdownTailMarkerSlot}`,
-      fallbackSlotSelector: `.${styles.markdownTailMarkerFallbackSlot}`,
-    })
-    setActiveSlot(hasTailMarker ? slot : null)
+    const container = containerRef.current
+    if (!hasTailMarker || !container) {
+      setActiveSlot(null)
+      return
+    }
+    const updateSlot = (): void => {
+      const slot = activateMarkdownTailMarker({
+        container,
+        inlineSlotSelector: `.${styles.markdownTailMarkerSlot}`,
+        fallbackSlotSelector: `.${styles.markdownTailMarkerFallbackSlot}`,
+      })
+      setActiveSlot((current) => current === slot ? current : slot)
+    }
+    updateSlot()
+    // Markdown 子树可能在父布局阶段之后提交；仅观察节点变化，避免属性回写自触发。
+    const observer = new MutationObserver(updateSlot)
+    observer.observe(container, { childList: true, subtree: true })
+    return () => observer.disconnect()
   }, [containerRef, hasTailMarker, markdownText])
 
   return tailMarkerNode && activeSlot ? createPortal(tailMarkerNode, activeSlot) : null
