@@ -654,3 +654,30 @@ void test('真实父子投影保持父消息与子输出交错顺序', async () 
   assert.deepEqual(presentations.map(entry => entry.message.id), entries.map(entry => entry.id))
   assert.ok(presentations.every(entry => entry.activityLeadingMessages.length === 0 && entry.activityTrailingMessages.length === 0))
 })
+
+void test('插入引导后的连续脚本仍保留工具折叠入口', () => {
+  const entries: ChatMessage[] = [message('task', 'user', 'turn-input'), message('before', 'assistant'), message('guide', 'user', 'run-guidance'), {
+    ...message('after', 'assistant'), blocks: [
+      { type: 'text', text: '接着执行' },
+      ...['a', 'b'].map(id => ({ type: 'script-execution' as const, id, turnId: 'next', kind: 'execute' as const, status: 'succeeded' as const, source: '// 检查', sourceTruncated: false, calls: [], error: null })),
+    ],
+  }]
+  const markup = renderToStaticMarkup(createElement(ConversationLocalizationProvider, { value: localization }, createElement(ConversationBlockHooksProvider, { value: blockHooks }, createElement(ChatTranscript, { messages: entries, sessionId: 'script-guidance', getIsStreaming: entry => entry.id === 'after' }))))
+  assert.match(markup, /data-slot="tool-activity-disclosure"/)
+  assert.match(markup, /接着执行/)
+})
+
+
+void test('完成运行之后的引导不能把新执行归入旧完成锚点', () => {
+  const old = message('old-completed', 'assistant')
+  const guide = message('new-guidance', 'user', 'run-guidance')
+  const current = message('current-run', 'assistant')
+  const result = buildChatTranscriptMessagePresentations([message('task', 'user', 'turn-input'), old, guide, current], {
+    isCompletedAssistant: entry => entry === old,
+    hasRunMarker: entry => entry === old,
+    isRunEnd: entry => entry === old,
+    isStreamingMessage: entry => entry === current,
+  })
+  assert.equal(result.find(entry => entry.message === old)?.activityTrailingMessages.length, 0)
+  assert.ok(result.some(entry => entry.message === current && entry.runInProgress))
+})

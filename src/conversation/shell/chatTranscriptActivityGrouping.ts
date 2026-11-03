@@ -172,7 +172,9 @@ export function buildChatTranscriptMessagePresentations(
   for (let index = 1; index < messages.length; index += 1) {
     const message = messages[index]
     // 外部来源消息保持原位，活动分组不能跨过它搬动前后助手正文。
-    if (!message || (!isConversationTurnInputMessage(message) && !message.peerOrigin)) continue
+    const previous = messages[index - 1]
+    const followsEndedRun = previous?.role === 'assistant' && !!options.isRunEnd?.(previous)
+    if (!message || (!isConversationTurnInputMessage(message) && !message.peerOrigin && !followsEndedRun)) continue
 
     appendTurnPresentations(messages, sectionStartIndex, index, presentations, options)
     sectionStartIndex = index
