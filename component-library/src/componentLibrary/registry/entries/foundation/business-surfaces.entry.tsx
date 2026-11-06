@@ -17,7 +17,7 @@ export default defineComponentLibraryEntry({
     domain: 'Main window',
     source: '@velaros-ai/ui/product/layout/BusinessSurface',
     usage:
-      'Borderless tonal blocks for dialog bodies and inspect panels such as SkillEditorDialog editors. Prefer over ad-hoc bordered boxes inside SettingsPanelDialog.',
+      'Borderless tonal blocks for dialog bodies and inspect panels such as FeatureEditorDialog editors. Prefer over ad-hoc bordered boxes inside SettingsPanelDialog.',
     avoid: 'Do not replace Panel chrome in generic layouts; reserve BusinessSurface for Velar business/read-only blocks.',
     recommendations: businessSurfaceRecommendations,
     apiComponents: ['BusinessSurface'],

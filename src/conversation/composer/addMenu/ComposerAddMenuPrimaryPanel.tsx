@@ -50,7 +50,7 @@ export function ComposerAddMenuPrimaryPanel({
   attachments: { showAddFilesItem, onSelectFilesClick },
   capabilityControls,
   features: {
-    showSkillsSubmenu,
+    showFeaturesSubmenu,
     showQuickPromptsSubmenu,
     canTogglePlanFeature,
     planModeActive,
@@ -151,19 +151,19 @@ export function ComposerAddMenuPrimaryPanel({
             </Button>
           )
         )
-      case 'skills':
+      case 'features':
         return (
-          showSkillsSubmenu && (
+          showFeaturesSubmenu && (
             <Button
               variant="ghost"
               size="block"
-              {...menu.getSubmenuTriggerProps<HTMLButtonElement>('skills', {
+              {...menu.getSubmenuTriggerProps<HTMLButtonElement>('features', {
                 className: menu.classes.item,
               })}
               disabled={disabled}
             >
               <FileCodeIcon size={14} />
-              <Text className={menu.classes.itemLabel}>{t('chat.composerSkills')}</Text>
+              <Text className={menu.classes.itemLabel}>{t('chat.composerFeatures')}</Text>
               <SubmenuDisclosureIcon size={12} className={menu.classes.disclosure} />
             </Button>
           )

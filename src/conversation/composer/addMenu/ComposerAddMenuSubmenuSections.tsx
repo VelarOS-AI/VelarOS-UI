@@ -29,12 +29,12 @@ export function ComposerAddMenuSubmenuSections({
   t,
   activeSubmenuId,
   features: {
-    showSkillsSubmenu,
+    showFeaturesSubmenu,
     showQuickPromptsSubmenu,
-    availableSkills,
+    availableFeatures,
     quickPrompts,
-    selectedSkillIdSet,
-    updateSelectedSkill,
+    selectedFeatureIdSet,
+    updateSelectedFeature,
     handleSelectQuickPrompt,
   },
 }: ComposerAddMenuSubmenuSectionsProps): ReactElement {
@@ -63,38 +63,38 @@ export function ComposerAddMenuSubmenuSections({
         </BusinessCascadingSubmenuSection>
       )}
 
-      {showSkillsSubmenu && activeSubmenuId === 'skills' && (
+      {showFeaturesSubmenu && activeSubmenuId === 'features' && (
         <BusinessCascadingSubmenuSection
           menu={menu}
-          className={styles.composerSkillList}
-          submenuWidth="var(--chat-input-menu-skill-width)"
-          header={t('chat.composerSkillCount', { count: availableSkills.length })}
+          className={styles.composerFeatureList}
+          submenuWidth="var(--chat-input-menu-feature-width)"
+          header={t('chat.composerFeatureCount', { count: availableFeatures.length })}
         >
-          {availableSkills.map((skill) => {
-            const selected = selectedSkillIdSet.has(skill.id)
+          {availableFeatures.map((feature) => {
+            const selected = selectedFeatureIdSet.has(feature.id)
 
             return (
               <BusinessCascadingMenuItem
                 menu={menu}
-                key={skill.id}
-                className={styles.composerSkillItem}
-                data-skill-item="true"
+                key={feature.id}
+                className={styles.composerFeatureItem}
+                data-feature-item="true"
                 selected={selected}
                 selectedIndicator={
-                  <CheckIcon size={11} weight="bold" className={styles.composerSkillCheck} />
+                  <CheckIcon size={11} weight="bold" className={styles.composerFeatureCheck} />
                 }
-                title={skill.description || skill.label}
-                onClick={() => updateSelectedSkill(skill.id, !selected)}
+                title={feature.description || feature.label}
+                onClick={() => updateSelectedFeature(feature.id, !selected)}
                 disabled={disabled}
               >
-                <span className={styles.composerSkillIcon}>
+                <span className={styles.composerFeatureIcon}>
                   <FileCodeIcon size={13} weight="fill" />
                 </span>
-                <span className={styles.composerSkillTitleRow}>
-                  <Text className={menu.classes.itemLabel}>{skill.label}</Text>
-                  {!!skill.builtIn && (
-                    <span className={styles.composerSkillBuiltInBadge}>
-                      {t('chat.composerSkillBuiltInBadge')}
+                <span className={styles.composerFeatureTitleRow}>
+                  <Text className={menu.classes.itemLabel}>{feature.label}</Text>
+                  {!!feature.builtIn && (
+                    <span className={styles.composerFeatureBuiltInBadge}>
+                      {t('chat.composerFeatureBuiltInBadge')}
                     </span>
                   )}
                 </span>

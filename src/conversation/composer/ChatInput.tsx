@@ -31,9 +31,9 @@ import { useChatInputFileAttachments } from './hooks/useChatInputFileAttachments
 import { useChatInputInsertDraftBridge } from './hooks/useChatInputInsertDraftBridge'
 import { useChatInputVoiceRecognition } from './hooks/useChatInputVoiceRecognition'
 import { useComposerAddMenuState } from './hooks/useComposerAddMenuState'
+import { useComposerFeatureSelection } from './hooks/useComposerFeatureSelection'
 import { useComposerMentionMenu } from './hooks/useComposerMentionMenu'
-import { useComposerSkillSelection } from './hooks/useComposerSkillSelection'
-import { useComposerSlashSkillMenu } from './hooks/useComposerSlashSkillMenu'
+import { useComposerSlashFeatureMenu } from './hooks/useComposerSlashFeatureMenu'
 import {
   ChatComposerInputMaxChars,
   ChatComposerInputWarningChars,
@@ -55,6 +55,8 @@ import {
 } from './chatInputInteractionState.pure'
 import { ChatInputQueuePanel } from './ChatInputQueuePanel'
 import type {
+  ChatInputFeatureDetailHandler,
+  ChatInputFeatureOption,
   ChatInputManualTestPromptOption,
   ChatInputMentionableOption,
   ChatInputMentionables,
@@ -63,8 +65,6 @@ import type {
   ChatInputRunProfileControl,
   ChatInputSelectionRange,
   ChatInputSendDraft,
-  ChatInputSkillDetailHandler,
-  ChatInputSkillOption,
   ChatInputThinkingDepthControl,
   ChatInputThinkingVisibilityControl,
   ChatVirtualPasteReference,
@@ -81,7 +81,7 @@ import { ComposerMentionMenu } from './ComposerMentionMenu'
 // 下一步建议的**面板**形态（`ComposerNextStepSuggestionMenu`）已于 2026-08-06 退役：它压在输入框
 // 正上方、一次铺开三条整句，把对话最后几行挡掉，用户判「太重」。改为写进输入框本身的内联建议
 // （幽灵文本 + ↑↓ 切换），组件与样式原样留在包里待回滚，只是不再有人渲染它。
-import { ComposerSlashSkillMenu } from './ComposerSlashSkillMenu'
+import { ComposerSlashFeatureMenu } from './ComposerSlashFeatureMenu'
 import { ComposerToolbarLeading } from './ComposerToolbarLeading'
 import { ComposerToolbarRight } from './ComposerToolbarRight'
 import { ComposerVirtualPastePreview } from './ComposerVirtualPastePreview'
@@ -182,10 +182,10 @@ export interface ChatInputFeaturesControl {
   onDismissWorkbenchCurrentFile?: () => void
   onDismissTurnContextDelta?: (id: string) => void
   onRemoveBrowserElementSelection?: (id: string) => void
-  availableSkills?: ChatInputSkillOption[]
-  selectedSkillIds?: string[]
-  onOpenSkillDetail?: ChatInputSkillDetailHandler
-  onSelectedSkillIdsChange?: (skillIds: string[]) => void
+  availableFeatures?: ChatInputFeatureOption[]
+  selectedFeatureIds?: string[]
+  onOpenFeatureDetail?: ChatInputFeatureDetailHandler
+  onSelectedFeatureIdsChange?: (featureIds: string[]) => void
   mentionables?: ChatInputMentionables
   manualTestPrompts?: ChatInputManualTestPromptOption[]
   quickPrompts?: ChatInputManualTestPromptOption[]
@@ -229,18 +229,18 @@ interface ChatInputProps {
 }
 
 export type {
+  ChatInputFeatureOption,
   ChatInputManualTestPromptOption,
   ChatInputQueuedDraft,
   ChatInputSendDraft,
-  ChatInputSkillOption,
 } from './chatInputTypes'
 
 const cx = StyleUtils.bindCx(styles)
 const EmptyQueuedDrafts: ChatInputQueuedDraft[] = []
 const EmptyBrowserElementSelections: BrowserElementSelection[] = []
 const EmptyTurnContextDeltas: TurnContextDelta[] = []
-const EmptyAvailableSkills: ChatInputSkillOption[] = []
-const EmptySelectedSkillIds: string[] = []
+const EmptyAvailableFeatures: ChatInputFeatureOption[] = []
+const EmptySelectedFeatureIds: string[] = []
 const EmptyMentionables: ChatInputMentionableOption[] = []
 const EmptySelectedMentionIds: string[] = []
 const EmptyManualTestPrompts: ChatInputManualTestPromptOption[] = []
@@ -362,8 +362,8 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
     voiceInput = true,
     turnContextDeltas = EmptyTurnContextDeltas,
     workbenchCurrentFilePath,
-    availableSkills = EmptyAvailableSkills,
-    selectedSkillIds = EmptySelectedSkillIds,
+    availableFeatures = EmptyAvailableFeatures,
+    selectedFeatureIds = EmptySelectedFeatureIds,
     mentionables,
     quickPrompts = EmptyManualTestPrompts,
   } = control.features ?? {}
@@ -371,8 +371,8 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
     onRemoveBrowserElementSelection,
     onDismissWorkbenchCurrentFile,
     onDismissTurnContextDelta,
-    onOpenSkillDetail,
-    onSelectedSkillIdsChange,
+    onOpenFeatureDetail,
+    onSelectedFeatureIdsChange,
   } = control.features ?? {}
   const {
     leftActions,
@@ -647,22 +647,22 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
     },
     [handleFileSelect]
   )
-  const selectedSkillIdSet = new Set(selectedSkillIds)
-  const activeSkillOptions: ChatInputSkillOption[] = []
-  for (const skill of availableSkills) {
-    if (selectedSkillIdSet.has(skill.id)) activeSkillOptions.push(skill)
+  const selectedFeatureIdSet = new Set(selectedFeatureIds)
+  const activeFeatureOptions: ChatInputFeatureOption[] = []
+  for (const feature of availableFeatures) {
+    if (selectedFeatureIdSet.has(feature.id)) activeFeatureOptions.push(feature)
   }
-  const { updateSelectedSkill } = useComposerSkillSelection({
-    availableSkills,
-    selectedSkillIds,
-    onSelectedSkillIdsChange,
+  const { updateSelectedFeature } = useComposerFeatureSelection({
+    availableFeatures,
+    selectedFeatureIds,
+    onSelectedFeatureIdsChange,
   })
-  const slashSkillMenu = useComposerSlashSkillMenu({
+  const slashFeatureMenu = useComposerSlashFeatureMenu({
     value,
-    disabled: composerDisabled || !onSelectedSkillIdsChange,
-    availableSkills,
-    selectedSkillIds,
-    updateSelectedSkill,
+    disabled: composerDisabled || !onSelectedFeatureIdsChange,
+    availableFeatures,
+    selectedFeatureIds,
+    updateSelectedFeature,
   })
   const mentionMenu = useComposerMentionMenu({
     value,
@@ -732,7 +732,7 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
     !!onFilesChange ||
     !!onGoalModeChange ||
     !!onPlanModeChange ||
-    (!!onSelectedSkillIdsChange && !!availableSkills.length) ||
+    (!!onSelectedFeatureIdsChange && !!availableFeatures.length) ||
     !!quickPrompts.length
   const showVoiceInput = voiceInput && !hideSubmit
   const voiceInputDisabled = composerDisabled || isStreaming || isVoiceProcessing
@@ -999,11 +999,11 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
     goalModeActive: goalMode,
     goalModeCopy,
     updateGoalMode: handleGoalModeChange,
-    canToggleSkills: !!onSelectedSkillIdsChange && !isEmpty(availableSkills),
+    canToggleFeatures: !!onSelectedFeatureIdsChange && !isEmpty(availableFeatures),
     quickPrompts,
-    availableSkills,
-    selectedSkillIdSet,
-    updateSelectedSkill,
+    availableFeatures,
+    selectedFeatureIdSet,
+    updateSelectedFeature,
     handleSelectQuickPrompt: handleSelectManualTestPrompt,
   }
   const composerAddMenuProps = buildChatInputComposerAddMenuProps(canShowComposerMenu, {
@@ -1072,7 +1072,7 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
         onQueuedDraftRunNow={onQueuedDraftRunNow}
       />
 
-      <ComposerSlashSkillMenu menu={slashSkillMenu} header={t('chat.composerSlashSkillHeader')} />
+      <ComposerSlashFeatureMenu menu={slashFeatureMenu} header={t('chat.composerSlashFeatureHeader')} />
 
       <ComposerMentionMenu
         menu={mentionMenu}
@@ -1111,11 +1111,11 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
             workbenchCurrentFilePath={workbenchCurrentFilePath}
             onDismissWorkbenchCurrentFile={onDismissWorkbenchCurrentFile}
             onDismissTurnContextDelta={onDismissTurnContextDelta}
-            activeSkillOptions={activeSkillOptions}
+            activeFeatureOptions={activeFeatureOptions}
             activeMentionOptions={activeMentionOptions}
             onRemoveMentionSelection={(id) => mentionables?.onToggleSelected(id, false)}
-            onOpenSkillDetail={onOpenSkillDetail}
-            updateSelectedSkill={updateSelectedSkill}
+            onOpenFeatureDetail={onOpenFeatureDetail}
+            updateSelectedFeature={updateSelectedFeature}
           />
         }
         inputArea={
@@ -1210,7 +1210,7 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
                     return
                   }
                   if (mentionMenu.handleKeyDown(event)) return
-                  if (slashSkillMenu.handleKeyDown(event)) return
+                  if (slashFeatureMenu.handleKeyDown(event)) return
                   if (!isComposing.current && handleInlineSuggestionKeyDown(event)) return
                   handleKeyDown(event)
                 }}
@@ -1308,11 +1308,11 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
                 workbenchCurrentFilePath={workbenchCurrentFilePath}
                 onDismissWorkbenchCurrentFile={onDismissWorkbenchCurrentFile}
                 onDismissTurnContextDelta={onDismissTurnContextDelta}
-                activeSkillOptions={activeSkillOptions}
+                activeFeatureOptions={activeFeatureOptions}
                 activeMentionOptions={activeMentionOptions}
                 onRemoveMentionSelection={(id) => mentionables?.onToggleSelected(id, false)}
-                onOpenSkillDetail={onOpenSkillDetail}
-                updateSelectedSkill={updateSelectedSkill}
+                onOpenFeatureDetail={onOpenFeatureDetail}
+                updateSelectedFeature={updateSelectedFeature}
               />
             }
             leftActions={leftActions}

@@ -14,8 +14,8 @@ export interface ChatInputComposerAddMenuBridgeInput {
     onSelectFilesClick: () => void
     canAttachFiles: boolean
   }
-  features: Omit<ComposerAddMenuProps['features'], 'showSkillsSubmenu' | 'showQuickPromptsSubmenu'> & {
-    canToggleSkills: boolean
+  features: Omit<ComposerAddMenuProps['features'], 'showFeaturesSubmenu' | 'showQuickPromptsSubmenu'> & {
+    canToggleFeatures: boolean
   }
   capabilityControls?: readonly ChatComposerCapabilityControl[]
 }
@@ -26,7 +26,7 @@ export function buildChatInputComposerAddMenuProps(
 ): Nullable<ComposerAddMenuProps> {
   if (!canShowComposerMenu) return null
   const { chrome, menu, attachments, features, capabilityControls = [] } = input
-  const { canToggleSkills, quickPrompts, ...featureControls } = features
+  const { canToggleFeatures, quickPrompts, ...featureControls } = features
 
   return {
     chrome: {
@@ -41,7 +41,7 @@ export function buildChatInputComposerAddMenuProps(
     },
     features: {
       ...featureControls,
-      showSkillsSubmenu: canToggleSkills,
+      showFeaturesSubmenu: canToggleFeatures,
       showQuickPromptsSubmenu: !isEmpty(quickPrompts),
       quickPrompts,
     },

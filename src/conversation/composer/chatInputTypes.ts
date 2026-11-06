@@ -42,7 +42,7 @@ export interface ChatInputSelectionRange {
 
 // ─── Composer submenu ────────────────────────────────────────────────────────
 
-export type ComposerSubmenuId = "quick-prompts" | "skills";
+export type ComposerSubmenuId = "quick-prompts" | "features";
 
 export interface ChatInputQueuedDraft {
   id: string;
@@ -51,15 +51,15 @@ export interface ChatInputQueuedDraft {
   virtualPasteReferences?: ChatVirtualPasteReference[];
 }
 
-export interface ChatInputSkillOption {
+export interface ChatInputFeatureOption {
   id: string;
   label: string;
   description?: string;
   builtIn?: boolean;
 }
 
-export type ChatInputSkillDetailHandler = (
-  skill: ChatInputSkillOption,
+export type ChatInputFeatureDetailHandler = (
+  feature: ChatInputFeatureOption,
 ) => void | Promise<void>;
 
 /** 聊天输入 `@` 菜单里的一条**可引用项**。 */

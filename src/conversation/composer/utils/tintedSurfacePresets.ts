@@ -53,10 +53,10 @@ export function buildTintedSurfaceForegroundStyle(
 
 export function resolveComposerChipTintedPreset(input: {
   chipDataPluginId?: string
-  chipDataSkillId?: string
+  chipDataFeatureId?: string
   tone?: 'default' | 'experimental'
 }): TintedSurfacePreset {
-  if (input.chipDataSkillId)
+  if (input.chipDataFeatureId)
     return { accent: TintedSurfaceAccentHex.teal, background: TintedSurfaceBackgroundHex.tealSoft }
 
   if (input.tone === 'experimental')
@@ -127,7 +127,7 @@ export function resolveComposerChipTintedPreset(input: {
 export function resolveComposerChipTintedForegroundStyle(
   input: {
     chipDataPluginId?: string
-    chipDataSkillId?: string
+    chipDataFeatureId?: string
     tone?: 'default' | 'experimental'
   },
   isDarkMode: boolean

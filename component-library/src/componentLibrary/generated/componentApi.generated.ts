@@ -1430,9 +1430,9 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "((id: string) => void)"
     },
     {
-      "name": "ChatInputFunctionBar.activeSkillOptions",
+      "name": "ChatInputFunctionBar.activeFeatureOptions",
       "description": "Auto-generated from TypeScript props.",
-      "type": "ChatInputSkillOption[]",
+      "type": "ChatInputFeatureOption[]",
       "recommended": "Required"
     },
     {
@@ -1446,14 +1446,14 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "((id: string) => void)"
     },
     {
-      "name": "ChatInputFunctionBar.onOpenSkillDetail",
+      "name": "ChatInputFunctionBar.onOpenFeatureDetail",
       "description": "Auto-generated from TypeScript props.",
-      "type": "ChatInputSkillDetailHandler"
+      "type": "ChatInputFeatureDetailHandler"
     },
     {
-      "name": "ChatInputFunctionBar.updateSelectedSkill",
+      "name": "ChatInputFunctionBar.updateSelectedFeature",
       "description": "Auto-generated from TypeScript props.",
-      "type": "(skillId: string, selected: boolean) => void",
+      "type": "(featureId: string, selected: boolean) => void",
       "recommended": "Required"
     }
   ],
@@ -2094,7 +2094,7 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "string"
     },
     {
-      "name": "ComposerActiveChip.chipDataSkillId",
+      "name": "ComposerActiveChip.chipDataFeatureId",
       "description": "Auto-generated from TypeScript props.",
       "type": "string"
     },
@@ -2241,9 +2241,9 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "((id: string) => void)"
     },
     {
-      "name": "ComposerActiveChipsBar.activeSkillOptions",
+      "name": "ComposerActiveChipsBar.activeFeatureOptions",
       "description": "Auto-generated from TypeScript props.",
-      "type": "ChatInputSkillOption[]",
+      "type": "ChatInputFeatureOption[]",
       "recommended": "Required"
     },
     {
@@ -2257,14 +2257,14 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "((id: string) => void)"
     },
     {
-      "name": "ComposerActiveChipsBar.onOpenSkillDetail",
+      "name": "ComposerActiveChipsBar.onOpenFeatureDetail",
       "description": "Auto-generated from TypeScript props.",
-      "type": "ChatInputSkillDetailHandler"
+      "type": "ChatInputFeatureDetailHandler"
     },
     {
-      "name": "ComposerActiveChipsBar.updateSelectedSkill",
+      "name": "ComposerActiveChipsBar.updateSelectedFeature",
       "description": "Auto-generated from TypeScript props.",
-      "type": "(skillId: string, selected: boolean) => void",
+      "type": "(featureId: string, selected: boolean) => void",
       "recommended": "Required"
     }
   ],
@@ -2340,7 +2340,7 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
   ],
   ComposerAddMenuFeatures: [
     {
-      "name": "ComposerAddMenuFeatures.showSkillsSubmenu",
+      "name": "ComposerAddMenuFeatures.showFeaturesSubmenu",
       "description": "Auto-generated from TypeScript props.",
       "type": "boolean",
       "recommended": "Required"
@@ -2393,9 +2393,9 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "recommended": "Required"
     },
     {
-      "name": "ComposerAddMenuFeatures.availableSkills",
+      "name": "ComposerAddMenuFeatures.availableFeatures",
       "description": "Auto-generated from TypeScript props.",
-      "type": "ChatInputSkillOption[]",
+      "type": "ChatInputFeatureOption[]",
       "recommended": "Required"
     },
     {
@@ -2405,15 +2405,15 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "recommended": "Required"
     },
     {
-      "name": "ComposerAddMenuFeatures.selectedSkillIdSet",
+      "name": "ComposerAddMenuFeatures.selectedFeatureIdSet",
       "description": "Auto-generated from TypeScript props.",
       "type": "ReadonlySet<string>",
       "recommended": "Required"
     },
     {
-      "name": "ComposerAddMenuFeatures.updateSelectedSkill",
+      "name": "ComposerAddMenuFeatures.updateSelectedFeature",
       "description": "Auto-generated from TypeScript props.",
-      "type": "(skillId: string, enabled: boolean) => void",
+      "type": "(featureId: string, enabled: boolean) => void",
       "recommended": "Required"
     },
     {
@@ -2737,15 +2737,15 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "defaultValue": "false"
     }
   ],
-  ComposerSlashSkillMenu: [
+  ComposerSlashFeatureMenu: [
     {
-      "name": "ComposerSlashSkillMenu.menu",
+      "name": "ComposerSlashFeatureMenu.menu",
       "description": "Auto-generated from TypeScript props.",
-      "type": "UseComposerSlashSkillMenuReturn",
+      "type": "UseComposerSlashFeatureMenuReturn",
       "recommended": "Required"
     },
     {
-      "name": "ComposerSlashSkillMenu.header",
+      "name": "ComposerSlashFeatureMenu.header",
       "description": "Auto-generated from TypeScript props.",
       "type": "string",
       "recommended": "Required"

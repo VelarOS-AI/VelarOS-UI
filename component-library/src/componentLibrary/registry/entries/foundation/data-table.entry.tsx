@@ -17,7 +17,7 @@ export default defineComponentLibraryEntry({
     domain: 'Main window',
     source: '@velaros-ai/ui/primitives/layout/DataTable; @velaros-ai/ui/product/layout/BusinessDataTable',
     usage:
-      'DataTable: framed striped grid and pagination for generic dense lists. BusinessDataTable defaults to borderless for settings-style inventories; skill and memory settings extend that primitive—see Recommended usage.',
+      'DataTable: framed striped grid and pagination for generic dense lists. BusinessDataTable defaults to borderless for settings-style inventories; feature and memory settings extend that primitive—see Recommended usage.',
     avoid:
       'Avoid for free-form chat transcripts; use List or custom cards. Radix has no table primitive—keep semantics on native <table>.',
     recommendations: dataTableRecommendations,

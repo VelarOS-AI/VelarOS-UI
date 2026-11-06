@@ -16,9 +16,9 @@ import type { ConversationMessageKey as MessageKey } from '../i18n'
 import { useComposerToolbarChipCollapse } from './hooks/useComposerToolbarChipCollapse'
 import { groupTurnContextChips } from './utils/turnContextChipGroups.utils'
 import type {
+  ChatInputFeatureDetailHandler,
+  ChatInputFeatureOption,
   ChatInputMentionableOption,
-  ChatInputSkillDetailHandler,
-  ChatInputSkillOption,
 } from './chatInputTypes'
 import { ComposerActiveChip } from './ComposerActiveChip'
 import {
@@ -104,11 +104,11 @@ export interface ComposerActiveChipsBarProps {
   workbenchCurrentFilePath?: string
   onDismissWorkbenchCurrentFile?: () => void
   onDismissTurnContextDelta?: (id: string) => void
-  activeSkillOptions: ChatInputSkillOption[]
+  activeFeatureOptions: ChatInputFeatureOption[]
   activeMentionOptions?: ChatInputMentionableOption[]
   onRemoveMentionSelection?: (id: string) => void
-  onOpenSkillDetail?: ChatInputSkillDetailHandler
-  updateSelectedSkill: (skillId: string, selected: boolean) => void
+  onOpenFeatureDetail?: ChatInputFeatureDetailHandler
+  updateSelectedFeature: (featureId: string, selected: boolean) => void
 }
 
 function ComposerActiveChipsBarInner({
@@ -128,11 +128,11 @@ function ComposerActiveChipsBarInner({
   workbenchCurrentFilePath,
   onDismissWorkbenchCurrentFile,
   onDismissTurnContextDelta,
-  activeSkillOptions,
+  activeFeatureOptions,
   activeMentionOptions,
   onRemoveMentionSelection,
-  onOpenSkillDetail,
-  updateSelectedSkill,
+  onOpenFeatureDetail,
+  updateSelectedFeature,
 }: ComposerActiveChipsBarProps): Nullable<ReactElement> {
   const isPersistent = placement === 'persistent'
   // 常驻档才需要单行收起：add-menu 上方那条活动芯片区是可以换行的多行区，不参与本机制。
@@ -249,23 +249,23 @@ function ComposerActiveChipsBarInner({
             />
           )),
         ]
-      case 'skills':
-        return activeSkillOptions.map((skill) => (
+      case 'features':
+        return activeFeatureOptions.map((feature) => (
           <ComposerActiveChip
-            key={`${slot}-${skill.id}`}
+            key={`${slot}-${feature.id}`}
             className={resolveComposerFunctionBarChipClassName(
               slot,
-              cx('activePluginChip', 'activeSkillChip')
+              cx('activePluginChip', 'activeFeatureChip')
             )}
-            chipDataSkillId={skill.id}
-            title={skill.description || skill.label}
-            label={skill.label}
+            chipDataFeatureId={feature.id}
+            title={feature.description || feature.label}
+            label={feature.label}
             icon={<FileCodeIcon size={12} weight="fill" />}
             disabled={disabled}
-            onActivate={optionalWhenLazy(onOpenSkillDetail, () => () => onOpenSkillDetail!(skill))}
-            activateAriaLabel={skill.label}
-            onRemove={() => updateSelectedSkill(skill.id, false)}
-            removeAriaLabel={skill.label}
+            onActivate={optionalWhenLazy(onOpenFeatureDetail, () => () => onOpenFeatureDetail!(feature))}
+            activateAriaLabel={feature.label}
+            onRemove={() => updateSelectedFeature(feature.id, false)}
+            removeAriaLabel={feature.label}
           />
         ))
       case 'mentions':

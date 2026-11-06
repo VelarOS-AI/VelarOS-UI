@@ -137,8 +137,8 @@ export const dataTableRecommendations = [
     id: 'settings-business-data-table',
     title: 'Settings lists compose BusinessDataTable',
     description:
-      'Settings screens are not a second table primitive: SkillManagementPanel wraps BusinessDataTable with borderless chrome, optional headerSlot toolbars, sortable columns, row actions, and client-side pagination.',
-    code: `// Pattern: settings inventory (see SkillManagementPanel.tsx)
+      'Settings screens are not a second table primitive: FeatureManagementPanel wraps BusinessDataTable with borderless chrome, optional headerSlot toolbars, sortable columns, row actions, and client-side pagination.',
+    code: `// Pattern: settings inventory (see FeatureManagementPanel.tsx)
 <BusinessDataTable
   borderless
   columns={columns}

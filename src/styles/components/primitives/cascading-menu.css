@@ -244,7 +244,7 @@
   --cascading-menu-item-bg: rgba(217, 119, 6, 0.12);
 }
 
-.velar-cascading-menu-content [data-skill-item='true'] {
+.velar-cascading-menu-content [data-feature-item='true'] {
   --cascading-menu-item-fg: #0f766e;
   --cascading-menu-item-bg: rgba(15, 118, 110, 0.11);
 }

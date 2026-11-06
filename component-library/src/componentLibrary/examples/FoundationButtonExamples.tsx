@@ -38,10 +38,10 @@ function SearchSectionIconPreview(): ReactElement {
   )
 }
 
-function CreateSkillIconPreview(): ReactElement {
+function CreateFeatureIconPreview(): ReactElement {
   const { t } = useI18n()
   return (
-    <GhostIconSmPreview label={t('componentLibrary.exampleButtonCreateSkill')}>
+    <GhostIconSmPreview label={t('componentLibrary.exampleButtonCreateFeature')}>
       <PlusIcon size={18} />
     </GhostIconSmPreview>
   )
@@ -129,13 +129,13 @@ const iconButtonRecommendations = [
   },
   {
     id: 'visible-boundary',
-    title: 'Section title addon (skills)',
+    title: 'Section title addon (features)',
     description:
-      'Same as SkillSettingsPanel title row: ghost icon-sm for create next to the section search popover.',
-    preview: <CreateSkillIconPreview />,
-    code: `// components/settings/sections/SkillSettingsPanel.tsx
+      'Same as FeatureSettingsPanel title row: ghost icon-sm for create next to the section search popover.',
+    preview: <CreateFeatureIconPreview />,
+    code: `// components/settings/sections/FeatureSettingsPanel.tsx
 <IconButton
-  label={t('settings.skillCreate')}
+  label={t('settings.featureCreate')}
   variant="ghost"
   size="icon-sm"
   className={styles.searchIconBtn}

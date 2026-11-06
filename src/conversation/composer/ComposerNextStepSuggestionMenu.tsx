@@ -19,7 +19,7 @@ interface ComposerNextStepSuggestionMenuProps {
   disabled?: boolean
 }
 
-/** 单轮结束后在 composer 扩展层展示，和 `/` Skill、`@` 评论面板占用同一位置。 */
+/** 单轮结束后在 composer 扩展层展示，和 `/` Feature、`@` 评论面板占用同一位置。 */
 export function ComposerNextStepSuggestionMenu({
   suggestions,
   selectedId,

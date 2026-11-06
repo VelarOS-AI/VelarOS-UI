@@ -35,7 +35,7 @@ export function useComposerAddMenuState(): UseComposerAddMenuStateResult {
 
   const handleComposerActiveSubmenuChange = useMemoizedFn((submenuId: Nullable<string>): void => {
     const nextSubmenuId: Nullable<ComposerSubmenuId> =
-      submenuId === 'quick-prompts' || submenuId === 'skills' ? submenuId : null
+      submenuId === 'quick-prompts' || submenuId === 'features' ? submenuId : null
 
     setComposerSubmenuId(nextSubmenuId)
   })

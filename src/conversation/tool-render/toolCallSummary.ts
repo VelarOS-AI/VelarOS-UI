@@ -181,11 +181,11 @@ function formatToolSpaceTargets(
   return targets.map((target) => formatToolSpaceTarget(target, locale, runtime)).join(separator)
 }
 
-function getToolReadSkillNames(toolName: string, args: Nullable<Record<string, any>>): string[] {
+function getToolReadFeatureNames(toolName: string, args: Nullable<Record<string, any>>): string[] {
   if (toolName !== 'tooling:read') return []
 
   return readStringArray(args, 'ids')
-    .map((id) => id.trim().replace(/^skill:/iu, '').trim())
+    .map((id) => id.trim().replace(/^(?:skill|feature):/iu, '').trim())
     .filter((id) => !isBlank(id))
 }
 
@@ -207,17 +207,17 @@ function getContextDistillPreview(
   return firstFact ? normalizeInline(firstFact) : null
 }
 
-function formatToolReadSkillNames(
+function formatToolReadFeatureNames(
   toolName: string,
   args: Nullable<Record<string, any>>,
   locale?: AppLocale,
   runtime: ConversationTranslator = conversationTranslatorRuntime
 ): Nullable<string> {
-  const skillNames = getToolReadSkillNames(toolName, args)
-  if (isEmpty(skillNames)) return null
+  const featureNames = getToolReadFeatureNames(toolName, args)
+  if (isEmpty(featureNames)) return null
 
   const separator = locale ? runtime.translate(locale, 'common.shortListSeparator') : ', '
-  return skillNames.join(separator)
+  return featureNames.join(separator)
 }
 
 /**
@@ -366,7 +366,7 @@ export function getToolDetailItems(
   pushDetail(getContextDistillPreview(block.toolName, args))
   if (!isEmpty(details)) return details
 
-  getToolReadSkillNames(block.toolName, args).forEach(pushDetail)
+  getToolReadFeatureNames(block.toolName, args).forEach(pushDetail)
   if (!isEmpty(details)) return details
 
   pushDetail(readQueryFirstSubject(block.toolName, args))
@@ -563,7 +563,7 @@ export function getToolActivitySummary(
 
 /**
  * 紧凑行在工具名之后的那句话：这次调用作用在什么上。先看按工具登记的摘要（计划、目标、浏览器检查……），
- * 再看上下文蒸馏的便签、读取的 skill，最后是通用的路径、命令、查询词。
+ * 再看上下文蒸馏的便签、读取的 feature，最后是通用的路径、命令、查询词。
  */
 export function getToolDetailSummary(
   block: ToolSummaryBlock,
@@ -576,7 +576,7 @@ export function getToolDetailSummary(
   return (
     toNullable(readToolTargetSummary(block, cwdFormatter)?.target) ??
     getContextDistillPreview(block.toolName, args) ??
-    formatToolReadSkillNames(block.toolName, args, locale, runtime) ??
+    formatToolReadFeatureNames(block.toolName, args, locale, runtime) ??
     getPrimaryArgPreview(block.toolName, args, cwdFormatter, locale, runtime)
   )
 }

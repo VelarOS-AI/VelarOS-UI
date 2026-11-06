@@ -19,7 +19,7 @@ export interface ComposerActiveChipProps {
   /** Defaults to `activePluginChip` */
   className?: string
   chipDataPluginId?: string
-  chipDataSkillId?: string
+  chipDataFeatureId?: string
   tone?: 'default' | 'experimental'
   title: string
   label: ReactNode
@@ -35,7 +35,7 @@ export interface ComposerActiveChipProps {
 export function ComposerActiveChip({
   className,
   chipDataPluginId,
-  chipDataSkillId,
+  chipDataFeatureId,
   tone = 'default',
   title,
   label,
@@ -55,17 +55,17 @@ export function ComposerActiveChip({
   const foregroundStyle = useMemo(
     () =>
       resolveComposerChipTintedForegroundStyle(
-        { chipDataPluginId, chipDataSkillId, tone },
+        { chipDataPluginId, chipDataFeatureId, tone },
         isDarkMode
       ),
-    [chipDataPluginId, chipDataSkillId, isDarkMode, tone]
+    [chipDataPluginId, chipDataFeatureId, isDarkMode, tone]
   )
 
   return (
     <div
       className={`${styles.composerActiveChip} ${variantClassName}`}
       data-plugin-id={chipDataPluginId}
-      data-skill-id={chipDataSkillId}
+      data-feature-id={chipDataFeatureId}
       data-tone={tone}
       data-removable={canShowRemoveButton}
       data-activatable={canActivate}

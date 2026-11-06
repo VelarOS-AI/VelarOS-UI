@@ -66,15 +66,15 @@ const zhRecommendationPatches: Record<string, LocalizedRecommendationPatch> = {
   },
   'buttons:toolbar-icon': {
     title: '分区搜索（设置页）',
-    description: '与 SkillSettingsPanel 区块搜索一致：AnchoredPopover 锚点内 ghost + icon-sm。',
+    description: '与 FeatureSettingsPanel 区块搜索一致：AnchoredPopover 锚点内 ghost + icon-sm。',
   },
   'buttons:visible-boundary': {
     title: '区块标题附加操作（技能）',
-    description: '与 SkillSettingsPanel 标题行一致：在搜索 Popover 旁使用 ghost icon-sm 创建按钮。',
+    description: '与 FeatureSettingsPanel 标题行一致：在搜索 Popover 旁使用 ghost icon-sm 创建按钮。',
   },
   'fields:compact-filter': {
     title: 'Popover 内筛选输入',
-    description: '与 Memory/Skill 设置搜索 Popover 相同：size="sm" 的 Input 与本地化 placeholder。',
+    description: '与 Memory/Feature 设置搜索 Popover 相同：size="sm" 的 Input 与本地化 placeholder。',
   },
   'fields:select-with-description': {
     title: '表单栅格里的 Select',
@@ -143,7 +143,7 @@ const zhRecommendationPatches: Record<string, LocalizedRecommendationPatch> = {
   'data-table:settings-business-data-table': {
     title: '设置列表基于 BusinessDataTable',
     description:
-      '设置里的表格不是第二套表格基元：SkillManagementPanel 在 BusinessDataTable 上叠无边框样式、可选 headerSlot 工具条、排序列、行操作与客户端分页。新增类似列表应对齐该实现，而不是在组件库再挂一层「业务表格」条目。',
+      '设置里的表格不是第二套表格基元：FeatureManagementPanel 在 BusinessDataTable 上叠无边框样式、可选 headerSlot 工具条、排序列、行操作与客户端分页。新增类似列表应对齐该实现，而不是在组件库再挂一层「业务表格」条目。',
   },
   'fields:settings-memory-and-model-forms': {
     title: '设置里的模型 / 系统表单组合',
@@ -214,7 +214,7 @@ const zhEntryPatches: Record<string, LocalizedEntryPatch> = {
   'business-surfaces': {
     domain: '主窗口',
     usage:
-      'BusinessSurface 用于 SettingsPanelDialog 内与详情里的无框 tonal 块（如 SkillEditorDialog）；详情分区组合见「推荐用法」。',
+      'BusinessSurface 用于 SettingsPanelDialog 内与详情里的无框 tonal 块（如 FeatureEditorDialog）；详情分区组合见「推荐用法」。',
     avoid: '不要用它替换通用布局里的 Panel；仅用于业务/只读块。',
   },
   'layout-primitives': {

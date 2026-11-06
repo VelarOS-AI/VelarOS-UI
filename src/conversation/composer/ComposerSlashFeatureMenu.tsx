@@ -6,22 +6,22 @@ import { Text } from '@velaros-ai/ui/primitives/display/Text'
 
 import { useConversationI18n } from '../i18n'
 
-import type { UseComposerSlashSkillMenuReturn } from './hooks/useComposerSlashSkillMenu'
+import type { UseComposerSlashFeatureMenuReturn } from './hooks/useComposerSlashFeatureMenu'
 
-import styles from './ComposerSlashSkillMenu.module.css'
+import styles from './ComposerSlashFeatureMenu.module.css'
 
 const cx = StyleUtils.bindCx(styles)
 
-interface ComposerSlashSkillMenuProps {
-  menu: UseComposerSlashSkillMenuReturn
+interface ComposerSlashFeatureMenuProps {
+  menu: UseComposerSlashFeatureMenuReturn
   header: string
 }
 
 /** 聊天输入 / 弹出的已装技能列表（内联在 composer 顶部，随查询过滤）。 */
-export function ComposerSlashSkillMenu({
+export function ComposerSlashFeatureMenu({
   menu,
   header,
-}: ComposerSlashSkillMenuProps): Nullable<ReactElement> {
+}: ComposerSlashFeatureMenuProps): Nullable<ReactElement> {
   const { t } = useConversationI18n()
 
   if (!menu.open) return null
@@ -30,14 +30,14 @@ export function ComposerSlashSkillMenu({
     <div className={styles.panel} role="listbox" aria-label={header} aria-multiselectable="true">
       <div className={styles.header}>{header}</div>
       <div className={styles.list}>
-        {menu.items.map((skill, index) => {
+        {menu.items.map((feature, index) => {
           const highlighted = index === menu.highlightedIndex
-          const selected = menu.isItemSelected(skill.id)
+          const selected = menu.isItemSelected(feature.id)
           const className = cx('item', highlighted && 'itemHighlighted', selected && 'itemSelected')
 
           return (
             <button
-              key={skill.id}
+              key={feature.id}
               type="button"
               role="option"
               aria-selected={selected}
@@ -46,7 +46,7 @@ export function ComposerSlashSkillMenu({
                 // 防止 textarea 失焦导致选择前菜单状态变化。
                 event.preventDefault()
               }}
-              onClick={() => menu.selectItem(skill.id)}
+              onClick={() => menu.selectItem(feature.id)}
             >
               <span className={styles.itemIcon}>
                 <FileCodeIcon size={14} weight="fill" />
@@ -54,17 +54,17 @@ export function ComposerSlashSkillMenu({
               <span className={styles.itemMain}>
                 <span className={styles.itemTitleRow}>
                   <span className={styles.itemTitlePrimary}>
-                    <Text className={styles.itemLabel}>{skill.label}</Text>
-                    {!!skill.builtIn && (
+                    <Text className={styles.itemLabel}>{feature.label}</Text>
+                    {!!feature.builtIn && (
                       <span className={styles.itemBuiltInBadge}>
-                        {t('chat.composerSkillBuiltInBadge')}
+                        {t('chat.composerFeatureBuiltInBadge')}
                       </span>
                     )}
                   </span>
-                  <span className={styles.itemSlug}>/{skill.id}</span>
+                  <span className={styles.itemSlug}>/{feature.id}</span>
                 </span>
-                {!!skill.description && (
-                  <Text className={styles.itemDescription}>{skill.description}</Text>
+                {!!feature.description && (
+                  <Text className={styles.itemDescription}>{feature.description}</Text>
                 )}
               </span>
             </button>

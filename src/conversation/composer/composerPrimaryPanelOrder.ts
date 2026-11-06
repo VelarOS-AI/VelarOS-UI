@@ -12,7 +12,7 @@ export const COMPOSER_PRIMARY_PANEL_SLOT_ORDER = [
   'capabilities',
   'plan',
   'goal',
-  'skills',
+  'features',
 ] as const
 
 export type ComposerPrimaryPanelSlotId = (typeof COMPOSER_PRIMARY_PANEL_SLOT_ORDER)[number]
@@ -24,7 +24,7 @@ export const COMPOSER_FUNCTION_BAR_CHIP_ORDER = [
   'capabilities',
   'browser-elements',
   'turn-context',
-  'skills',
+  'features',
   'mentions',
 ] as const
 
@@ -54,7 +54,7 @@ export const COMPOSER_FUNCTION_BAR_CHIP_CONFIG = {
     chipStyle: 'legacy',
     placement: 'legacy',
   },
-  skills: {
+  features: {
     chipStyle: 'legacy',
     placement: 'legacy',
   },

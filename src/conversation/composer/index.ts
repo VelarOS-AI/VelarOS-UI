@@ -87,15 +87,15 @@ export {
   useComposerAddMenuState,
   type UseComposerAddMenuStateResult,
 } from './hooks/useComposerAddMenuState'
+export { useComposerFeatureSelection } from './hooks/useComposerFeatureSelection'
 export {
   useComposerMentionMenu,
   type UseComposerMentionMenuReturn,
 } from './hooks/useComposerMentionMenu'
-export { useComposerSkillSelection } from './hooks/useComposerSkillSelection'
 export {
-  useComposerSlashSkillMenu,
-  type UseComposerSlashSkillMenuReturn,
-} from './hooks/useComposerSlashSkillMenu'
+  useComposerSlashFeatureMenu,
+  type UseComposerSlashFeatureMenuReturn,
+} from './hooks/useComposerSlashFeatureMenu'
 
 // ── 注入端口 + 宿主 DOM 事件契约 ────────────────────────────────────────────
 export * from './composerHostEvents'

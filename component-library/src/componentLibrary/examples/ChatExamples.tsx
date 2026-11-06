@@ -185,11 +185,11 @@ export function ChatInputExample(): ReactElement {
               onFilesChange: setFiles,
             },
             features: {
-              availableSkills: [
+              availableFeatures: [
                 {
                   id: 'browser',
-                  label: t('componentLibrary.chatExample.skillBrowserLabel'),
-                  description: t('componentLibrary.chatExample.skillBrowserDescription'),
+                  label: t('componentLibrary.chatExample.featureBrowserLabel'),
+                  description: t('componentLibrary.chatExample.featureBrowserDescription'),
                 },
               ],
               manualTestPrompts: [
@@ -200,7 +200,7 @@ export function ChatInputExample(): ReactElement {
                   prompt: t('componentLibrary.chatExample.manualWorkspaceListPrompt'),
                 },
               ],
-              onSelectedSkillIdsChange: () => undefined,
+              onSelectedFeatureIdsChange: () => undefined,
             },
             streaming: {
               onStop: () => undefined,

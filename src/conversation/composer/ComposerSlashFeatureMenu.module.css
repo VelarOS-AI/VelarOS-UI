@@ -1,9 +1,9 @@
 @reference "../styles/tailwind-reference.css";
 
 .panel {
-  --composer-slash-skill-accent: #0f766e;
-  --composer-slash-skill-bg: rgba(15, 118, 110, 0.055);
-  --composer-slash-skill-bg-strong: rgba(15, 118, 110, 0.08);
+  --composer-slash-feature-accent: var(--velar-accent);
+  --composer-slash-feature-bg: color-mix(in srgb, var(--velar-accent) 5.5%, transparent);
+  --composer-slash-feature-bg-strong: color-mix(in srgb, var(--velar-accent) 8%, transparent);
   border-bottom: 1px solid var(--chat-input-menu-divider, var(--border));
   background: var(--card);
 }
@@ -38,22 +38,22 @@
 
 .item:hover,
 .itemHighlighted {
-  background: var(--composer-slash-skill-bg);
+  background: var(--composer-slash-feature-bg);
 }
 
 .itemSelected {
-  background: var(--composer-slash-skill-bg-strong);
+  background: var(--composer-slash-feature-bg-strong);
 }
 
 .itemSelected:hover,
 .itemSelected.itemHighlighted {
-  background: var(--composer-slash-skill-bg-strong);
+  background: var(--composer-slash-feature-bg-strong);
 }
 
 .item:hover .itemIcon,
 .itemSelected .itemIcon,
 .itemHighlighted .itemIcon {
-  color: var(--composer-slash-skill-accent);
+  color: var(--composer-slash-feature-accent);
 }
 
 .itemIcon {
@@ -101,10 +101,10 @@
 .itemBuiltInBadge {
   flex-shrink: 0;
   padding: 1px 5px;
-  border: 1px solid color-mix(in srgb, var(--composer-slash-skill-accent) 24%, transparent);
+  border: 1px solid color-mix(in srgb, var(--composer-slash-feature-accent) 24%, transparent);
   border-radius: var(--ui-radius-chip);
-  color: var(--composer-slash-skill-accent);
-  background: color-mix(in srgb, var(--composer-slash-skill-accent) 10%, var(--card));
+  color: var(--composer-slash-feature-accent);
+  background: color-mix(in srgb, var(--composer-slash-feature-accent) 10%, var(--card));
   font-size: 10px;
   font-weight: var(--font-weight-medium);
   line-height: 1.3;
