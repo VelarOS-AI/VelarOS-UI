@@ -96,7 +96,12 @@ function appendTurnPresentations(
     })
   }
 
-  if (!hasGuidance) {
+  const hasSettledAnchor =
+    completedAnchorIndex >= 0 ||
+    implicitCompletedAnchorIndex >= 0 ||
+    turnMessages.some((message) => message.role === 'assistant' && !!options.isRunEnd?.(message))
+  // 没有引导也可能因恢复或通信产生多条助手片段；终态统一归组，运行中不改变挂载身份。
+  if (!hasGuidance && !hasSettledAnchor) {
     turnMessages.forEach((message, index) => pushPresentation(message, index))
     return
   }
@@ -119,8 +124,8 @@ function appendTurnPresentations(
           ? terminalAnchorIndex
           : activeAnchorIndex
 
-  // 运行中锚定引导前已经挂载的 assistant，插入引导时不换宿主、不重置内部状态；只有正常
-  // 完成后才切到最终 assistant，让它把总结留在外面，并承载整轮唯一的「已处理」。
+  // 运行中锚定引导前已经挂载的 assistant，插入引导时不换宿主、不重置内部状态；执行结束
+  // 后才切到最终 assistant，让它把总结留在外面，并承载整轮唯一的「已处理」。
   // 引导刚写入、但本轮尚未产出任何 assistant 消息时没有可承载活动的气泡，保持原顺序。
   if (anchorIndex < 0) {
     turnMessages.forEach((message, index) => pushPresentation(message, index))

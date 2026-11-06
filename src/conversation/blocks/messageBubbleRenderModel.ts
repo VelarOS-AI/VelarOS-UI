@@ -120,10 +120,13 @@ export function shouldUseProcessedActivitySummaryBoundary({
   runMarker,
 }: ProcessedActivitySummaryBoundarySignalOptions): boolean {
   if (isStreaming) return false
-  if (runMarker?.status === 'awaiting-confirmation' || runMarker?.status === 'awaiting-input')
-    return false
 
-  return runMarker?.status === 'completed'
+  // 折叠表示执行已结束，不把失败或中止伪装成正常完成。
+  return (
+    runMarker?.status === 'completed' ||
+    runMarker?.status === 'failed' ||
+    runMarker?.status === 'aborted'
+  )
 }
 
 export function getAssistantResponseDurationMs(options: {

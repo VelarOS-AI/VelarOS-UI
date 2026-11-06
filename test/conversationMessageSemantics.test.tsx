@@ -681,3 +681,110 @@ void test('完成运行之后的引导不能把新执行归入旧完成锚点', 
   assert.equal(result.find(entry => entry.message === old)?.activityTrailingMessages.length, 0)
   assert.ok(result.some(entry => entry.message === current && entry.runInProgress))
 })
+
+function renderSettledTranscript(
+  entries: ChatMessage[],
+  finalId: string,
+  status: 'completed' | 'failed' | 'aborted'
+): string {
+  return renderToStaticMarkup(
+    createElement(
+      ConversationLocalizationProvider,
+      { value: localization },
+      createElement(
+        ConversationBlockHooksProvider,
+        { value: blockHooks },
+        createElement(ChatTranscript, {
+          messages: entries,
+          sessionId: 'settled-fragments',
+          getRunMarker: (entry) =>
+            entry.id === finalId
+              ? {
+                  messageId: entry.id,
+                  status,
+                  detail: status === 'failed' ? '真实错误详情' : null,
+                  turnCount: 1,
+                  turnKind: 'turn',
+                  timestamp: 2,
+                }
+              : null,
+        })
+      )
+    )
+  )
+}
+
+void test('完成时没有引导的多个助手片段也只保留一个已处理入口', () => {
+  const entries: ChatMessage[] = [
+    message('task', 'user', 'turn-input'),
+    {
+      ...message('process', 'assistant'),
+      blocks: [{ type: 'thinking', text: '先前思考' }],
+    },
+    {
+      ...message('final', 'assistant'),
+      blocks: [{ type: 'text', text: '最终回答标记' }],
+    },
+  ]
+  const before = JSON.stringify(entries)
+  const markup = renderSettledTranscript(entries, 'final', 'completed')
+  assert.equal((markup.match(/data-slot="tool-activity-disclosure"/g) ?? []).length, 1)
+  assert.doesNotMatch(markup, /data-chat-message="process"/)
+  assert.match(markup, /最终回答标记/)
+  assert.equal(JSON.stringify(entries), before)
+})
+
+void test('失败和中止仍统一折叠活动并在外面保留真实终态', () => {
+  for (const status of ['failed', 'aborted'] as const) {
+    for (const withText of [false, true]) {
+      const entries: ChatMessage[] = [
+        message('task', 'user', 'turn-input'),
+        {
+          ...message('process', 'assistant'),
+          blocks: [{ type: 'thinking', text: '前段执行思考' }],
+        },
+        message('guide', 'user', 'run-guidance'),
+        {
+          ...message('final', 'assistant'),
+          blocks: [
+            { type: 'thinking', text: '终止前思考' },
+            ...(withText ? [{ type: 'text' as const, text: '最后正文标记' }] : []),
+          ],
+        },
+      ]
+      const markup = renderSettledTranscript(entries, 'final', status)
+      assert.equal((markup.match(/data-slot="tool-activity-disclosure"/g) ?? []).length, 1)
+      assert.doesNotMatch(markup, /终止前思考/)
+      // 正文末尾角标经 portal 挂载，SSR 只验证无正文时的独立终态角标。
+      if (!withText) assert.match(markup, new RegExp(`aria-label="status\\.${status}`))
+      if (withText) assert.match(markup, /最后正文标记/)
+    }
+  }
+})
+
+void test('通信边界保持独立且其后的执行片段仍统一折叠', () => {
+  const peer: ChatMessage = {
+    ...message('peer', 'user', 'system-notice'),
+    peerOrigin: { sessionId: 'other', title: '同伴', folderId: 'folder' },
+    blocks: [{ type: 'text', text: '独立通信标记' }],
+  }
+  const entries: ChatMessage[] = [
+    message('task', 'user', 'turn-input'),
+    message('before-peer', 'assistant'),
+    peer,
+    {
+      ...message('process', 'assistant'),
+      blocks: [{ type: 'thinking', text: '通信后的思考' }],
+    },
+    {
+      ...message('final', 'assistant'),
+      blocks: [{ type: 'text', text: '通信后的结论' }],
+    },
+  ]
+  const markup = renderSettledTranscript(entries, 'final', 'completed')
+  assert.match(markup, /data-chat-message="peer"/)
+  assert.doesNotMatch(markup, /data-chat-message="process"/)
+  assert.equal((markup.match(/data-slot="tool-activity-disclosure"/g) ?? []).length, 1)
+  assert.ok(markup.indexOf('before-peer') < markup.indexOf('独立通信标记'))
+  assert.ok(markup.indexOf('独立通信标记') < markup.indexOf('通信后的结论'))
+})

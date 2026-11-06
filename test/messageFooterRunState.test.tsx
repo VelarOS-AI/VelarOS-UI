@@ -176,7 +176,7 @@ void describe('回答收尾件（复制与时间）什么时候出现', () => {
     )
   })
 
-  void test('运行中的会话里，前面的助手消息不出复制按钮；跑完后照常出现', () => {
+  void test('运行中不显示助手复制按钮；结束后前段归组，最终回答显示复制按钮', () => {
     const messages = [
       message('turn', 'user', 'turn-input'),
       message('a1', 'assistant'),
@@ -208,7 +208,7 @@ void describe('回答收尾件（复制与时间）什么时候出现', () => {
     assert.doesNotMatch(messageMarkup(running, 'a2'), /chat\.copyAnswer/u)
 
     const completed = renderTranscript(null, { a2: 'completed' })
-    assert.match(messageMarkup(completed, 'a1'), /chat\.copyAnswer/u)
+    assert.doesNotMatch(completed, /data-chat-message="a1"/u)
     assert.match(messageMarkup(completed, 'a2'), /chat\.copyAnswer/u)
   })
 

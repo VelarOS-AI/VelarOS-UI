@@ -664,6 +664,15 @@ function AssistantMessageSegmentsInner({
           <React.Fragment key="activity-trailing">{activityTrailingElement}</React.Fragment>
         )
       }
+      // 无最终正文时，失败或中止角标仍放在折叠区外，避免收起过程后丢失真实终态。
+      const standaloneMarker =
+        !isStreaming && !lastTextSegmentKey ? settledRunMarker(runMarker) : null
+      if (standaloneMarker)
+        renderedSegments.push(
+          <div key="run-status" className={styles.standaloneStatusMarker}>
+            <MessageStatusMarker marker={standaloneMarker} />
+          </div>
+        )
       return renderedSegments
     }
 
