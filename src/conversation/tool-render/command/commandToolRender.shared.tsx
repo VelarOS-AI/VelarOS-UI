@@ -1,10 +1,7 @@
 import { CheckCircleIcon, ClockCountdownIcon, WarningCircleIcon } from '@phosphor-icons/react'
 import type { ReactElement } from 'react'
 
-import {
-  type ConversationTranslator,
-  conversationTranslatorRuntime,
-} from '../../i18n'
+import { type ConversationTranslator } from '../../i18n'
 
 import styles from './CommandToolRender.module.css'
 
@@ -15,7 +12,15 @@ import type {
   ProjectVerificationSummary,
   ToolCallBlock,
 } from '#contracts'
-import { isEmpty,isPlainObject, isString, isTrue, numberOrNull, optionalWhen, toOptional } from '#internal/runtime'
+import {
+  isEmpty,
+  isPlainObject,
+  isString,
+  isTrue,
+  numberOrNull,
+  optionalWhen,
+  toOptional,
+} from '#internal/runtime'
 
 export interface CommandToolArgs {
   command?: string
@@ -40,7 +45,7 @@ export function getStatusLabel(
   block: ToolCallBlock,
   result: Nullable<ProjectCommandResult>,
   locale: AppLocale,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  runtime: ConversationTranslator
 ): string {
   if (block.isRunning) return runtime.translate(locale, 'commandTool.statusRunning')
 
@@ -82,9 +87,9 @@ export function getStatusIcon(
 export function inferCommandPurpose(
   command: string,
   locale: AppLocale,
-  verification?: LooseOptional<ProjectVerificationSummary>,
-  backgroundProcess?: LooseOptional<ProjectBackgroundProcessInfo>,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  verification: LooseOptional<ProjectVerificationSummary>,
+  backgroundProcess: LooseOptional<ProjectBackgroundProcessInfo>,
+  runtime: ConversationTranslator
 ): string {
   if (backgroundProcess?.reason) return backgroundProcess.reason
 
@@ -162,7 +167,7 @@ export function inferCommandPurpose(
 export function summarizeOutput(
   result: Nullable<ProjectCommandResult>,
   locale: AppLocale,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  runtime: ConversationTranslator
 ): Nullable<string> {
   if (!result) return null
 

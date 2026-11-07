@@ -1,7 +1,4 @@
-import {
-  type ConversationTranslator,
-  conversationTranslatorRuntime,
-} from '../i18n'
+import { type ConversationTranslator } from '../i18n'
 
 import {
   isCommandToolName,
@@ -16,7 +13,7 @@ import {
 } from './toolActivityPredicates'
 
 import type { AppLocale, ToolCallBlock } from '#contracts'
-import { isArray, isBlank, isEmpty,isFalse, isPresent, isString } from '#internal/runtime'
+import { isArray, isBlank, isEmpty, isFalse, isPresent, isString } from '#internal/runtime'
 import {
   asRecord,
   readBoolean,
@@ -265,7 +262,7 @@ function buildActivityParts(
 export function getToolActivityGroupSummary(
   blocks: ToolCallBlock[],
   locale: AppLocale,
-  translatorRuntime: ConversationTranslator = conversationTranslatorRuntime
+  translatorRuntime: ConversationTranslator
 ): string {
   const conversationTranslate = translatorRuntime.translate
   const counts: ToolActivityCounts = {

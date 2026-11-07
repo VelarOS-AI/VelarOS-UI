@@ -47,14 +47,10 @@ Slot 面是 §12.9 意义上的**封闭有限具名集合**,不是任意扩展�
 
 ### 3. 可变注册表按实例走,不做进程单例
 
-- `ToolRendererRegistry` —— 每个应用 / 租户 / 嵌入面建自己的实例,
-  避免测试与多宿主之间共享可变注册。共享默认实例 `ToolRenderRegistry` 只为旧接入与内置卡保留。
 - `ConversationTranslatorRuntime` —— 每个窗口 / React root / 测试各自拥有翻译端口。
   `ConversationLocalizationProvider` 默认为当前 root 创建并安装隔离实例;
   需要跨 React 与非 React 模型共享时才显式传入。
-  `configureConversationTranslator()` / `conversationTranslate()` /
-  `conversationLookupMessage()` 的全局单例**仅为旧应用兼容**,新代码别用
-  ——「最后一次全局配置覆盖掉其他界面」是它们的固有故障模式。
+  React 内经 Provider 获取实例，纯模型显式传入翻译端口。未安装 Provider 时直接报错。
 
 ### 4. Desktop 与 Workbench 的聊天行为只在这里实现一次
 

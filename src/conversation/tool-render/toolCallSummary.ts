@@ -1,15 +1,26 @@
-import {
-  type ConversationTranslator,
-  conversationTranslatorRuntime,
-} from '../i18n/conversationTranslator'
+import { type ConversationTranslator } from '../i18n/conversationTranslator'
 
 import { getToolCategoryLabel, getToolDescriptionText } from './toolPresentation'
 import { getToolTargetSummary } from './toolTargetSummary'
 
 import type { AppLocale, ToolCallBlock, ToolCategoryId } from '#contracts'
 import { platformCompatibility } from '#internal/platform'
-import { isBlank, isEmpty, isFalse, isFiniteNumber, isNonBlankString, isPresent, toNullable } from '#internal/runtime'
-import { asRecord, readNumber, readRecordsArray, readString, readStringArray } from '#internal/unknownJsonRecord'
+import {
+  isBlank,
+  isEmpty,
+  isFalse,
+  isFiniteNumber,
+  isNonBlankString,
+  isPresent,
+  toNullable,
+} from '#internal/runtime'
+import {
+  asRecord,
+  readNumber,
+  readRecordsArray,
+  readString,
+  readStringArray,
+} from '#internal/unknownJsonRecord'
 
 type PathDisplayFormatter = (path: string) => string
 
@@ -26,7 +37,8 @@ function wrapFormatterWithCwd(
     !isPresent(cwd) ||
     !cwd.trim() ||
     !platformCompatibility.isAbsolutePathText(cwd.trim())
-  ) return toNullable(formatter)
+  )
+    return toNullable(formatter)
 
   const normalizedCwd = cwd.trim()
 
@@ -139,16 +151,18 @@ function formatCliArgvPreview(argv: string[]): Nullable<string> {
 
 function formatCategory(
   categoryId: string,
-  locale?: AppLocale,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  locale: AppLocale,
+  runtime: ConversationTranslator
 ): string {
-  return locale ? getToolCategoryLabel(categoryId as ToolCategoryId, locale, undefined, runtime) : categoryId
+  return locale
+    ? getToolCategoryLabel(categoryId as ToolCategoryId, locale, undefined, runtime)
+    : categoryId
 }
 
 function formatCategories(
   categories: string[],
-  locale?: AppLocale,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  locale: AppLocale,
+  runtime: ConversationTranslator
 ): Nullable<string> {
   if (isEmpty(categories)) return null
 
@@ -158,8 +172,8 @@ function formatCategories(
 
 function formatToolSpaceTarget(
   target: string,
-  locale?: AppLocale,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  locale: AppLocale,
+  runtime: ConversationTranslator
 ): string {
   const match = /^(capability|category|tool|plugin):(.+)$/.exec(target)
   if (!match) return target
@@ -172,8 +186,8 @@ function formatToolSpaceTarget(
 
 function formatToolSpaceTargets(
   targets: string[],
-  locale?: AppLocale,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  locale: AppLocale,
+  runtime: ConversationTranslator
 ): Nullable<string> {
   if (isEmpty(targets)) return null
 
@@ -185,7 +199,12 @@ function getToolReadFeatureNames(toolName: string, args: Nullable<Record<string,
   if (toolName !== 'tooling:read') return []
 
   return readStringArray(args, 'ids')
-    .map((id) => id.trim().replace(/^(?:skill|feature):/iu, '').trim())
+    .map((id) =>
+      id
+        .trim()
+        .replace(/^(?:skill|feature):/iu, '')
+        .trim()
+    )
     .filter((id) => !isBlank(id))
 }
 
@@ -210,8 +229,8 @@ function getContextDistillPreview(
 function formatToolReadFeatureNames(
   toolName: string,
   args: Nullable<Record<string, any>>,
-  locale?: AppLocale,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  locale: AppLocale,
+  runtime: ConversationTranslator
 ): Nullable<string> {
   const featureNames = getToolReadFeatureNames(toolName, args)
   if (isEmpty(featureNames)) return null
@@ -225,7 +244,13 @@ function formatToolReadFeatureNames(
  * （`getToolSearchScopeItems`）；没有查询词的 action（如 language_diagnostics）仍回落到 path。
  * system:search 的查询词叫 `pattern`；外部引擎的 Grep 映射成 project:search 时也只带 `pattern`。
  */
-const QueryFirstToolNames = new Set(['project:search', 'project:code', 'project:code-analysis', 'project:query-code', 'system:search'])
+const QueryFirstToolNames = new Set([
+  'project:search',
+  'project:code',
+  'project:code-analysis',
+  'project:query-code',
+  'system:search',
+])
 
 function readQueryFirstSubject(
   toolName: string,
@@ -233,7 +258,8 @@ function readQueryFirstSubject(
 ): Nullable<string> {
   if (!QueryFirstToolNames.has(toolName)) return null
 
-  const subject = readString(args, 'symbol') ?? readString(args, 'query') ?? readString(args, 'pattern')
+  const subject =
+    readString(args, 'symbol') ?? readString(args, 'query') ?? readString(args, 'pattern')
   return subject ? normalizeInline(subject) : null
 }
 
@@ -244,11 +270,14 @@ function readQueryFirstSubject(
 function readPathArgList(args: Nullable<Record<string, any>>): string[] {
   const singlePath = readString(args, 'path') ?? readString(args, 'file_path')
   if (singlePath) return [singlePath]
-  const batch = readRecordsArray(args, 'files').map((file) => readString(file, 'path')).filter((path): path is string => !!path)
+  const batch = readRecordsArray(args, 'files')
+    .map((file) => readString(file, 'path'))
+    .filter((path): path is string => !!path)
   return !isEmpty(batch) ? batch : readStringArray(args, 'path')
 }
 
-type ToolSummaryBlock = Pick<ToolCallBlock, 'toolName' | 'args'> & Partial<Pick<ToolCallBlock, 'result'>>
+type ToolSummaryBlock = Pick<ToolCallBlock, 'toolName' | 'args'> &
+  Partial<Pick<ToolCallBlock, 'result'>>
 
 /** 按工具登记的作用对象摘要（见 toolTargetSummary）；路径按调用的 cwd 解析后交给宿主格式化。 */
 function readToolTargetSummary(
@@ -272,9 +301,9 @@ function formatPathListPreview(
 function getPrimaryArgPreview(
   toolName: string,
   args: Nullable<Record<string, any>>,
-  pathFormatter?: LooseOptional<PathDisplayFormatter>,
-  locale?: AppLocale,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  pathFormatter: LooseOptional<PathDisplayFormatter>,
+  locale: AppLocale,
+  runtime: ConversationTranslator
 ): Nullable<string> {
   const querySubject = readQueryFirstSubject(toolName, args)
   if (querySubject) return querySubject
@@ -324,9 +353,9 @@ function getPrimaryArgPreview(
 
 export function getToolDetailItems(
   block: ToolSummaryBlock,
-  pathFormatter?: LooseOptional<PathDisplayFormatter>,
-  locale?: AppLocale,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  pathFormatter: LooseOptional<PathDisplayFormatter>,
+  locale: AppLocale,
+  runtime: ConversationTranslator
 ): string[] {
   const args = asRecord(block.args)
   const cwd = readString(args, 'cwd')
@@ -414,7 +443,8 @@ function buildResultSummary(
   if (!result) return null
 
   const count = readNumber(result, 'count')
-  if (isPresent(count)) return count === 0
+  if (isPresent(count))
+    return count === 0
       ? runtime.translate(locale, 'toolSummary.noResults')
       : runtime.translate(locale, 'toolSummary.resultCount', { count })
 
@@ -443,7 +473,8 @@ export function getToolDurationMs(
 
   const executionStartedAt = readNumber(asRecord(block.metadata), 'executionStartedAt')
   const startedAt = isFiniteTimestamp(executionStartedAt) ? executionStartedAt : block.startedAt
-  if (isFiniteTimestamp(startedAt) && isFiniteTimestamp(block.finishedAt)) return Math.max(0, block.finishedAt - startedAt)
+  if (isFiniteTimestamp(startedAt) && isFiniteTimestamp(block.finishedAt))
+    return Math.max(0, block.finishedAt - startedAt)
 
   return null
 }
@@ -455,7 +486,7 @@ function shouldShowToolDurationMs(durationMs: Nullable<number>): durationMs is n
 export function formatToolDurationMs(
   durationMs: number,
   locale: AppLocale,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  runtime: ConversationTranslator
 ): string {
   const safeDurationMs = Math.max(0, Math.round(durationMs))
 
@@ -467,7 +498,8 @@ export function formatToolDurationMs(
 
   const totalMinutes = Math.floor(totalSeconds / 60)
   const seconds = totalSeconds % 60
-  if (totalMinutes < 60) return runtime.translate(locale, 'status.elapsedMinutesSeconds', {
+  if (totalMinutes < 60)
+    return runtime.translate(locale, 'status.elapsedMinutesSeconds', {
       minutes: totalMinutes,
       seconds,
     })
@@ -481,7 +513,7 @@ export function formatToolDurationMs(
 export function getToolStatusLabel(
   block: Pick<ToolCallBlock, 'isRunning' | 'startedAt' | 'finishedAt' | 'result' | 'metadata'>,
   locale: AppLocale,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  runtime: ConversationTranslator
 ): Nullable<string> {
   if (block.isRunning) return runtime.translate(locale, 'toolSummary.running')
 
@@ -503,7 +535,8 @@ function getToolGroupDurationMs(
   for (const block of blocks) {
     const durationMs = getToolDurationMs(block)
     if (!isPresent(durationMs)) continue
-    if (isFiniteTimestamp(block.finishedAt)) intervals.push({ start: block.finishedAt - durationMs, end: block.finishedAt })
+    if (isFiniteTimestamp(block.finishedAt))
+      intervals.push({ start: block.finishedAt - durationMs, end: block.finishedAt })
     else unplacedDurationMs += durationMs
   }
 
@@ -520,9 +553,11 @@ function getToolGroupDurationMs(
 }
 
 export function getToolGroupStatusLabel(
-  blocks: Array<Pick<ToolCallBlock, 'isRunning' | 'startedAt' | 'finishedAt' | 'result' | 'metadata'>>,
+  blocks: Array<
+    Pick<ToolCallBlock, 'isRunning' | 'startedAt' | 'finishedAt' | 'result' | 'metadata'>
+  >,
   locale: AppLocale,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  runtime: ConversationTranslator
 ): Nullable<string> {
   if (blocks.some((block) => block.isRunning))
     return runtime.translate(locale, 'toolSummary.running')
@@ -535,9 +570,11 @@ export function getToolGroupStatusLabel(
 }
 
 export function getMergedToolGroupStatusLabel(
-  blocks: Array<Pick<ToolCallBlock, 'isRunning' | 'startedAt' | 'finishedAt' | 'result' | 'metadata'>>,
+  blocks: Array<
+    Pick<ToolCallBlock, 'isRunning' | 'startedAt' | 'finishedAt' | 'result' | 'metadata'>
+  >,
   locale: AppLocale,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  runtime: ConversationTranslator
 ): Nullable<string> {
   const statusLabel = getToolGroupStatusLabel(blocks, locale, runtime)
   if (blocks.length <= 1) return statusLabel
@@ -549,8 +586,8 @@ export function getMergedToolGroupStatusLabel(
 export function getToolActivitySummary(
   block: ToolSummaryBlock & Pick<ToolCallBlock, 'isRunning'>,
   locale: AppLocale,
-  pathFormatter?: LooseOptional<PathDisplayFormatter>,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  pathFormatter: LooseOptional<PathDisplayFormatter>,
+  runtime: ConversationTranslator
 ): Nullable<string> {
   const displayName = block.toolName
   const preview = getToolDetailSummary(block, pathFormatter, locale, runtime)
@@ -567,9 +604,9 @@ export function getToolActivitySummary(
  */
 export function getToolDetailSummary(
   block: ToolSummaryBlock,
-  pathFormatter?: LooseOptional<PathDisplayFormatter>,
-  locale?: AppLocale,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  pathFormatter: LooseOptional<PathDisplayFormatter>,
+  locale: AppLocale,
+  runtime: ConversationTranslator
 ): Nullable<string> {
   const args = asRecord(block.args)
   const cwdFormatter = wrapFormatterWithCwd(pathFormatter, readString(args, 'cwd'))
@@ -587,9 +624,9 @@ export function getToolDetailSummary(
  */
 export function getToolMergedDetailItems(
   block: ToolSummaryBlock,
-  pathFormatter?: LooseOptional<PathDisplayFormatter>,
-  locale?: AppLocale,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  pathFormatter: LooseOptional<PathDisplayFormatter>,
+  locale: AppLocale,
+  runtime: ConversationTranslator
 ): string[] {
   const cwdFormatter = wrapFormatterWithCwd(pathFormatter, readString(asRecord(block.args), 'cwd'))
   const target = readToolTargetSummary(block, cwdFormatter)?.target
@@ -599,7 +636,7 @@ export function getToolMergedDetailItems(
 export function getToolResultSummary(
   block: Pick<ToolCallBlock, 'toolName' | 'result'>,
   locale: AppLocale,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  runtime: ConversationTranslator
 ): Nullable<string> {
   return buildResultSummary(asRecord(block.result), locale, runtime)
 }
@@ -607,8 +644,8 @@ export function getToolResultSummary(
 export function getToolDescription(
   block: Pick<ToolCallBlock, 'toolName' | 'args' | 'result' | 'error' | 'isRunning'>,
   locale: AppLocale,
-  pathFormatter?: LooseOptional<PathDisplayFormatter>,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  pathFormatter: LooseOptional<PathDisplayFormatter>,
+  runtime: ConversationTranslator
 ): string | undefined {
   const detail = getToolDetailSummary(block, pathFormatter, locale, runtime)
   const staticDescription = getToolDescriptionText(block.toolName, locale, undefined, runtime)
@@ -632,8 +669,8 @@ export function getToolDescription(
 export function getToolGroupPreview(
   blocks: ToolCallBlock[],
   locale: AppLocale,
-  pathFormatter?: LooseOptional<PathDisplayFormatter>,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  pathFormatter: LooseOptional<PathDisplayFormatter>,
+  runtime: ConversationTranslator
 ): string | undefined {
   const previews = blocks
     .map((block) => getToolActivitySummary(block, locale, pathFormatter, runtime))

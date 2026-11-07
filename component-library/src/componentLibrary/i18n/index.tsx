@@ -8,10 +8,7 @@ import {
   useState,
 } from 'react'
 
-import {
-  configureConversationTranslator,
-  ConversationLocalizationProvider,
-} from '@velaros-ai/ui/conversation/i18n'
+import { ConversationLocalizationProvider } from '@velaros-ai/ui/conversation/i18n'
 import {
   type UiLocalizationMessages,
   UiLocalizationProvider,
@@ -50,11 +47,6 @@ function interpolate(template: string, params?: TranslateParams): string {
 function translate(locale: CatalogLocale, key: string, params?: TranslateParams): string {
   return interpolate(readMessage(locale, key) ?? key, params)
 }
-
-configureConversationTranslator({
-  lookupMessage: (locale, key) => readMessage(locale, key),
-  translate,
-})
 
 function createUiMessages(locale: CatalogLocale, t: I18nContextValue['t']): UiLocalizationMessages {
   return {

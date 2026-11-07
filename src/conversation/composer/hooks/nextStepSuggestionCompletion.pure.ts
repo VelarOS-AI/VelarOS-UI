@@ -3,14 +3,6 @@ import { isEmpty } from '#internal/runtime'
 
 export const NoNextStepSuggestionHighlightIndex = -1
 
-export type NextStepSuggestionKeyboardAction =
-  | { kind: 'dismiss' }
-  | { kind: 'highlight'; index: number }
-  | { kind: 'ignore' }
-  | { kind: 'open'; index: number }
-  | { kind: 'remove-attachment'; dismissWhenEmpty: boolean; index: number }
-  | { kind: 'submit'; index: number }
-
 function normalizeCompletionText(value: string): string {
   return value.trim().replaceAll(/\s+/gu, ' ').toLocaleLowerCase()
 }
@@ -30,19 +22,6 @@ export function matchNextStepSuggestionPrefix(
 
   return suggestions.filter((suggestion) =>
     normalizeCompletionText(suggestion.prompt).startsWith(normalizedPrefix)
-  )
-}
-
-/**
- * @deprecated 建议集合出主进程时已按 confidence 降序排好（`normalizeChatSuggestionDrafts`），
- * 内联形态直接用「第 1 条 = 最高优先级」的数组序，不再二次挑最高分。随面板一起保留待回滚。
- */
-export function findHighestConfidenceNextStepSuggestion(
-  suggestions: readonly ChatSuggestionItem[]
-): ChatSuggestionItem | undefined {
-  return suggestions.reduce<ChatSuggestionItem | undefined>(
-    (best, suggestion) => (!best || suggestion.confidence > best.confidence ? suggestion : best),
-    undefined
   )
 }
 
@@ -85,7 +64,7 @@ export function resolveInlineNextStepSuggestionIndex(
   return Math.min(Math.max(currentIndex, 0), itemCount - 1)
 }
 
-/** 输入框内联建议的按键动作（面板退役后取代 {@link NextStepSuggestionKeyboardAction}）。 */
+/** 输入框内联建议的按键动作。 */
 export type InlineNextStepSuggestionAction =
   | { kind: 'accept' }
   | { kind: 'cycle'; index: number }
@@ -144,63 +123,6 @@ export function resolveInlineNextStepSuggestionKeyboardAction({
   if (key === 'Escape') return { kind: 'dismiss' }
   if (key === 'Tab' && canAccept) return { kind: 'accept' }
   if (key === 'Enter' && inputEmpty) return { kind: 'send' }
-
-  return { kind: 'ignore' }
-}
-
-/**
- * 把扩展栏按键转换成与 React/DOM 无关的动作，供输入框路由与回归测试共用。
- *
- * @deprecated 面板形态（{@link import('../ComposerNextStepSuggestionMenu.tsx').ComposerNextStepSuggestionMenu}）
- * 已于 2026-08-06 退役，改为输入框内联建议；本函数随面板一起保留待回滚，现役路由见
- * {@link resolveInlineNextStepSuggestionKeyboardAction}。
- */
-export function resolveNextStepSuggestionKeyboardAction(
-  key: string,
-  highlightedIndex: number,
-  itemCount: number,
-  menuOpen: boolean,
-  inputEmpty: boolean,
-  removableAttachmentCount = 0
-): NextStepSuggestionKeyboardAction {
-  if (!menuOpen) {
-    if (key !== 'ArrowUp' || itemCount <= 0) return { kind: 'ignore' }
-    return {
-      kind: 'open',
-      index: resolveNextStepSuggestionHighlightIndex(
-        NoNextStepSuggestionHighlightIndex,
-        itemCount,
-        'up'
-      ),
-    }
-  }
-
-  if (key === 'Escape') return { kind: 'dismiss' }
-
-  if (key === 'Backspace' && inputEmpty) {
-    if (removableAttachmentCount > 0)
-      return {
-        kind: 'remove-attachment',
-        dismissWhenEmpty: removableAttachmentCount === 1,
-        index: removableAttachmentCount - 1,
-      }
-
-    return { kind: 'dismiss' }
-  }
-
-  if (key === 'ArrowDown' || key === 'ArrowUp') {
-    const index = resolveNextStepSuggestionHighlightIndex(
-      highlightedIndex,
-      itemCount,
-      key === 'ArrowDown' ? 'down' : 'up'
-    )
-    return index === NoNextStepSuggestionHighlightIndex
-      ? { kind: 'ignore' }
-      : { kind: 'highlight', index }
-  }
-
-  if (key === 'Enter' && highlightedIndex >= 0 && highlightedIndex < itemCount)
-    return { kind: 'submit', index: highlightedIndex }
 
   return { kind: 'ignore' }
 }

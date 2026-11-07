@@ -4,8 +4,7 @@ import type {
 } from './ConversationLocalizationProvider'
 
 import type { AppLocale } from '#contracts'
-import { isNotNull,toNullable } from '#internal/runtime'
-
+import { isNotNull, toNullable } from '#internal/runtime'
 
 /** React 外纯模型消费的最小翻译端口。 */
 export interface ConversationTranslator {
@@ -71,31 +70,4 @@ export class ConversationTranslatorRuntime implements ConversationTranslator {
     }
     return this.translator
   }
-}
-
-/** 旧 API 使用的进程级默认实例。新应用应为每个 composition root 创建独立实例。 */
-export const conversationTranslatorRuntime = new ConversationTranslatorRuntime()
-
-/** @deprecated 使用 `new ConversationTranslatorRuntime(translator)` 并通过 Provider 注入。 */
-export function configureConversationTranslator(translator: ConversationTranslator): void {
-  conversationTranslatorRuntime.configure(translator)
-}
-
-/** @deprecated React 内使用 `useConversationTranslatorRuntime()`；纯模型显式传 runtime。 */
-export function conversationTranslate(
-  locale: AppLocale,
-  key: ConversationMessageKey,
-  params?: ConversationTranslateParams,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
-): string {
-  return runtime.translate(locale, key, params)
-}
-
-/** @deprecated React 内使用 `useConversationTranslatorRuntime()`；纯模型显式传 runtime。 */
-export function conversationLookupMessage(
-  locale: AppLocale,
-  key: ConversationMessageKey,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
-): Nullable<string> {
-  return runtime.lookupMessage(locale, key)
 }

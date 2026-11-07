@@ -1,16 +1,10 @@
-import {
-  type ConversationTranslator,
-  conversationTranslatorRuntime,
-} from '../i18n/conversationTranslator'
+import { type ConversationTranslator } from '../i18n/conversationTranslator'
 
 import type { AppLocale, ToolCategoryId, ToolPermission } from '#contracts'
 import { toNullable } from '#internal/runtime'
 
 type ToolMessageSection =
-  | 'toolDescriptions'
-  | 'categoryLabels'
-  | 'categoryDescriptions'
-  | 'permissionNames'
+  'toolDescriptions' | 'categoryLabels' | 'categoryDescriptions' | 'permissionNames'
 
 function readToolMessage(
   locale: AppLocale,
@@ -25,8 +19,8 @@ function readToolMessage(
 export function getToolDescriptionText(
   toolName: string,
   locale: AppLocale,
-  fallback?: LooseOptional<string>,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  fallback: LooseOptional<string>,
+  runtime: ConversationTranslator
 ): Nullable<string> {
   return toNullable(readToolMessage(locale, 'toolDescriptions', toolName, runtime) ?? fallback)
 }
@@ -34,8 +28,8 @@ export function getToolDescriptionText(
 export function getToolCategoryLabel(
   categoryId: ToolCategoryId,
   locale: AppLocale,
-  fallback?: LooseOptional<string>,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  fallback: LooseOptional<string>,
+  runtime: ConversationTranslator
 ): string {
   return readToolMessage(locale, 'categoryLabels', categoryId, runtime) ?? fallback ?? categoryId
 }
@@ -43,8 +37,8 @@ export function getToolCategoryLabel(
 export function getToolCategoryDescription(
   categoryId: ToolCategoryId,
   locale: AppLocale,
-  fallback?: LooseOptional<string>,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  fallback: LooseOptional<string>,
+  runtime: ConversationTranslator
 ): Nullable<string> {
   return toNullable(
     readToolMessage(locale, 'categoryDescriptions', categoryId, runtime) ?? fallback
@@ -54,7 +48,7 @@ export function getToolCategoryDescription(
 export function getToolPermissionDisplayName(
   permission: ToolPermission,
   locale: AppLocale,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  runtime: ConversationTranslator
 ): string {
   return readToolMessage(locale, 'permissionNames', permission, runtime) ?? permission
 }

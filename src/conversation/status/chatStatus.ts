@@ -1,8 +1,5 @@
 import type { ConversationMessageKey } from '../i18n/ConversationLocalizationProvider'
-import {
-  type ConversationTranslator,
-  conversationTranslatorRuntime,
-} from '../i18n/conversationTranslator'
+import { type ConversationTranslator } from '../i18n/conversationTranslator'
 
 import type { AppLocale, TeamExecutionPhase } from '#contracts'
 import { isBlank, isEmpty, isPresent, optionalWhenLazy, truncate } from '#internal/runtime'
@@ -133,7 +130,7 @@ function getReconnectingLabel(
 export function getChatStatusMeta(
   runtime: ChatStatusRuntime,
   locale: AppLocale,
-  translatorRuntime: ConversationTranslator = conversationTranslatorRuntime
+  translatorRuntime: ConversationTranslator
 ): ChatStatusMeta {
   const conversationTranslate = translatorRuntime.translate
   const detail = getChatStatusDetail(runtime, locale, conversationTranslate)
@@ -149,7 +146,8 @@ function getChatStatusDetail(
   locale: AppLocale,
   conversationTranslate: ConversationTranslate
 ): string | undefined {
-  if (runtime.status === 'stopping') return conversationTranslate(locale, 'status.stoppingDescription')
+  if (runtime.status === 'stopping')
+    return conversationTranslate(locale, 'status.stoppingDescription')
   if (runtime.status === 'running' && runtime.lastError) return runtime.lastError
   if (runtime.status === 'running' && isPresent(runtime.connectionRetryAttempt))
     return getReconnectingLabel(runtime, locale, conversationTranslate)
@@ -188,7 +186,7 @@ function getChatStatusDetail(
 export function getChatNoticeMeta(
   runtime: ChatStatusRuntime,
   locale: AppLocale,
-  translatorRuntime: ConversationTranslator = conversationTranslatorRuntime
+  translatorRuntime: ConversationTranslator
 ): Nullable<ChatNoticeMeta> {
   const conversationTranslate = translatorRuntime.translate
   if (runtime.status === 'running' && isPresent(runtime.connectionRetryAttempt))
@@ -322,8 +320,8 @@ function buildRunningInlineNoticeText(
 export function getChatInlineNoticeMeta(
   runtime: ChatStatusRuntime,
   locale: AppLocale,
-  options?: ChatInlineNoticeOptions,
-  translatorRuntime: ConversationTranslator = conversationTranslatorRuntime
+  options: ChatInlineNoticeOptions,
+  translatorRuntime: ConversationTranslator
 ): Nullable<ChatInlineNoticeMeta> {
   const conversationTranslate = translatorRuntime.translate
   if (runtime.status === 'running' && isPresent(runtime.connectionRetryAttempt))

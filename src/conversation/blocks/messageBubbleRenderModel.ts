@@ -1,7 +1,4 @@
-import {
-  type ConversationTranslator,
-  conversationTranslatorRuntime,
-} from '../i18n/conversationTranslator'
+import { type ConversationTranslator } from '../i18n/conversationTranslator'
 import type { ConversationMessageRunMarker } from '../projection'
 import type { ChatInlineNoticeMeta } from '../status/chatStatus'
 import {
@@ -436,7 +433,8 @@ function messageSegmentHasStartedText(segment: MessageRenderSegment): boolean {
 }
 
 function messageSegmentIsThinking(segment: MessageRenderSegment): boolean {
-  if (segment.kind === 'activity-group') return segment.segments.every(({ block }) => block.type === 'thinking')
+  if (segment.kind === 'activity-group')
+    return segment.segments.every(({ block }) => block.type === 'thinking')
   return (
     segment.kind === 'segment' &&
     segment.segment.block.type === 'thinking' &&
@@ -544,7 +542,7 @@ export function getProcessedActivityDisclosureLabel(
   blocks: Array<Pick<ToolCallBlockType, 'isRunning'>>,
   locale: AppLocale,
   options: ProcessedActivityDisclosureLabelOptions = {},
-  translatorRuntime: ConversationTranslator = conversationTranslatorRuntime
+  translatorRuntime: ConversationTranslator
 ): string {
   const conversationTranslate = translatorRuntime.translate
   if (options.goalCompletionSummary)

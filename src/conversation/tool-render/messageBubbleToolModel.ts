@@ -1,7 +1,4 @@
-import {
-  type ConversationTranslator,
-  conversationTranslatorRuntime,
-} from '../i18n'
+import { type ConversationTranslator } from '../i18n'
 
 import { isCommandToolName } from './toolActivityPredicates'
 import type { MergedToolCallGroup } from './toolCallRenderGrouping'
@@ -13,9 +10,9 @@ import { asRecord, readStringPreserveOuterWhitespace } from '#internal/unknownJs
 
 export function getMergedToolDetails(
   blocks: ToolCallBlockType[],
-  formatPathForDisplay?: (path: string) => string,
-  locale?: AppLocale,
-  translatorRuntime: ConversationTranslator = conversationTranslatorRuntime
+  formatPathForDisplay: (path: string) => string,
+  locale: AppLocale,
+  translatorRuntime: ConversationTranslator
 ): string[] {
   const seen = new Set<string>()
   const details: string[] = []

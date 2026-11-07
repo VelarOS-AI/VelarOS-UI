@@ -21,13 +21,7 @@ export {
   mergeConversationMessages,
 } from './conversationMessageCatalog'
 export type { ConversationTranslator } from './conversationTranslator'
-export {
-  configureConversationTranslator,
-  conversationLookupMessage,
-  conversationTranslate,
-  ConversationTranslatorRuntime,
-  conversationTranslatorRuntime,
-} from './conversationTranslator'
+export { ConversationTranslatorRuntime } from './conversationTranslator'
 export {
   ConversationTranslatorProvider,
   useConversationTranslatorRuntime,

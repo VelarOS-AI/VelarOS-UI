@@ -248,7 +248,8 @@ function addCostEstimate(accumulator: SessionCostEstimate, estimate: MessageCost
   accumulator.turnCount += 1
 }
 
-function estimateRuntimeTelemetryCost(input: {
+/** 按每次请求实际记录的服务商、模型和用量估价；缺失身份不猜测。 */
+export function estimateSessionCost(input: {
   pricingCatalog?: LooseOptional<ModelPricingCatalog>
   usageTelemetry: StreamUsageTelemetryPayload[]
 }): Nullable<SessionCostEstimate> {
@@ -386,14 +387,6 @@ export function areRunCostEstimatesEqual(
     prev.coverage === next.coverage &&
     prev.cachedInputPricedAtInputRate === next.cachedInputPricedAtInputRate
   )
-}
-
-/** 按每次请求实际记录的服务商、模型和用量估价；缺失身份不猜测。 */
-export function estimateSessionCost(input: {
-  pricingCatalog?: LooseOptional<ModelPricingCatalog>
-  usageTelemetry: StreamUsageTelemetryPayload[]
-}): Nullable<SessionCostEstimate> {
-  return estimateRuntimeTelemetryCost(input)
 }
 
 export function formatMessageCostEstimate(_locale: AppLocale, usd: number): string {

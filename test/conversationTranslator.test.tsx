@@ -8,10 +8,7 @@ import {
   ConversationLocalizationProvider,
   useConversationTranslatorRuntime,
 } from '../src/conversation/i18n'
-import {
-  conversationTranslate,
-  ConversationTranslatorRuntime,
-} from '../src/conversation/i18n/conversationTranslator'
+import { ConversationTranslatorRuntime } from '../src/conversation/i18n/conversationTranslator'
 
 function createTranslator(prefix: string) {
   return {
@@ -26,13 +23,19 @@ function RuntimeProbe(): React.JSX.Element {
 }
 
 void describe('ConversationTranslatorRuntime', () => {
+  void test('requires a root-scoped provider', () => {
+    assert.throws(
+      () => renderToStaticMarkup(createElement(RuntimeProbe)),
+      /ConversationTranslatorProvider/
+    )
+  })
+
   void test('isolates translators and supports explicit teardown', () => {
     const first = new ConversationTranslatorRuntime(createTranslator('first'))
     const second = new ConversationTranslatorRuntime(createTranslator('second'))
 
     assert.equal(first.translate('en-US', 'title'), 'first:title')
     assert.equal(second.translate('en-US', 'title'), 'second:title')
-    assert.equal(conversationTranslate('en-US', 'title', undefined, first), 'first:title')
 
     first.dispose()
     assert.equal(first.isConfigured, false)

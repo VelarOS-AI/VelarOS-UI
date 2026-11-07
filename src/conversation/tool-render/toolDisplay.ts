@@ -1,7 +1,4 @@
-import {
-  type ConversationTranslator,
-  conversationTranslatorRuntime,
-} from '../i18n/conversationTranslator'
+import { type ConversationTranslator } from '../i18n/conversationTranslator'
 
 import type { AppLocale } from '#contracts'
 import { isPresent, isString, Log, stringifyPretty } from '#internal/runtime'
@@ -41,7 +38,7 @@ export function truncateLocalizedCommandOutput(
   text: string,
   locale: AppLocale,
   maxChars: number = DEFAULT_COMMAND_TOOL_DISPLAY_MAX_CHARS,
-  runtime: ConversationTranslator = conversationTranslatorRuntime
+  runtime: ConversationTranslator
 ): string {
   return truncateForDisplay(
     text,

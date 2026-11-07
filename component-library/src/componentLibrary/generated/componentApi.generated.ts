@@ -2687,36 +2687,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "\"default\" | \"compact\""
     }
   ],
-  ComposerNextStepSuggestionMenu: [
-    {
-      "name": "ComposerNextStepSuggestionMenu.suggestions",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "ChatSuggestionItem[]",
-      "recommended": "Required"
-    },
-    {
-      "name": "ComposerNextStepSuggestionMenu.selectedId",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "LooseOptional<string>"
-    },
-    {
-      "name": "ComposerNextStepSuggestionMenu.onSelect",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "((suggestion: ChatSuggestionItem) => void)"
-    },
-    {
-      "name": "ComposerNextStepSuggestionMenu.label",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "string",
-      "recommended": "Required"
-    },
-    {
-      "name": "ComposerNextStepSuggestionMenu.disabled",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "boolean",
-      "defaultValue": "false"
-    }
-  ],
   ComposerSlashFeatureMenu: [
     {
       "name": "ComposerSlashFeatureMenu.menu",

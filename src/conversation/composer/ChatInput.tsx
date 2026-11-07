@@ -78,9 +78,6 @@ import type { ChatComposerCapabilityControl } from './ComposerCapabilityControls
 import { ComposerDropOverlay } from './ComposerDropOverlay'
 import { ComposerFilePreview } from './ComposerFilePreview'
 import { ComposerMentionMenu } from './ComposerMentionMenu'
-// 下一步建议的**面板**形态（`ComposerNextStepSuggestionMenu`）已于 2026-08-06 退役：它压在输入框
-// 正上方、一次铺开三条整句，把对话最后几行挡掉，用户判「太重」。改为写进输入框本身的内联建议
-// （幽灵文本 + ↑↓ 切换），组件与样式原样留在包里待回滚，只是不再有人渲染它。
 import { ComposerSlashFeatureMenu } from './ComposerSlashFeatureMenu'
 import { ComposerToolbarLeading } from './ComposerToolbarLeading'
 import { ComposerToolbarRight } from './ComposerToolbarRight'
@@ -89,12 +86,8 @@ import { useConversationComposerPort } from './conversationComposerPort'
 
 import styles from './ChatInput.module.css'
 
-import type {
-  BrowserElementSelection,
-  ChatSuggestionItem,
-  TurnContextDelta,
-} from '#contracts'
-import { isEmpty,isPresent, optionalWhenLazy } from '#internal/runtime'
+import type { BrowserElementSelection, ChatSuggestionItem, TurnContextDelta } from '#contracts'
+import { isEmpty, isPresent, optionalWhenLazy } from '#internal/runtime'
 
 function isOnboardingComposerSendLocked(): boolean {
   return document.documentElement.dataset.tourComposerSendLocked === 'true'
@@ -878,7 +871,9 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
             ? t('chat.sendingMessage')
             : answering
               ? t('chat.answerQuestion')
-              : canEnqueue ? t('chat.sendAfterCurrent') : sendButtonTitle,
+              : canEnqueue
+                ? t('chat.sendAfterCurrent')
+                : sendButtonTitle,
       disabled: primaryActionState.disabled,
       pending: primaryActionState.pending,
       buttonClassName:
@@ -1072,7 +1067,10 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
         onQueuedDraftRunNow={onQueuedDraftRunNow}
       />
 
-      <ComposerSlashFeatureMenu menu={slashFeatureMenu} header={t('chat.composerSlashFeatureHeader')} />
+      <ComposerSlashFeatureMenu
+        menu={slashFeatureMenu}
+        header={t('chat.composerSlashFeatureHeader')}
+      />
 
       <ComposerMentionMenu
         menu={mentionMenu}

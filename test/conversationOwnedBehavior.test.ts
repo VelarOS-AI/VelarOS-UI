@@ -7,7 +7,6 @@ import { resolveChatSurfaceComposerDensity } from '../src/conversation/composer/
 import {
   NoNextStepSuggestionHighlightIndex,
   resolveNextStepSuggestionHighlightIndex,
-  resolveNextStepSuggestionKeyboardAction,
 } from '../src/conversation/composer/hooks/nextStepSuggestionCompletion.pure'
 import { canClaimChatDraftInsertion } from '../src/conversation/composer/utils/chatDraftInsertion.utils'
 import { activateMarkdownTailMarker } from '../src/conversation/markdown/markdownTailMarker.utils'
@@ -346,44 +345,6 @@ void describe('Platform-owned conversation composer behavior', () => {
     assert.equal(
       resolveNextStepSuggestionHighlightIndex(NoNextStepSuggestionHighlightIndex, 0, 'down'),
       NoNextStepSuggestionHighlightIndex
-    )
-  })
-
-  void test('routes suggestion keyboard actions without React or DOM state', () => {
-    assert.deepEqual(
-      resolveNextStepSuggestionKeyboardAction(
-        'Escape',
-        NoNextStepSuggestionHighlightIndex,
-        3,
-        true,
-        true
-      ),
-      { kind: 'dismiss' }
-    )
-    assert.deepEqual(resolveNextStepSuggestionKeyboardAction('Enter', 1, 3, true, true), {
-      kind: 'submit',
-      index: 1,
-    })
-    assert.deepEqual(
-      resolveNextStepSuggestionKeyboardAction(
-        'ArrowUp',
-        NoNextStepSuggestionHighlightIndex,
-        3,
-        false,
-        true
-      ),
-      { kind: 'open', index: 2 }
-    )
-    assert.deepEqual(
-      resolveNextStepSuggestionKeyboardAction(
-        'Backspace',
-        NoNextStepSuggestionHighlightIndex,
-        3,
-        true,
-        true,
-        2
-      ),
-      { kind: 'remove-attachment', dismissWhenEmpty: false, index: 1 }
     )
   })
 

@@ -1,8 +1,5 @@
 // 从当前运行的消息块读取活动说明；阶段只作兜底，历史轨迹不能冒充正在执行的动作。
-import {
-  type ConversationTranslator,
-  conversationTranslatorRuntime,
-} from '../i18n/conversationTranslator'
+import { type ConversationTranslator } from '../i18n/conversationTranslator'
 import { getToolActivitySummary } from '../tool-render/toolCallSummary'
 
 import { type ChatStatusRuntime, getChatStatusMeta } from './chatStatus'
@@ -21,7 +18,7 @@ interface ChatLiveActivityOptions {
 
 export function readConversationLiveActivity(
   { runtime, message, waitMessage, locale, pathFormatter }: ChatLiveActivityOptions,
-  translator: ConversationTranslator = conversationTranslatorRuntime
+  translator: ConversationTranslator
 ): {
   liveTraceSummary: string
   hasStreamingThinkingBlock: boolean
