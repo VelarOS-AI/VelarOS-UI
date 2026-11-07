@@ -1,12 +1,9 @@
 import { memo, type ReactElement, type ReactNode } from 'react'
 
 import type { FileChangeSummaryListEntry } from '../cards/FileChangeSummaryList'
-import type { ConversationRewindPlan, ConversationTurnContextView } from '../projection'
+import type { ConversationRewindPlan } from '../projection'
 import { type BrowserScreenshotDisplayMode, useConversationRenderSlots } from '../render-slots'
-import type {
-  ChatInlineNoticeMeta,
-  ChatInlineNoticeRuntimeSource,
-} from '../status/chatStatus'
+import type { ChatInlineNoticeMeta, ChatInlineNoticeRuntimeSource } from '../status/chatStatus'
 
 import { AssistantMessageBubble } from './AssistantMessageBubble'
 import {
@@ -19,13 +16,7 @@ import type { RunCostEstimate } from './messageCostEstimate'
 import { SystemNoticeMessageRow } from './SystemNoticeMessageRow'
 import { UserMessageBubble } from './UserMessageBubble'
 
-import type {
-  ChatMessage,
-  ChatProviderId,
-  ConversationStepBlock,
-  ModelPricingCatalog,
-  ProjectRootEntry,
-} from '#contracts'
+import type { ChatMessage, ConversationStepBlock, ProjectRootEntry } from '#contracts'
 import { isSystemNoticeMessage } from '#contracts'
 import { isPresent } from '#internal/runtime'
 
@@ -42,20 +33,9 @@ interface MessageBubbleProps {
   inlineNotice?: LooseOptional<ChatInlineNoticeMeta>
   inlineNoticeRuntimeSource?: LooseOptional<ChatInlineNoticeRuntimeSource>
   showToolDetails?: boolean
-  /** @deprecated 工具调用不再有计划专属卡，计划序号不参与渲染；保留只为已发布宿主。 */
-  planUpdateIndexByToolCallId?: ReadonlyMap<string, number>
   activeProjectRoot?: LooseOptional<string>
   projectRoots?: ProjectRootEntry[]
   canShowFileChangeSummary?: boolean
-  /** @deprecated 约价改由 `runCostEstimate` 提供（按执行用量账计价）；保留只为已发布宿主。 */
-  billingModel?: LooseOptional<{
-    provider: ChatProviderId
-    model: string
-  }>
-  /** @deprecated 同 `billingModel`。 */
-  pricingCatalog?: LooseOptional<ModelPricingCatalog>
-  /** @deprecated 同 `billingModel`。 */
-  runtimeCostContexts?: ConversationTurnContextView[]
   /** 这次执行的约价（主 Agent 全部模型调用 + 子 Agent 运行）；缺席时回答末尾不显示金额。 */
   runCostEstimate?: LooseOptional<RunCostEstimate>
   goalCompletionSummary?: LooseOptional<GoalCompletionActivitySummary>
@@ -102,10 +82,7 @@ function areToolSlotRenderPropsEqual(
   prev: Readonly<MessageBubbleProps>,
   next: Readonly<MessageBubbleProps>
 ): boolean {
-  if (
-    !hasWorkerThreadAnchorBlock(prev.message) &&
-    !hasWorkerThreadAnchorBlock(next.message)
-  )
+  if (!hasWorkerThreadAnchorBlock(prev.message) && !hasWorkerThreadAnchorBlock(next.message))
     return true
 
   return prev.renderAfterStep === next.renderAfterStep
@@ -124,7 +101,8 @@ function MessageBubbleInner(props: MessageBubbleProps): Nullable<ReactElement> {
 }
 
 function renderMessageBubbleContent(props: MessageBubbleProps): ReactElement {
-  if (isSystemNoticeMessage(props.message) && !props.message.peerOrigin) return <SystemNoticeMessageRow message={props.message} />
+  if (isSystemNoticeMessage(props.message) && !props.message.peerOrigin)
+    return <SystemNoticeMessageRow message={props.message} />
 
   return props.message.role === 'user' ? (
     <UserMessageBubble

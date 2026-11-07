@@ -410,13 +410,7 @@ export interface ScriptExecutionBlock {
 
 /** 交互卡的种类：带选项的提问、表单、一句话的提问、确认、危险命令、登录墙、能力申请。 */
 export type InteractionKind =
-  | 'choice'
-  | 'form'
-  | 'input'
-  | 'confirm'
-  | 'danger'
-  | 'login'
-  | 'capability'
+  'choice' | 'form' | 'input' | 'confirm' | 'danger' | 'login' | 'capability'
 
 /** pending 等回答；answered 已回答或已批准；declined 跳过或拒绝；expired 运行结束前没答，不再有效。 */
 export type InteractionStatus = 'pending' | 'answered' | 'declined' | 'expired'
@@ -576,11 +570,7 @@ export interface TurnContextDelta {
 }
 
 export type ChatMessageConversationKind =
-  | 'turn-input'
-  | 'run-guidance'
-  | 'interaction-reply'
-  | 'system-notice'
-  | 'assistant-output'
+  'turn-input' | 'run-guidance' | 'interaction-reply' | 'system-notice' | 'assistant-output'
 
 export interface ChatMessage {
   id: string
@@ -676,15 +666,11 @@ export function isConversationTurnInputMessage(
   return resolveChatMessageConversationKind(message) === 'turn-input'
 }
 
-export function isRunGuidanceMessage(
-  message: ChatMessageConversationSemanticInput
-): boolean {
+export function isRunGuidanceMessage(message: ChatMessageConversationSemanticInput): boolean {
   return resolveChatMessageConversationKind(message) === 'run-guidance'
 }
 
-export function isSystemNoticeMessage(
-  message: ChatMessageConversationSemanticInput
-): boolean {
+export function isSystemNoticeMessage(message: ChatMessageConversationSemanticInput): boolean {
   return resolveChatMessageConversationKind(message) === 'system-notice'
 }
 
@@ -771,26 +757,6 @@ export type TeamExecutionPhase =
   | 'synthesizing'
   | 'waiting-confirmation'
   | 'completed'
-
-export interface StreamTurnContextPayload {
-  kind: 'turn-context'
-  turn: number
-  roleRuntimeModel: LooseOptional<{
-    provider: ChatProviderId
-    model: string
-    providerModel?: LooseOptional<string>
-    contextWindow?: LooseOptional<number>
-    resolutionSource: 'provider-pool' | 'chat-config'
-    resolutionTrace: Array<{
-      provider: ChatProviderId
-      model: string
-      providerModel?: LooseOptional<string>
-      status: 'selected' | 'skipped'
-      reason?: LooseOptional<string>
-    }>
-    fallbackReason?: LooseOptional<string>
-  }>
-}
 
 export interface WorkspaceTaskTarget {
   kind: 'session' | 'project' | 'browser-site' | 'system'

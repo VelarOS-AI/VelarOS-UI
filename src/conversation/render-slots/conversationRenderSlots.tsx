@@ -4,12 +4,7 @@ import type { FileChangeSummaryListEntry } from '../cards/FileChangeSummaryList'
 import type { ConversationRunMarkerView, UserActionResolution } from '../projection'
 import type { ConversationWorkerThread } from '../projection/conversationWorkerThread'
 
-import type {
-  ChatGoalLifecycleAction,
-  ChatMessage,
-  ContentBlock,
-  UserActionCard,
-} from '#contracts'
+import type { ChatGoalLifecycleAction, ChatMessage, ContentBlock, UserActionCard } from '#contracts'
 import type { GoalDockViewModel } from '#internal/goalLifecycle'
 
 /**
@@ -47,9 +42,6 @@ export type ConversationCardContent =
       onAction: (action: ChatGoalLifecycleAction) => Promise<boolean>
       onContinue: () => void | Promise<void>
     }
-
-/** @deprecated 仅供已发布的旧宿主完成跨版本升级；新代码使用 `ConversationCardContent`。 */
-export type ConversationStickyDockContent = ConversationCardContent
 
 /**
  * `messageMarkdown` 替换槽的 props。
@@ -131,8 +123,6 @@ export interface ConversationRenderSlots {
    * 会话卡片内容——见 `ConversationCardContent`。宿主渲染专属卡并处理其宿主耦合。
    */
   conversationCardContent: (content: ConversationCardContent) => Nullable<ReactElement>
-  /** @deprecated 旧宿主的 slot 名兼容入口；位置仍由新版会话壳决定。 */
-  stickyDockItemContent?: (content: ConversationCardContent) => Nullable<ReactElement>
   /**
    * 单消息渲染错误边界（pass-4 収口）——ChatTranscript 每条消息经此包裹。宿主实现 `RenderErrorBoundary` +
    * `ChatMessageRenderFailureAlert`（含 staleModuleRecovery 自愈耦合，留宿主）；缺注入时直接透传 children。
@@ -187,7 +177,6 @@ const defaultConversationRenderSlots: ConversationRenderSlots = {
   workerThreadPanel: () => null,
   messageFileChangeSummary: () => null,
   conversationCardContent: () => null,
-  stickyDockItemContent: () => null,
   renderMessageBoundary: ({ children }) => <>{children}</>,
 }
 
@@ -196,7 +185,7 @@ const defaultConversationRenderSlots: ConversationRenderSlots = {
  * Replacement slots remain absent unless a host explicitly supplies them.
  */
 export function createConversationRenderSlots(
-  overrides: Partial<ConversationRenderSlots> = {},
+  overrides: Partial<ConversationRenderSlots> = {}
 ): ConversationRenderSlots {
   return { ...defaultConversationRenderSlots, ...overrides }
 }

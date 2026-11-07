@@ -12,10 +12,7 @@ import {
   InteractionCard,
   MessageBubble,
 } from '@velaros-ai/ui/conversation'
-import {
-  ChatInput,
-  type ChatInputQueuedDraft,
-} from '@velaros-ai/ui/conversation/composer'
+import { ChatInput, type ChatInputQueuedDraft } from '@velaros-ai/ui/conversation/composer'
 import { Badge } from '@velaros-ai/ui/primitives/display/Badge'
 import { Inline } from '@velaros-ai/ui/primitives/layout/Inline'
 import { Stack } from '@velaros-ai/ui/primitives/layout/Stack'
@@ -145,11 +142,6 @@ export function ChatConversationMessageStatesExample(): ReactElement {
           message={completedAssistantMessage}
           sessionId="component-library-session"
           runMarker={completedMarker}
-          billingModel={{
-            provider: 'openai',
-            model: 'gpt-5.4',
-          }}
-          runtimeCostContexts={[]}
         />
         <MessageBubble
           message={streamingAssistantMessage}
@@ -172,42 +164,42 @@ export function ChatInputExample(): ReactElement {
 
   return (
     <div data-library-chat-composer>
-        <ChatInput
-          control={{
-            input: {
-              value,
-              placeholder: t('componentLibrary.chatExample.chatInputPlaceholder'),
-              onValueChange: setValue,
-              onSend: () => undefined,
-            },
-            attachments: {
-              files,
-              onFilesChange: setFiles,
-            },
-            features: {
-              availableFeatures: [
-                {
-                  id: 'browser',
-                  label: t('componentLibrary.chatExample.featureBrowserLabel'),
-                  description: t('componentLibrary.chatExample.featureBrowserDescription'),
-                },
-              ],
-              manualTestPrompts: [
-                {
-                  id: 'workspace-list',
-                  title: t('componentLibrary.chatExample.manualWorkspaceListTitle'),
-                  description: t('componentLibrary.chatExample.manualWorkspaceListDescription'),
-                  prompt: t('componentLibrary.chatExample.manualWorkspaceListPrompt'),
-                },
-              ],
-              onSelectedFeatureIdsChange: () => undefined,
-            },
-            streaming: {
-              onStop: () => undefined,
-            },
-          }}
-        />
-      </div>
+      <ChatInput
+        control={{
+          input: {
+            value,
+            placeholder: t('componentLibrary.chatExample.chatInputPlaceholder'),
+            onValueChange: setValue,
+            onSend: () => undefined,
+          },
+          attachments: {
+            files,
+            onFilesChange: setFiles,
+          },
+          features: {
+            availableFeatures: [
+              {
+                id: 'browser',
+                label: t('componentLibrary.chatExample.featureBrowserLabel'),
+                description: t('componentLibrary.chatExample.featureBrowserDescription'),
+              },
+            ],
+            manualTestPrompts: [
+              {
+                id: 'workspace-list',
+                title: t('componentLibrary.chatExample.manualWorkspaceListTitle'),
+                description: t('componentLibrary.chatExample.manualWorkspaceListDescription'),
+                prompt: t('componentLibrary.chatExample.manualWorkspaceListPrompt'),
+              },
+            ],
+            onSelectedFeatureIdsChange: () => undefined,
+          },
+          streaming: {
+            onStop: () => undefined,
+          },
+        }}
+      />
+    </div>
   )
 }
 
@@ -233,7 +225,9 @@ export function ChatGuidanceQueueExample(): ReactElement {
   }
 
   function updateQueuedDraft(id: string, value: string): void {
-    setQueuedDrafts((current) => current.map((item) => item.id === id ? { ...item, value } : item))
+    setQueuedDrafts((current) =>
+      current.map((item) => (item.id === id ? { ...item, value } : item))
+    )
   }
 
   function moveQueuedDraft(id: string, direction: 'up' | 'down'): void {
@@ -265,33 +259,33 @@ export function ChatGuidanceQueueExample(): ReactElement {
 
   return (
     <div data-library-chat-composer>
-        <ChatInput
-          control={{
-            input: {
-              value,
-              placeholder: t('componentLibrary.chatExample.chatInputPlaceholder'),
-              onValueChange: setValue,
-              onSend: queueInputDraft,
-            },
-            attachments: {
-              files: [],
-              onFilesChange: () => undefined,
-            },
-            queue: {
-              canEnqueue: true,
-              queuedDrafts,
-              onQueuedDraftMove: moveQueuedDraft,
-              onQueuedDraftRemove: removeQueuedDraft,
-              onQueuedDraftGuide: removeQueuedDraft,
-              onQueuedDraftUpdate: updateQueuedDraft,
-            },
-            streaming: {
-              isStreaming: true,
-              onStop: () => undefined,
-            },
-          }}
-        />
-      </div>
+      <ChatInput
+        control={{
+          input: {
+            value,
+            placeholder: t('componentLibrary.chatExample.chatInputPlaceholder'),
+            onValueChange: setValue,
+            onSend: queueInputDraft,
+          },
+          attachments: {
+            files: [],
+            onFilesChange: () => undefined,
+          },
+          queue: {
+            canEnqueue: true,
+            queuedDrafts,
+            onQueuedDraftMove: moveQueuedDraft,
+            onQueuedDraftRemove: removeQueuedDraft,
+            onQueuedDraftGuide: removeQueuedDraft,
+            onQueuedDraftUpdate: updateQueuedDraft,
+          },
+          streaming: {
+            isStreaming: true,
+            onStop: () => undefined,
+          },
+        }}
+      />
+    </div>
   )
 }
 
@@ -335,7 +329,11 @@ export function ChatInteractionCardsExample(): ReactElement {
             kind: 'choice',
             message: t('componentLibrary.chatExample.awaitingGenEntriesQuestion'),
             options: [
-              { id: 'yes', label: t('componentLibrary.chatExample.interactionContinue'), recommended: true },
+              {
+                id: 'yes',
+                label: t('componentLibrary.chatExample.interactionContinue'),
+                recommended: true,
+              },
               { id: 'no', label: t('componentLibrary.chatExample.interactionStop') },
             ],
             status: 'pending',

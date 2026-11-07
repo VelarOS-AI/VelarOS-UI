@@ -1,10 +1,6 @@
 import type { ConversationRunUsage } from './conversationRunUsage'
 
-import type {
-  ProjectCheckpointDiffFailure,
-  ProjectCheckpointFileDiff,
-  StreamTurnContextPayload,
-} from '#contracts'
+import type { ProjectCheckpointDiffFailure, ProjectCheckpointFileDiff } from '#contracts'
 
 /**
  * `ConversationRunMarkerView` — 消息运行标记的**渲染切片投影**（MessageStatusMarker / 气泡状态角标消费）。
@@ -13,11 +9,7 @@ import type {
  * （goalMode / workspaceCheckpointDiff / timestamp 等运行态字段留宿主）。status/turnKind 值域镜像宿主枚举。
  */
 export type ConversationRunMarkerStatus =
-  | 'completed'
-  | 'aborted'
-  | 'failed'
-  | 'awaiting-confirmation'
-  | 'awaiting-input'
+  'completed' | 'aborted' | 'failed' | 'awaiting-confirmation' | 'awaiting-input'
 
 export type ConversationRunMarkerTurnKind = 'turn' | 'totalTurns'
 
@@ -54,16 +46,4 @@ export interface ConversationMessageRunMarker extends ConversationRunMarkerView 
    */
   usage?: LooseOptional<ConversationRunUsage>
   timestamp: number
-}
-
-/**
- * `ConversationTurnContextView` — 回合上下文的**渲染切片投影**（成本估算 messageCostEstimate 消费）。
- *
- * §12.8：只承载成本估算读取的字段（turn/timestamp/roleRuntimeModel），不整桶宿主
- * `ChatTurnContextSnapshot`（systemPrompt / promptSegments / messages 等重字段留宿主）。
- */
-export interface ConversationTurnContextView {
-  turn: number
-  timestamp: number
-  roleRuntimeModel: StreamTurnContextPayload['roleRuntimeModel']
 }

@@ -5,22 +5,14 @@
  * 运行态模型。desktop 在边界处提供 `toConversation*` 装配器把权威源映射成投影；WS2 会话权威搬迁后换
  * 权威源接口，只动 desktop 边界映射，本层不动。
  */
-export type {
-  ConversationRewindFilePlan,
-  ConversationRewindPlan,
-} from './conversationRewindPlan'
+export type { ConversationRewindFilePlan, ConversationRewindPlan } from './conversationRewindPlan'
 export type {
   ConversationMessageRunMarker,
   ConversationRunMarkerStatus,
   ConversationRunMarkerTurnKind,
   ConversationRunMarkerView,
-  ConversationTurnContextView,
 } from './conversationRunMarkerView'
-export type {
-  ConversationCardItem,
-  ConversationRuntimeView,
-  ConversationStickyDockItem,
-} from './conversationRuntimeView'
+export type { ConversationCardItem, ConversationRuntimeView } from './conversationRuntimeView'
 export type {
   ConversationRunUsage,
   ConversationRunUsageBucket,

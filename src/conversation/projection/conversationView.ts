@@ -1,16 +1,8 @@
-import type {
-  ConversationMessageRunMarker,
-  ConversationTurnContextView,
-} from './conversationRunMarkerView'
+import type { ConversationMessageRunMarker } from './conversationRunMarkerView'
 import type { ConversationRuntimeView } from './conversationRuntimeView'
 import type { ConversationWorkerThread } from './conversationWorkerThread'
 
-import type {
-  ChatMessage,
-  ChatProviderId,
-  ModelPricingCatalog,
-  ProjectRootEntry,
-} from '#contracts'
+import type { ChatMessage, ChatProviderId, ModelPricingCatalog, ProjectRootEntry } from '#contracts'
 
 /**
  * `ConversationView` — 宿主 `ChatConversationState` 的**渲染切片投影**（会话壳 `ChatConversationPane`，
@@ -18,7 +10,7 @@ import type {
  *
  * §12.8「按域投影非整桶透传」：本投影只承载**渲染直接消费**的字段。运行态编排三字段（pass-4 収口补齐）
  * 走窄投影而非整桶宿主 `ChatRuntimeState`：`runtime` → `ConversationRuntimeView`（壳实际读取的运行态切片）、
- * `messageRunMarkers` → `ConversationMessageRunMarker[]`、`turnContexts` → `ConversationTurnContextView[]`。
+ * `messageRunMarkers` → `ConversationMessageRunMarker[]`。
  * `pricingCatalog` 从 shell 边界穿过（包件不直依宿主 ModelPricingContext）。desktop 边界 `build-ConversationView`
  * 从权威源装配本投影（宿主 `ChatConversationState` 结构可赋值），WS2 权威搬迁后只改边界映射。
  */
@@ -34,11 +26,6 @@ export interface ConversationView {
   messages: ChatMessage[]
   queuedMessages?: ChatMessage[]
   messageRunMarkers: ConversationMessageRunMarker[]
-  /**
-   * @deprecated 约价改由执行用量账计价（`usage-telemetry` 带着每次调用的真实模型），会话壳不再
-   * 读回合上下文；保留字段只为已发布宿主。
-   */
-  turnContexts?: ConversationTurnContextView[]
   workerThreads?: ConversationWorkerThread[]
   runtime: ConversationRuntimeView
   isStreaming: boolean

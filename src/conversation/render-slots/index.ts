@@ -4,7 +4,6 @@ export type {
   ConversationCodeBlockSlotProps,
   ConversationMarkdownSlotProps,
   ConversationRenderSlots,
-  ConversationStickyDockContent,
   ConversationWorkerThreadVariant,
 } from './conversationRenderSlots'
 export {

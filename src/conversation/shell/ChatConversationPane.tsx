@@ -455,10 +455,7 @@ export function ChatConversationPane({
   // 提示应由下方的独立提示气泡承载，出现在新输入之后。
   const inlineNoticeMessageId =
     activeAssistantMessageId ?? (hasTurnInputAfterLatestAssistant ? null : latestAssistantMessageId)
-  const conversationCards = useMemo(
-    () => runtime.conversationCards ?? runtime.stickyDockItems ?? [],
-    [runtime.conversationCards, runtime.stickyDockItems]
-  )
+  const conversationCards = runtime.conversationCards
   const inlineConversationCards = useMemo<ReactElement[]>(() => {
     const cards: ReactElement[] = []
 
@@ -637,130 +634,130 @@ export function ChatConversationPane({
   return (
     <InteractionAnswerProvider value={toNullable(answerInteraction)}>
       <ConversationViewMemoryProvider sessionId={sessionId}>
-      <ConversationScrollFollowProvider scrollRef={scrollRef}>
-        <section
-          className={cx('chatPane', variant === 'side' && 'chatPaneSide')}
-          data-tour-id="chat-conversation"
-          style={{ '--chat-input-dock-height': `${inputDockHeight}px` } as CSSProperties}
-        >
-          <div
-            key={stableConversationRefreshKey}
-            className={styles.conversationBody}
-            data-scroll-navigator-hidden={!!scrollNavigatorHidden}
+        <ConversationScrollFollowProvider scrollRef={scrollRef}>
+          <section
+            className={cx('chatPane', variant === 'side' && 'chatPaneSide')}
+            data-tour-id="chat-conversation"
+            style={{ '--chat-input-dock-height': `${inputDockHeight}px` } as CSSProperties}
           >
-            <ScrollArea
-              ref={scrollRef}
-              className={styles.messageList}
-              data-tour-id="chat-output"
-              aria-label={t('chat.messagesRegionAriaLabel')}
+            <div
+              key={stableConversationRefreshKey}
+              className={styles.conversationBody}
+              data-scroll-navigator-hidden={!!scrollNavigatorHidden}
             >
-              <Stack
-                className={cx('messageListInner', variant === 'side' && 'messageListInnerSide')}
-                gap="lg"
+              <ScrollArea
+                ref={scrollRef}
+                className={styles.messageList}
+                data-tour-id="chat-output"
+                aria-label={t('chat.messagesRegionAriaLabel')}
               >
-                {/* 向上翻页哨兵：窗口已在已加载顶端时，满屏前即触发从磁盘加载更旧消息 */}
-                {hasOlderMessages && isWindowAtLoadedTop && (
-                  <div ref={loadMoreSentinelRef} className={styles.loadMoreSentinel}>
-                    {isLoadingOlderMessages ? '...' : null}
-                  </div>
-                )}
-                <SessionStickyDock
-                  variant={variant}
-                  items={stickyDockItems}
-                  barLabel={t('sessionStickyDock.barLabel')}
-                  autoRevealKey={goalLifecycleRevealKey ?? activeDockPlanRevealKey}
-                  autoCollapseKey={goalLifecycleCollapseKey}
-                  spotlightItemIds={activeDockStatusSpotlightItemIds}
-                />
-                {!isEmpty(workerThreadPlacement.beforeTranscript)
-                  ? renderWorkerThreadPanel(workerThreadPlacement.beforeTranscript)
-                  : null}
-                <ChatTranscript
-                  messages={windowMessages}
-                  browserScreenshotDisplayMode={browserScreenshotDisplayMode}
-                  sessionId={sessionId}
-                  className={styles.messageSequence}
-                  getQuestionMessage={getTranscriptQuestionMessage}
-                  getIsStreaming={getTranscriptIsStreaming}
-                  getRunMarker={getTranscriptRunMarker}
-                  getInlineNotice={getTranscriptInlineNotice}
-                  inlineNoticeRuntimeSource={inlineNoticeRuntimeSource}
-                  showToolDetails
-                  activeProjectRoot={activeProjectRoot}
-                  projectRoots={projectRoots}
-                  canShowFileChangeSummary={supportsProjectFiles}
-                  getRunCostEstimate={getTranscriptRunCostEstimate}
-                  getGoalCompletionSummary={getTranscriptGoalCompletionSummary}
-                  renderActivityLeadingElement={renderWorkerThreadActivityLeading}
-                  renderAfterMessage={renderWorkerThreadsAfterUserMessage}
-                  renderAfterStep={renderWorkerThreadsAfterStep}
-                  onOpenBrowserLink={onOpenBrowserLink}
-                  onOpenFileChange={onOpenFileChange}
-                  onOpenProjectPath={onOpenProjectPath}
-                  onReviewFileChanges={onReviewFileChanges}
-                  onRewindToMessage={onRewindToMessage}
-                  onTranslateThinkingBlock={onTranslateThinkingBlock}
-                  canRewindToMessage={canRewindToMessage}
-                  getRewindPlan={getRewindPlan}
-                />
-                {inlineConversationCards}
-                {!!streamSlot && <div className={styles.streamSlot}>{streamSlot}</div>}
-                {!inlineNoticeMessageId && inlineNotice && (
-                  <MessageBubble
-                    message={RuntimeInlineNoticeMessage}
-                    sessionId={sessionId}
+                <Stack
+                  className={cx('messageListInner', variant === 'side' && 'messageListInnerSide')}
+                  gap="lg"
+                >
+                  {/* 向上翻页哨兵：窗口已在已加载顶端时，满屏前即触发从磁盘加载更旧消息 */}
+                  {hasOlderMessages && isWindowAtLoadedTop && (
+                    <div ref={loadMoreSentinelRef} className={styles.loadMoreSentinel}>
+                      {isLoadingOlderMessages ? '...' : null}
+                    </div>
+                  )}
+                  <SessionStickyDock
+                    variant={variant}
+                    items={stickyDockItems}
+                    barLabel={t('sessionStickyDock.barLabel')}
+                    autoRevealKey={goalLifecycleRevealKey ?? activeDockPlanRevealKey}
+                    autoCollapseKey={goalLifecycleCollapseKey}
+                    spotlightItemIds={activeDockStatusSpotlightItemIds}
+                  />
+                  {!isEmpty(workerThreadPlacement.beforeTranscript)
+                    ? renderWorkerThreadPanel(workerThreadPlacement.beforeTranscript)
+                    : null}
+                  <ChatTranscript
+                    messages={windowMessages}
                     browserScreenshotDisplayMode={browserScreenshotDisplayMode}
-                    inlineNotice={inlineNotice}
+                    sessionId={sessionId}
+                    className={styles.messageSequence}
+                    getQuestionMessage={getTranscriptQuestionMessage}
+                    getIsStreaming={getTranscriptIsStreaming}
+                    getRunMarker={getTranscriptRunMarker}
+                    getInlineNotice={getTranscriptInlineNotice}
                     inlineNoticeRuntimeSource={inlineNoticeRuntimeSource}
                     showToolDetails
                     activeProjectRoot={activeProjectRoot}
                     projectRoots={projectRoots}
                     canShowFileChangeSummary={supportsProjectFiles}
+                    getRunCostEstimate={getTranscriptRunCostEstimate}
+                    getGoalCompletionSummary={getTranscriptGoalCompletionSummary}
+                    renderActivityLeadingElement={renderWorkerThreadActivityLeading}
+                    renderAfterMessage={renderWorkerThreadsAfterUserMessage}
+                    renderAfterStep={renderWorkerThreadsAfterStep}
                     onOpenBrowserLink={onOpenBrowserLink}
                     onOpenFileChange={onOpenFileChange}
                     onOpenProjectPath={onOpenProjectPath}
                     onReviewFileChanges={onReviewFileChanges}
+                    onRewindToMessage={onRewindToMessage}
                     onTranslateThinkingBlock={onTranslateThinkingBlock}
+                    canRewindToMessage={canRewindToMessage}
+                    getRewindPlan={getRewindPlan}
                   />
-                )}
-                {isStreaming &&
-                  (!showThinkingProcess || !hasStreamingThinkingBlock) &&
-                  !inlineNotice && (
-                    <div className={styles.thinkingRow}>
-                      <div className={styles.thinkingText}>
-                        <span className={styles.thinkingDot} />
-                        <Paragraph spacing="none">
-                          {visibleRuntimeSummary ?? runningLabel}
-                        </Paragraph>
-                      </div>
-                    </div>
+                  {inlineConversationCards}
+                  {!!streamSlot && <div className={styles.streamSlot}>{streamSlot}</div>}
+                  {!inlineNoticeMessageId && inlineNotice && (
+                    <MessageBubble
+                      message={RuntimeInlineNoticeMessage}
+                      sessionId={sessionId}
+                      browserScreenshotDisplayMode={browserScreenshotDisplayMode}
+                      inlineNotice={inlineNotice}
+                      inlineNoticeRuntimeSource={inlineNoticeRuntimeSource}
+                      showToolDetails
+                      activeProjectRoot={activeProjectRoot}
+                      projectRoots={projectRoots}
+                      canShowFileChangeSummary={supportsProjectFiles}
+                      onOpenBrowserLink={onOpenBrowserLink}
+                      onOpenFileChange={onOpenFileChange}
+                      onOpenProjectPath={onOpenProjectPath}
+                      onReviewFileChanges={onReviewFileChanges}
+                      onTranslateThinkingBlock={onTranslateThinkingBlock}
+                    />
                   )}
-              </Stack>
-              {/* 夹底守卫占位：必须是滚动内容的最后一个元素，且在被 ResizeObserver 观测的内容栈之外，
+                  {isStreaming &&
+                    (!showThinkingProcess || !hasStreamingThinkingBlock) &&
+                    !inlineNotice && (
+                      <div className={styles.thinkingRow}>
+                        <div className={styles.thinkingText}>
+                          <span className={styles.thinkingDot} />
+                          <Paragraph spacing="none">
+                            {visibleRuntimeSummary ?? runningLabel}
+                          </Paragraph>
+                        </div>
+                      </div>
+                    )}
+                </Stack>
+                {/* 夹底守卫占位：必须是滚动内容的最后一个元素，且在被 ResizeObserver 观测的内容栈之外，
                   改高度不会再触发一轮尺寸回调。平时高度为 0。 */}
-              <div aria-hidden="true" className={styles.scrollClampGuard} />
-            </ScrollArea>
+                <div aria-hidden="true" className={styles.scrollClampGuard} />
+              </ScrollArea>
 
-            <ChatScrollNavigator
-              hidden={scrollNavigatorHidden}
-              followLocked={followLocked}
-              onFollowLockedChange={onFollowLockedChange}
-              scrollRef={scrollRef}
-              transcriptNavigationRef={transcriptNavigationRef}
-            />
-          </div>
-
-          <section
-            ref={inputDockRef}
-            className={styles.inputDock}
-            aria-label={t('chat.composerRegionAriaLabel')}
-          >
-            <div className={cx('inputDockInner', variant === 'side' && 'inputDockInnerSide')}>
-              <div className={styles.inputDockSurface}>{composer}</div>
+              <ChatScrollNavigator
+                hidden={scrollNavigatorHidden}
+                followLocked={followLocked}
+                onFollowLockedChange={onFollowLockedChange}
+                scrollRef={scrollRef}
+                transcriptNavigationRef={transcriptNavigationRef}
+              />
             </div>
+
+            <section
+              ref={inputDockRef}
+              className={styles.inputDock}
+              aria-label={t('chat.composerRegionAriaLabel')}
+            >
+              <div className={cx('inputDockInner', variant === 'side' && 'inputDockInnerSide')}>
+                <div className={styles.inputDockSurface}>{composer}</div>
+              </div>
+            </section>
           </section>
-        </section>
-      </ConversationScrollFollowProvider>
+        </ConversationScrollFollowProvider>
       </ConversationViewMemoryProvider>
     </InteractionAnswerProvider>
   )

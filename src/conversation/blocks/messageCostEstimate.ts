@@ -1,4 +1,4 @@
-import type { ConversationRunUsage, ConversationTurnContextView } from '../projection'
+import type { ConversationRunUsage } from '../projection'
 
 import { formatExactNumber } from './numberFormat'
 
@@ -6,13 +6,11 @@ import type {
   AppLocale,
   ChatContextUsageAccountingConfidence,
   ChatContextUsageAccountingSource,
-  ChatMessage,
   ChatProviderId,
   ModelPricingCatalog,
   StreamUsageTelemetryPayload,
 } from '#contracts'
-import { estimateContextUsage } from '#internal/contextUsage'
-import { isBlank, isEmpty, isFiniteNumber, isPresent } from '#internal/runtime'
+import { isEmpty, isFiniteNumber, isPresent } from '#internal/runtime'
 
 interface ModelTokenPrice {
   inputUsdPerMillion: number
@@ -36,11 +34,6 @@ interface UsageTokenCost {
   cachedInputPricedAtInputRate: boolean
 }
 
-export interface ResolvedCostModel {
-  provider: ChatProviderId
-  model: string
-}
-
 export interface MessageCostEstimate {
   usd: number
   inputTokens: number
@@ -49,7 +42,6 @@ export interface MessageCostEstimate {
 
 export interface SessionCostEstimate extends MessageCostEstimate {
   turnCount: number
-  isRuntimeBacked: boolean
   usageSource: ChatContextUsageAccountingSource
   confidence: ChatContextUsageAccountingConfidence
   hasUnpricedUsage: boolean
@@ -198,20 +190,6 @@ function resolveModelPrice(
   return null
 }
 
-function calculateTokenCost(
-  price: ModelTokenPrice,
-  inputTokens: number,
-  outputTokens: number
-): MessageCostEstimate {
-  return {
-    usd:
-      (inputTokens / 1_000_000) * price.inputUsdPerMillion +
-      (outputTokens / 1_000_000) * price.outputUsdPerMillion,
-    inputTokens,
-    outputTokens,
-  }
-}
-
 /**
  * 按 token 类别计价：缓存读 / 写从总输入里扣出来按各自单价算，其余输入按输入价，输出（含推理）
  * 按输出价。目录没给缓存价时缓存 token 按输入价计——宁可偏高也不把不知道的折扣当成已知，并如实
@@ -251,36 +229,14 @@ function readTelemetryOutputTokens(usage: StreamUsageTelemetryPayload): number {
   return visibleOutputTokens + reasoningTokens
 }
 
-function estimateTextTokens(model: string, role: 'user' | 'assistant', text: string): number {
-  if (isBlank(text.trim())) return 0
-
-  return estimateContextUsage(model, '', [{ role, content: text }]).estimatedTokens
-}
-
-function extractChatMessageText(message: ChatMessage): string {
-  const textBlocks: string[] = []
-
-  for (const block of message.blocks) {
-    if (block.type !== 'text') continue
-
-    const text = block.text.trimEnd()
-    if (isBlank(text)) continue
-
-    textBlocks.push(text)
-  }
-
-  return textBlocks.join('\n\n').trim()
-}
-
-function createEmptySessionCostEstimate(isRuntimeBacked: boolean): SessionCostEstimate {
+function createEmptySessionCostEstimate(): SessionCostEstimate {
   return {
     usd: 0,
     inputTokens: 0,
     outputTokens: 0,
     turnCount: 0,
-    isRuntimeBacked,
-    usageSource: isRuntimeBacked ? 'provider' : 'local-estimate',
-    confidence: isRuntimeBacked ? 'high' : 'low',
+    usageSource: 'provider',
+    confidence: 'high',
     hasUnpricedUsage: false,
   }
 }
@@ -292,86 +248,13 @@ function addCostEstimate(accumulator: SessionCostEstimate, estimate: MessageCost
   accumulator.turnCount += 1
 }
 
-export function resolveLatestRuntimeCostModel(input: {
-  provider: ChatProviderId
-  model: string
-  turnContexts: ConversationTurnContextView[]
-}): Nullable<ResolvedCostModel> {
-  let latest: Nullable<ResolvedCostModel & { timestamp: number; turn: number }> = null
-
-  for (const context of input.turnContexts) {
-    const runtimeModel = context.roleRuntimeModel
-    const provider = runtimeModel?.provider ?? input.provider
-    const model = (runtimeModel?.model ?? input.model).trim()
-    if (!model) continue
-    if (
-      latest &&
-      (context.turn < latest.turn ||
-        (context.turn === latest.turn && context.timestamp <= latest.timestamp))
-    )
-      continue
-
-    latest = {
-      provider,
-      model,
-      timestamp: context.timestamp,
-      turn: context.turn,
-    }
-  }
-
-  return latest ? { provider: latest.provider, model: latest.model } : null
-}
-
-function estimateVisibleSessionCost(input: {
-  provider: ChatProviderId
-  model: string
-  messages: ChatMessage[]
-  pricingCatalog?: LooseOptional<ModelPricingCatalog>
-}): Nullable<SessionCostEstimate> {
-  const model = input.model.trim()
-  const price = resolveModelPrice(input.pricingCatalog, input.provider, model)
-
-  if (!price) return null
-
-  const estimate = createEmptySessionCostEstimate(false)
-  let latestQuestion = ''
-
-  for (const message of input.messages) {
-    const text = extractChatMessageText(message)
-
-    if (message.role === 'user') {
-      latestQuestion = text
-      continue
-    }
-
-    if (message.role !== 'assistant' || isBlank(text)) continue
-
-    const inputTokens = estimateTextTokens(model, 'user', latestQuestion)
-    const outputTokens = estimateTextTokens(model, 'assistant', text)
-    addCostEstimate(estimate, calculateTokenCost(price, inputTokens, outputTokens))
-  }
-
-  return estimate.turnCount > 0 ? estimate : null
-}
-
 function estimateRuntimeTelemetryCost(input: {
-  provider: ChatProviderId
-  model: string
   pricingCatalog?: LooseOptional<ModelPricingCatalog>
   usageTelemetry: StreamUsageTelemetryPayload[]
-  turnContexts?: LooseOptional<ConversationTurnContextView[]>
 }): Nullable<SessionCostEstimate> {
   if (isEmpty(input.usageTelemetry)) return null
 
-  const runtimeCostModel =
-    input.turnContexts && !isEmpty(input.turnContexts)
-      ? resolveLatestRuntimeCostModel({
-          provider: input.provider,
-          model: input.model,
-          turnContexts: input.turnContexts,
-        })
-      : null
-  const estimate = createEmptySessionCostEstimate(true)
+  const estimate = createEmptySessionCostEstimate()
 
   for (const usage of input.usageTelemetry) {
     // 推理 token 按输出价计费：计价与展示都用含推理的全部输出，不能只数可见输出。
@@ -388,9 +271,9 @@ function estimateRuntimeTelemetryCost(input: {
       continue
     }
 
-    const provider = usage.provider ?? runtimeCostModel?.provider ?? input.provider
-    const model = (usage.model || runtimeCostModel?.model || input.model).trim()
-    const price = resolveModelPrice(input.pricingCatalog, provider, model)
+    const provider = usage.provider
+    const model = usage.model.trim()
+    const price = provider ? resolveModelPrice(input.pricingCatalog, provider, model) : null
     if (!isPresent(usage.inputTokens) && !isPresent(usage.outputTokens)) continue
     if (!price) {
       estimate.hasUnpricedUsage = true
@@ -505,90 +388,12 @@ export function areRunCostEstimatesEqual(
   )
 }
 
-/**
- * 只按可见问答文字估的价：不含每轮重发的上下文、工具参数与结果、推理 token、中间轮次和子 Agent，
- * 对 Agent 执行会低估几个数量级。
- *
- * @deprecated 回答末尾的约价改由执行用量账计价（`estimateRunCost`）；这里只为已发布宿主保留。
- */
-export function estimateMessageCost(input: {
-  provider: ChatProviderId
-  model: string
-  pricingCatalog?: LooseOptional<ModelPricingCatalog>
-  question: string
-  answer: string
-}): Nullable<MessageCostEstimate> {
-  const answer = input.answer.trim()
-  if (isBlank(answer)) return null
-
-  const model = input.model.trim()
-  const price = resolveModelPrice(input.pricingCatalog, input.provider, model)
-  if (!price) return null
-
-  const inputTokens = estimateTextTokens(model, 'user', input.question)
-  const outputTokens = estimateTextTokens(model, 'assistant', answer)
-  return calculateTokenCost(price, inputTokens, outputTokens)
-}
-
-/** @deprecated 同 {@link estimateMessageCost}：只按可见问答文字估，回答末尾的约价已改用 `estimateRunCost`。 */
-export function estimateAssistantMessageCost(input: {
-  provider: ChatProviderId
-  model: string
-  pricingCatalog?: LooseOptional<ModelPricingCatalog>
-  question: string
-  answer: string
-  turnContexts?: ConversationTurnContextView[]
-}): Nullable<MessageCostEstimate> {
-  const answer = input.answer.trim()
-  if (isBlank(answer)) return null
-
-  const runtimeCostModel =
-    input.turnContexts && !isEmpty(input.turnContexts)
-      ? resolveLatestRuntimeCostModel({
-          provider: input.provider,
-          model: input.model,
-          turnContexts: input.turnContexts,
-        })
-      : null
-
-  return estimateMessageCost({
-    ...input,
-    provider: runtimeCostModel?.provider ?? input.provider,
-    model: runtimeCostModel?.model ?? input.model,
-  })
-}
-
+/** 按每次请求实际记录的服务商、模型和用量估价；缺失身份不猜测。 */
 export function estimateSessionCost(input: {
-  provider: ChatProviderId
-  model: string
-  messages: ChatMessage[]
   pricingCatalog?: LooseOptional<ModelPricingCatalog>
-  turnContexts?: ConversationTurnContextView[]
-  usageTelemetry?: StreamUsageTelemetryPayload[]
+  usageTelemetry: StreamUsageTelemetryPayload[]
 }): Nullable<SessionCostEstimate> {
-  const runtimeEstimate = estimateRuntimeTelemetryCost({
-    provider: input.provider,
-    model: input.model,
-    pricingCatalog: input.pricingCatalog,
-    turnContexts: input.turnContexts,
-    usageTelemetry: input.usageTelemetry ?? [],
-  })
-  if (runtimeEstimate) return runtimeEstimate
-
-  const runtimeCostModel =
-    input.turnContexts && !isEmpty(input.turnContexts)
-      ? resolveLatestRuntimeCostModel({
-          provider: input.provider,
-          model: input.model,
-          turnContexts: input.turnContexts,
-        })
-      : null
-
-  return estimateVisibleSessionCost({
-    ...input,
-    provider: runtimeCostModel?.provider ?? input.provider,
-    model: runtimeCostModel?.model ?? input.model,
-  })
+  return estimateRuntimeTelemetryCost(input)
 }
 
 export function formatMessageCostEstimate(_locale: AppLocale, usd: number): string {

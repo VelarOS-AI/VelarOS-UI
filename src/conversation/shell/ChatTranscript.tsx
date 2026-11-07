@@ -4,18 +4,11 @@ import { MessageBubble } from '../blocks/MessageBubble'
 import { type GoalCompletionActivitySummary } from '../blocks/messageBubbleRenderModel'
 import type { RunCostEstimate } from '../blocks/messageCostEstimate'
 import type { FileChangeSummaryListEntry } from '../cards/FileChangeSummaryList'
-import type {
-  ConversationMessageRunMarker,
-  ConversationRunMarkerStatus,
-  ConversationTurnContextView,
-} from '../projection'
+import type { ConversationMessageRunMarker, ConversationRunMarkerStatus } from '../projection'
 import type { ConversationRewindPlan } from '../projection'
 import { type SectionMetric } from '../react-hooks/scrollBehavior'
 import type { BrowserScreenshotDisplayMode } from '../render-slots'
-import type {
-  ChatInlineNoticeMeta,
-  ChatInlineNoticeRuntimeSource,
-} from '../status/chatStatus'
+import type { ChatInlineNoticeMeta, ChatInlineNoticeRuntimeSource } from '../status/chatStatus'
 
 import {
   buildChatTranscriptMessagePresentations,
@@ -23,13 +16,7 @@ import {
 } from './chatTranscriptActivityGrouping'
 import { useStableHostCallback } from './useStableHostCallback'
 
-import type {
-  ChatMessage,
-  ChatProviderId,
-  ConversationStepBlock,
-  ModelPricingCatalog,
-  ProjectRootEntry,
-} from '#contracts'
+import type { ChatMessage, ConversationStepBlock, ProjectRootEntry } from '#contracts'
 import { isEmpty, toNullable } from '#internal/runtime'
 
 function markFirstChatTranscriptCommit(): void {
@@ -64,7 +51,10 @@ export function shouldForceGroupedActivityFlat(hasGroupedRunActivity: boolean): 
  * 收进别的消息活动里的片段按什么状态画：整轮还在跑时跟着直播平铺；整轮停了（展开「已处理」看）按它自己
  * 是否在流式画，写完的思考收成一行，跟承载整轮那条自己的活动一个样子。
  */
-export function isGroupedActivityMessageLive(groupRunning: boolean, messageStreaming: boolean): boolean {
+export function isGroupedActivityMessageLive(
+  groupRunning: boolean,
+  messageStreaming: boolean
+): boolean {
   return groupRunning || messageStreaming
 }
 
@@ -99,26 +89,15 @@ export interface ChatTranscriptProps {
   sessionId: string
   className?: string
   itemClassName?: string
-  /** @deprecated 约价改由 `getRunCostEstimate` 提供（按执行用量账计价）；保留只为已发布宿主。 */
-  pricingCatalog?: LooseOptional<ModelPricingCatalog>
   getQuestionMessage?: (message: ChatMessage) => Nullable<ChatMessage>
   getIsStreaming?: (message: ChatMessage) => boolean
   getRunMarker?: (message: ChatMessage) => Nullable<ConversationMessageRunMarker>
   getInlineNotice?: (message: ChatMessage) => Nullable<ChatInlineNoticeMeta>
   inlineNoticeRuntimeSource?: LooseOptional<ChatInlineNoticeRuntimeSource>
   showToolDetails?: boolean
-  /** @deprecated 工具调用不再有计划专属卡，计划序号不参与渲染；保留只为已发布宿主。 */
-  planUpdateIndexByToolCallId?: ReadonlyMap<string, number>
   activeProjectRoot?: LooseOptional<string>
   projectRoots?: ProjectRootEntry[]
   canShowFileChangeSummary?: boolean
-  /** @deprecated 约价改由 `getRunCostEstimate` 提供（按执行用量账计价）；保留只为已发布宿主。 */
-  billingModel?: LooseOptional<{
-    provider: ChatProviderId
-    model: string
-  }>
-  /** @deprecated 约价不再按回合上下文反推运行时模型；保留只为已发布宿主。 */
-  getRuntimeCostContexts?: (message: ChatMessage) => ConversationTurnContextView[]
   /**
    * 一次执行的约价（主 Agent 全部模型调用 + 子 Agent 运行），挂在承载运行标记的助手消息上；
    * 不传或返回 null 时回答末尾不显示金额。
@@ -259,7 +238,7 @@ function ChatTranscriptInner({
       ? ownInlineNotice?.tone === 'running'
         ? null
         : ownInlineNotice
-      : groupedRunningNotice ?? ownInlineNotice
+      : (groupedRunningNotice ?? ownInlineNotice)
     const groupedRunIsStreaming = [
       message,
       ...activityLeadingMessages,

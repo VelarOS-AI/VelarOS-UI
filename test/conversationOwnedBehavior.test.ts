@@ -16,17 +16,10 @@ import { getToolDetailSummary } from '../src/conversation/tool-render/toolCallSu
 void describe('Platform-owned conversation card placement', () => {
   void test('derives the sticky dock from Plan and Goal while rendering conversation cards inline', () => {
     const source = readFileSync(
-      new URL(
-        '../src/conversation/shell/ChatConversationPane.tsx',
-        import.meta.url
-      ),
+      new URL('../src/conversation/shell/ChatConversationPane.tsx', import.meta.url),
       'utf8'
     )
 
-    assert.match(
-      source,
-      /const conversationCards = useMemo\(\s*\(\) => runtime\.conversationCards \?\? runtime\.stickyDockItems \?\? \[\],\s*\[runtime\.conversationCards, runtime\.stickyDockItems\]\s*\)/u
-    )
     assert.match(source, /for \(const item of conversationCards\)/u)
     assert.match(source, /\{inlineConversationCards\}\s*\{!!streamSlot/u)
     assert.match(source, /if \(goalDockModel && goalLifecycleDockItemId\)/u)
@@ -83,10 +76,7 @@ void describe('Platform-owned conversation composer behavior', () => {
       'utf8'
     )
     const chipsSource = readFileSync(
-      new URL(
-        '../src/conversation/composer/ComposerActiveChipsBar.tsx',
-        import.meta.url
-      ),
+      new URL('../src/conversation/composer/ComposerActiveChipsBar.tsx', import.meta.url),
       'utf8'
     )
 
@@ -97,24 +87,15 @@ void describe('Platform-owned conversation composer behavior', () => {
 
   void test('keeps enabled composer toggle rows transparent until hover or keyboard focus', () => {
     const selectorSource = readFileSync(
-      new URL(
-        '../src/conversation/composer/ComposerModelRunSelector.tsx',
-        import.meta.url
-      ),
+      new URL('../src/conversation/composer/ComposerModelRunSelector.tsx', import.meta.url),
       'utf8'
     )
     const capabilitySource = readFileSync(
-      new URL(
-        '../src/conversation/composer/ComposerCapabilityControls.tsx',
-        import.meta.url
-      ),
+      new URL('../src/conversation/composer/ComposerCapabilityControls.tsx', import.meta.url),
       'utf8'
     )
     const menuStyles = readFileSync(
-      new URL(
-        '../src/styles/components/primitives/cascading-menu.css',
-        import.meta.url
-      ),
+      new URL('../src/styles/components/primitives/cascading-menu.css', import.meta.url),
       'utf8'
     )
 
@@ -130,10 +111,7 @@ void describe('Platform-owned conversation composer behavior', () => {
 
   void test('keeps the compact composer summary focused on the selected model', () => {
     const selectorSource = readFileSync(
-      new URL(
-        '../src/conversation/composer/ComposerModelRunSelector.tsx',
-        import.meta.url
-      ),
+      new URL('../src/conversation/composer/ComposerModelRunSelector.tsx', import.meta.url),
       'utf8'
     )
 
@@ -149,17 +127,11 @@ void describe('Platform-owned conversation composer behavior', () => {
 
   void test('keeps image attachment removal compact across Desktop and Workbench consumers', () => {
     const source = readFileSync(
-      new URL(
-        '../src/conversation/composer/ChatInputImageThumb.tsx',
-        import.meta.url
-      ),
+      new URL('../src/conversation/composer/ChatInputImageThumb.tsx', import.meta.url),
       'utf8'
     )
     const styles = readFileSync(
-      new URL(
-        '../src/conversation/composer/ChatInput.module.css',
-        import.meta.url
-      ),
+      new URL('../src/conversation/composer/ChatInput.module.css', import.meta.url),
       'utf8'
     )
     const imageThumbButtonStyles =
@@ -181,10 +153,7 @@ void describe('Platform-owned conversation composer behavior', () => {
 
   void test('renders sent image attachments without filename or size chrome', () => {
     const source = readFileSync(
-      new URL(
-        '../src/conversation/blocks/UserAttachmentGallery.tsx',
-        import.meta.url
-      ),
+      new URL('../src/conversation/blocks/UserAttachmentGallery.tsx', import.meta.url),
       'utf8'
     )
 
@@ -196,15 +165,12 @@ void describe('Platform-owned conversation composer behavior', () => {
 
   void test('keeps Latin table headers intact instead of breaking identifiers anywhere', () => {
     const styles = readFileSync(
-      new URL(
-        '../src/conversation/blocks/MessageBubble.module.css',
-        import.meta.url
-      ),
+      new URL('../src/conversation/blocks/MessageBubble.module.css', import.meta.url),
       'utf8'
     )
     const tableHeaderStyles =
-      styles.match(/\[data-streamdown='table-wrapper'\] th\s*\{(?<body>[^}]*)\}/su)?.groups?.body
-      ?? ''
+      styles.match(/\[data-streamdown='table-wrapper'\] th\s*\{(?<body>[^}]*)\}/su)?.groups?.body ??
+      ''
 
     assert.match(tableHeaderStyles, /overflow-wrap: normal;/u)
     assert.match(tableHeaderStyles, /word-break: normal;/u)
@@ -212,10 +178,7 @@ void describe('Platform-owned conversation composer behavior', () => {
 
   void test('keeps conversation tables at a 400px clipped preview until fully expanded', () => {
     const styles = readFileSync(
-      new URL(
-        '../src/conversation/blocks/MessageBubble.module.css',
-        import.meta.url
-      ),
+      new URL('../src/conversation/blocks/MessageBubble.module.css', import.meta.url),
       'utf8'
     )
     const collapsedTableViewportStyles =
@@ -238,17 +201,11 @@ void describe('Platform-owned conversation composer behavior', () => {
 
   void test('keeps code at a 400px clipped preview and expands the whole block in one click', () => {
     const styles = readFileSync(
-      new URL(
-        '../src/conversation/blocks/MessageBubble.module.css',
-        import.meta.url
-      ),
+      new URL('../src/conversation/blocks/MessageBubble.module.css', import.meta.url),
       'utf8'
     )
     const source = readFileSync(
-      new URL(
-        '../src/conversation/blocks/useMessageMarkdownComponents.tsx',
-        import.meta.url
-      ),
+      new URL('../src/conversation/blocks/useMessageMarkdownComponents.tsx', import.meta.url),
       'utf8'
     )
     const controlStyles = readFileSync(
@@ -256,9 +213,8 @@ void describe('Platform-owned conversation composer behavior', () => {
       'utf8'
     )
     const codeBodyStyles =
-      styles.match(
-        /& \[data-streamdown='code-block-body'\] \{(?<body>[\s\S]*?)\n {2}\}/u
-      )?.groups?.body ?? ''
+      styles.match(/& \[data-streamdown='code-block-body'\] \{(?<body>[\s\S]*?)\n {2}\}/u)?.groups
+        ?.body ?? ''
     const collapsedCodeStyles =
       styles.match(
         /\.expandableCodeBlock\[data-collapsed='true'\] \[data-streamdown='code-block-body'\] \{(?<body>[\s\S]*?)\n {2}\}/u
@@ -291,17 +247,11 @@ void describe('Platform-owned conversation composer behavior', () => {
 
   void test('keeps conversation rows, bubbles, cards, and detail tooltips within their surface', () => {
     const bubbleStyles = readFileSync(
-      new URL(
-        '../src/conversation/blocks/MessageBubble.module.css',
-        import.meta.url
-      ),
+      new URL('../src/conversation/blocks/MessageBubble.module.css', import.meta.url),
       'utf8'
     )
     const paneStyles = readFileSync(
-      new URL(
-        '../src/conversation/shell/ChatConversationPane.module.css',
-        import.meta.url
-      ),
+      new URL('../src/conversation/shell/ChatConversationPane.module.css', import.meta.url),
       'utf8'
     )
     const productStyles = readFileSync(
@@ -316,10 +266,7 @@ void describe('Platform-owned conversation composer behavior', () => {
       /\.userBubbleInner\s*\{[\s\S]*?max-w-full[\s\S]*?overflow-wrap: anywhere;[\s\S]*?word-break: break-word;/u
     )
     assert.match(paneStyles, /\.messageSequence\s*\{\s*@apply flex min-w-0 max-w-full/u)
-    assert.match(
-      paneStyles,
-      /\.messageListInnerSide\s*\{[\s\S]*?@apply max-w-none gap-3 px-4/u
-    )
+    assert.match(paneStyles, /\.messageListInnerSide\s*\{[\s\S]*?@apply max-w-none gap-3 px-4/u)
     // 侧边形态不留导航槽位（覆盖式），槽位只属于主聊天页的阅读栏留白。
     assert.match(
       paneStyles,
@@ -442,10 +389,7 @@ void describe('Platform-owned conversation composer behavior', () => {
 
   void test('keeps model and run menus fixed at the popover boundary', () => {
     const stylesheet = readFileSync(
-      new URL(
-        '../src/conversation/composer/ChatInput.module.css',
-        import.meta.url
-      ),
+      new URL('../src/conversation/composer/ChatInput.module.css', import.meta.url),
       'utf8'
     )
     const defaultMenu = stylesheet.match(
@@ -488,10 +432,7 @@ void describe('Platform-owned chat scroll navigator structure', () => {
 
   void test('owns the controlled header visibility toggle and freezes body remounts while active', () => {
     const toggle = readFileSync(
-      new URL(
-        '../src/conversation/shell/ChatScrollNavigatorVisibilityToggle.tsx',
-        import.meta.url
-      ),
+      new URL('../src/conversation/shell/ChatScrollNavigatorVisibilityToggle.tsx', import.meta.url),
       'utf8'
     )
     const pane = readFileSync(
@@ -536,10 +477,7 @@ void describe('Platform-owned chat scroll navigator structure', () => {
 
   void test('keeps the narrow navigator inset instead of collapsing over content', () => {
     const stylesheet = readFileSync(
-      new URL(
-        '../src/conversation/shell/ChatScrollNavigator.module.css',
-        import.meta.url
-      ),
+      new URL('../src/conversation/shell/ChatScrollNavigator.module.css', import.meta.url),
       'utf8'
     )
     assert.match(
@@ -556,15 +494,15 @@ void describe('Platform-owned chat scroll navigator structure', () => {
       'utf8'
     )
     const stylesheet = readFileSync(
-      new URL(
-        '../src/conversation/shell/ChatScrollNavigator.module.css',
-        import.meta.url
-      ),
+      new URL('../src/conversation/shell/ChatScrollNavigator.module.css', import.meta.url),
       'utf8'
     )
 
     const wheelHandlerStart = source.indexOf('const forwardWheelToTranscript')
-    const wheelHandlerEnd = source.indexOf('\n  if (hidden || !navState.visible)', wheelHandlerStart)
+    const wheelHandlerEnd = source.indexOf(
+      '\n  if (hidden || !navState.visible)',
+      wheelHandlerStart
+    )
     const wheelHandler = source.slice(wheelHandlerStart, wheelHandlerEnd)
     assert.ok(wheelHandlerStart >= 0)
     assert.ok(wheelHandlerEnd > wheelHandlerStart)

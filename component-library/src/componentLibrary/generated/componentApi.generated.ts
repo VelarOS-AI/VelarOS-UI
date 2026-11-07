@@ -1720,11 +1720,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "string"
     },
     {
-      "name": "ChatTranscript.pricingCatalog",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "LooseOptional<ModelPricingCatalog>"
-    },
-    {
       "name": "ChatTranscript.getQuestionMessage",
       "description": "Auto-generated from TypeScript props.",
       "type": "((message: ChatMessage) => Nullable<ChatMessage>)"
@@ -1755,11 +1750,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "boolean"
     },
     {
-      "name": "ChatTranscript.planUpdateIndexByToolCallId",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "ReadonlyMap<string, number>"
-    },
-    {
       "name": "ChatTranscript.activeProjectRoot",
       "description": "Auto-generated from TypeScript props.",
       "type": "LooseOptional<string>"
@@ -1773,16 +1763,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "name": "ChatTranscript.canShowFileChangeSummary",
       "description": "Auto-generated from TypeScript props.",
       "type": "boolean"
-    },
-    {
-      "name": "ChatTranscript.billingModel",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "LooseOptional<{ provider: ChatProviderId; model: string; }>"
-    },
-    {
-      "name": "ChatTranscript.getRuntimeCostContexts",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "((message: ChatMessage) => ConversationTurnContextView[])"
     },
     {
       "name": "ChatTranscript.getRunCostEstimate",
@@ -4244,11 +4224,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "type": "boolean"
     },
     {
-      "name": "MessageBubble.planUpdateIndexByToolCallId",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "ReadonlyMap<string, number>"
-    },
-    {
       "name": "MessageBubble.activeProjectRoot",
       "description": "Auto-generated from TypeScript props.",
       "type": "LooseOptional<string>"
@@ -4262,21 +4237,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "name": "MessageBubble.canShowFileChangeSummary",
       "description": "Auto-generated from TypeScript props.",
       "type": "boolean"
-    },
-    {
-      "name": "MessageBubble.billingModel",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "LooseOptional<{ provider: ChatProviderId; model: string; }>"
-    },
-    {
-      "name": "MessageBubble.pricingCatalog",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "LooseOptional<ModelPricingCatalog>"
-    },
-    {
-      "name": "MessageBubble.runtimeCostContexts",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "ConversationTurnContextView[]"
     },
     {
       "name": "MessageBubble.runCostEstimate",

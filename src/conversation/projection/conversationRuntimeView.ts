@@ -8,10 +8,7 @@ import type { StreamUsageTelemetryPayload, UserActionCard } from '#contracts'
  */
 export type ConversationCardItem =
   /** 宿主自有的会话转交建议卡：批准即建新会话，身份必须是声明式的，不能靠 id 前缀嗅。 */
-  | { kind: 'handoff-suggestion'; id: string; createdAt: number; card: UserActionCard }
-
-/** @deprecated 仅供已发布的旧宿主完成跨版本升级；新代码使用 `ConversationCardItem`。 */
-export type ConversationStickyDockItem = ConversationCardItem
+  { kind: 'handoff-suggestion'; id: string; createdAt: number; card: UserActionCard }
 
 /**
  * `ConversationRuntimeView` — 宿主 `ChatRuntimeState` 的**运行态渲染切片投影**（pass-4 会话壳収口）。
@@ -23,8 +20,6 @@ export type ConversationStickyDockItem = ConversationCardItem
  */
 export interface ConversationRuntimeView extends ChatStatusRuntime {
   conversationCards: ConversationCardItem[]
-  /** @deprecated 旧宿主的读取兼容镜像；会话壳不会据此决定卡片位置。 */
-  stickyDockItems?: ConversationCardItem[]
   awaitingConfirmationExecutionId: Nullable<string>
   awaitingConfirmationId?: LooseOptional<string>
   lastRunFinishedAt: Nullable<number>

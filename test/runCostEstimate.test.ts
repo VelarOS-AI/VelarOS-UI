@@ -128,7 +128,12 @@ void describe('run usage accounting', () => {
         reasoningTokens: 4_000,
         cachedInputTokens: 250_000,
       }),
-      telemetry({ turn: 2, inputTokens: 310_000, outputTokens: 1_000, cacheReadInputTokens: 300_000 }),
+      telemetry({
+        turn: 2,
+        inputTokens: 310_000,
+        outputTokens: 1_000,
+        cacheReadInputTokens: 300_000,
+      }),
     ])
 
     assert.equal(usage.buckets.length, 1)
@@ -223,11 +228,16 @@ void describe('run cost estimate', () => {
     assert.equal(estimate.coverage, 'complete')
     assert.equal(estimate.reasoningTokens, 115 * 600)
     assert.ok(Math.abs(estimate.usd - expectedUsd) < 1e-9)
-    assert.ok(estimate.usd > 50, `whole-run estimate should be tens of dollars, got ${estimate.usd}`)
+    assert.ok(
+      estimate.usd > 50,
+      `whole-run estimate should be tens of dollars, got ${estimate.usd}`
+    )
   })
 
   void test('prices cache reads at the catalog cache rate when the price list carries one', () => {
-    const usage = sumUsage([telemetry({ inputTokens: 1_000_000, outputTokens: 0, cacheReadInputTokens: 900_000 })])
+    const usage = sumUsage([
+      telemetry({ inputTokens: 1_000_000, outputTokens: 0, cacheReadInputTokens: 900_000 }),
+    ])
     const estimate = estimateRunCost({
       usage,
       ...GatewayBilling,
@@ -240,7 +250,9 @@ void describe('run cost estimate', () => {
   })
 
   void test('prices cache reads at the input rate and says so when the price list has no cache price', () => {
-    const usage = sumUsage([telemetry({ inputTokens: 1_000_000, outputTokens: 0, cacheReadInputTokens: 900_000 })])
+    const usage = sumUsage([
+      telemetry({ inputTokens: 1_000_000, outputTokens: 0, cacheReadInputTokens: 900_000 }),
+    ])
     const estimate = estimateRunCost({ usage, ...GatewayBilling, pricingCatalog: createCatalog() })
 
     assert.ok(estimate)
@@ -256,7 +268,12 @@ void describe('run cost estimate', () => {
     })
 
     assert.equal(
-      estimateRunCost({ usage, ...GatewayBilling, pricingCatalog: createCatalog(), expectedAgentCalls: 115 }),
+      estimateRunCost({
+        usage,
+        ...GatewayBilling,
+        pricingCatalog: createCatalog(),
+        expectedAgentCalls: 115,
+      }),
       null
     )
   })
@@ -309,11 +326,15 @@ void describe('run cost estimate', () => {
 void describe('session telemetry cost', () => {
   void test('bills reasoning tokens as output instead of only the visible part', () => {
     const estimate = estimateSessionCost({
-      ...GatewayBilling,
-      messages: [],
       pricingCatalog: createCatalog(),
       usageTelemetry: [
-        telemetry({ inputTokens: 0, outputTokens: 10_000, visibleOutputTokens: 1_000, reasoningTokens: 9_000 }),
+        telemetry({
+          provider: 'openai-compatible-gateway',
+          inputTokens: 0,
+          outputTokens: 10_000,
+          visibleOutputTokens: 1_000,
+          reasoningTokens: 9_000,
+        }),
       ],
     })
 
