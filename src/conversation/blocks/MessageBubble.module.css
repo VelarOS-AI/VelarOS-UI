@@ -6,7 +6,8 @@
 
   &.user {
     position: relative;
-    justify-content: flex-end;
+    flex-direction: column;
+    align-items: flex-end;
 
     &:hover,
     &:is(:focus-visible, :has(:focus-visible)) {
@@ -36,13 +37,16 @@
 .userCopySlot {
   @apply flex items-center gap-1.5 opacity-0 transition-all duration-150;
   position: absolute;
-  right: calc(100% + 10px);
+  right: 100%;
+  /* 透明留白与气泡相接，指针穿过可见间距时仍在当前消息的操作区域内。 */
+  padding-inline-end: 10px;
   bottom: 2px;
   pointer-events: none;
   transform: translateY(4px);
   z-index: 2;
   border-radius: 4px;
   background: var(--background);
+  background-clip: content-box;
 
   .userRow:hover &,
   .userRow:is(:focus-visible, :has(:focus-visible)) & {
@@ -223,8 +227,7 @@
 }
 
 /* 收起动画会继续挂载 body；只让真实展开项占满一行，避免连续标题在动画期间被挤成多行。 */
-.toolActivitySummaryRow
-  > .toolActivityDisclosure:has(> .toolActivityToggle[aria-expanded='true']) {
+.toolActivitySummaryRow > .toolActivityDisclosure:has(> .toolActivityToggle[aria-expanded='true']) {
   flex-basis: 100%;
   width: 100%;
   max-width: 100%;
@@ -436,23 +439,23 @@
   max-width: 100%;
 }
 
-:global(.velar-transcript-run-activity)
-  > :global([data-chat-run-activity-layout='inline']) {
+:global(.velar-transcript-run-activity) > :global([data-chat-run-activity-layout='inline']) {
   flex: 0 1 auto;
   width: auto;
   min-width: 0;
   max-width: 100%;
 }
 
-:global(.velar-transcript-run-activity)
-  > :global([data-chat-run-activity-layout='block']) {
+:global(.velar-transcript-run-activity) > :global([data-chat-run-activity-layout='block']) {
   flex: 1 0 100%;
   width: 100%;
   min-width: 0;
 }
 
 :global(.velar-transcript-run-activity)
-  > :global([data-chat-run-activity-layout='inline']):has(.toolActivityToggle[aria-expanded='true']) {
+  > :global([data-chat-run-activity-layout='inline']):has(
+    .toolActivityToggle[aria-expanded='true']
+  ) {
   flex-basis: 100%;
   width: 100%;
 }
@@ -685,14 +688,11 @@
 }
 
 .userMessageTimestamp {
-  position: absolute;
-  right: 0;
-  bottom: -14px;
   z-index: 2;
   border-radius: 3px;
   background: var(--background);
   height: 12px;
-  margin-top: 0;
+  margin-top: 2px;
   opacity: 0;
   pointer-events: none;
   transition:
@@ -700,8 +700,8 @@
     transform 150ms ease;
   transform: translateY(-2px);
 
-  .userRow:hover &,
-  .userRow:is(:focus-visible, :has(:focus-visible)) & {
+  .root.user:hover &,
+  .root.user:is(:focus-visible, :has(:focus-visible)) & {
     opacity: 1;
     transform: translateY(0);
   }
@@ -843,6 +843,11 @@
   margin: 0;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.userBubbleInner .textContent {
+  /* 用户正文的公开行高优先于通用 Paragraph 默认值，与样式导入顺序无关。 */
+  line-height: var(--chat-user-message-line-height, 1.5rem);
 }
 
 .markdownContent {
@@ -1400,14 +1405,12 @@
   }
 
   /* 与代码块折叠态同理：纵向裁切，不截断页面滚动链。 */
-  & [data-streamdown='table-wrapper'][data-collapsed='true']
-    > [data-conversation-table-viewport] {
+  & [data-streamdown='table-wrapper'][data-collapsed='true'] > [data-conversation-table-viewport] {
     max-height: 400px !important;
     overflow-y: hidden !important;
   }
 
-  & [data-streamdown='table-wrapper'][data-collapsed='false']
-    > [data-conversation-table-viewport] {
+  & [data-streamdown='table-wrapper'][data-collapsed='false'] > [data-conversation-table-viewport] {
     max-height: none !important;
     overflow-y: hidden !important;
     overscroll-behavior-x: contain;
@@ -1857,7 +1860,7 @@
   font-weight: 500;
 }
 
-/* 窄侧栏仅调整状态文案，操作与时间始终悬浮在气泡周围。 */
+/* 窄侧栏仅调整状态文案；时间在消息内正常占高，操作仍悬浮在气泡旁。 */
 @container chat-conversation-body (max-width: 520px) {
   .userRow {
     display: flex;

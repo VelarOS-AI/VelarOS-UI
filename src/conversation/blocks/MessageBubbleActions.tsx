@@ -20,14 +20,8 @@ import { useConversationI18n } from '../i18n'
 import type { ConversationRewindPlan } from '../projection'
 import { useChatToolRenderCapabilities } from '../tool-render/chatToolRenderCapabilitiesContext'
 
-import {
-  formatMessageDateTime,
-  formatMessageTime,
-} from './messageBubbleRenderModel'
-import {
-  type MessageClipboardContent,
-  writeMessageClipboardContent,
-} from './messageClipboard'
+import { formatMessageDateTime, formatMessageTime } from './messageBubbleRenderModel'
+import { type MessageClipboardContent, writeMessageClipboardContent } from './messageClipboard'
 import {
   describeRunCostEstimate,
   formatRunCostEstimateLabel,
@@ -120,7 +114,10 @@ export function MessageRewindButton({
       })
     } catch (error) {
       const appError = AppError.from(error)
-      log.error('回溯消息失败', { code: appError.code, error: appError.message })
+      log.error('回溯消息失败', {
+        code: appError.code,
+        error: appError.message,
+      })
       showNoticeLatest.current?.({
         title: tLatest.current('chat.rewindErrorTitle'),
         description: appError.message.trim() || tLatest.current('chat.rewindErrorFallback'),
@@ -178,12 +175,14 @@ export function MessageRewindButton({
               })}
             </DialogDescription>
           </DialogHeader>
-          {!!plan && <RewindFilePlanSection
-            plan={plan}
-            choice={fileChoice}
-            disabled={isRewinding || disabled}
-            onChoiceChange={setFileChoice}
-          />}
+          {!!plan && (
+            <RewindFilePlanSection
+              plan={plan}
+              choice={fileChoice}
+              disabled={isRewinding || disabled}
+              onChoiceChange={setFileChoice}
+            />
+          )}
           {/* 弹窗开着时会话被推成运行中：留着窗口但禁用确认，并说明为什么点不动。 */}
           {disabled && !isRewinding && (
             <p className={styles.rewindFileNotice}>{t('chat.rewindWhileActive')}</p>
@@ -257,13 +256,12 @@ function RewindFilePlanSection({
         {/* Radio 自身已经是一个 <label>，所以这里只能用 htmlFor 指过去，不能再套一层 label。
             点选项文字必须能切换：在一个不可撤销、会覆盖手改文件的确认框里，点了没反应会被读成
             「这个选项是坏的」，更糟的是用户以为已经选中而实际提交的仍是默认档。 */}
-        <label
-          htmlFor={`${groupId}-conversation-only`}
-          className={styles.rewindFileChoiceText}
-        >
+        <label htmlFor={`${groupId}-conversation-only`} className={styles.rewindFileChoiceText}>
           <span className={styles.rewindFileChoiceLabel}>{t('chat.rewindDialogKeepFiles')}</span>
           <span className={styles.rewindFileChoiceHint}>
-            {t('chat.rewindDialogKeepFilesHint', { files: files.changedFileCount })}
+            {t('chat.rewindDialogKeepFilesHint', {
+              files: files.changedFileCount,
+            })}
           </span>
         </label>
       </div>
@@ -304,7 +302,6 @@ export function MessageTimestamp({
   return (
     <time
       className={cx('messageTimestamp', variant === 'user' && 'userMessageTimestamp')}
-      data-chat-virtual-measure-overflow="true"
       dateTime={date.toISOString()}
       title={title}
     >
@@ -324,10 +321,7 @@ export function MessageCostEstimate({
   if (!estimate) return null
 
   return (
-    <span
-      className={styles.messageCostEstimate}
-      title={describeRunCostEstimate(locale, estimate)}
-    >
+    <span className={styles.messageCostEstimate} title={describeRunCostEstimate(locale, estimate)}>
       {formatRunCostEstimateLabel(locale, estimate)}
     </span>
   )

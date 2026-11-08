@@ -14,6 +14,9 @@
 与「store → props 投影 + 端口 / 插槽实现」的胶水。同一套件也能被任意第三方应用直接用——
 第三方只需要实现自己的会话存储、模型流与端口,**不需要引入 Kernel,也不需要实现任何 VelarOS 接口**。
 
+宿主可在会话容器或祖先设置 `--chat-user-message-line-height` 调整用户正文行高，默认 `1.5rem`。
+`--chat-message-gap` 调整消息容器的外层内容间距；默认主区为 `--ui-space-5`（20px），侧区为 `--ui-space-3`（12px）。
+
 ## 四条不可动摇的设计判决
 
 ### 1. 屏显节奏的唯一权威是 `ChatStreamPacer`

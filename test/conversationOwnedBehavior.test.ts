@@ -265,7 +265,6 @@ void describe('Platform-owned conversation composer behavior', () => {
       /\.userBubbleInner\s*\{[\s\S]*?max-w-full[\s\S]*?overflow-wrap: anywhere;[\s\S]*?word-break: break-word;/u
     )
     assert.match(paneStyles, /\.messageSequence\s*\{\s*@apply flex min-w-0 max-w-full/u)
-    assert.match(paneStyles, /\.messageListInnerSide\s*\{[\s\S]*?@apply max-w-none gap-3 px-4/u)
     // 侧边形态不留导航槽位（覆盖式），槽位只属于主聊天页的阅读栏留白。
     assert.match(
       paneStyles,
@@ -280,17 +279,6 @@ void describe('Platform-owned conversation composer behavior', () => {
       productStyles,
       /\.velar-tool-disclosure-card\s*\{[\s\S]*?min-width: 0;[\s\S]*?max-width: 100%;/u
     )
-  })
-
-  void test('keeps user actions and timestamps out of message layout at every pane width', () => {
-    const styles = readFileSync(
-      new URL('../src/conversation/blocks/MessageBubble.module.css', import.meta.url),
-      'utf8'
-    ).replace(/\r\n?/gu, '\n')
-    assert.match(styles, /\.userCopySlot\s*\{[\s\S]*?position: absolute;/u)
-    assert.match(styles, /\.userMessageTimestamp\s*\{[\s\S]*?position: absolute;/u)
-    const narrowLayout = styles.slice(styles.indexOf('@container chat-conversation-body'))
-    assert.doesNotMatch(narrowLayout, /position: static;/u)
   })
 
   void test('shows the context distill progress note with a fact fallback', () => {

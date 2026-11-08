@@ -458,7 +458,7 @@ void describe("reader-stable auto-collapse wiring", () => {
     );
     assert.match(
       pane,
-      /<\/Stack>\s*\{\/\*[\s\S]*?\*\/\}\s*<div aria-hidden="true" className=\{styles\.scrollClampGuard\} \/>\s*<\/ScrollArea>/u,
+      /<\/div>\s*\{\/\*[\s\S]*?\*\/\}\s*<div aria-hidden="true" className=\{styles\.scrollClampGuard\} \/>\s*<\/ScrollArea>/u,
     );
 
     const stylesheet = readSource(

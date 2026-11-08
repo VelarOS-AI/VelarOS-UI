@@ -10,25 +10,14 @@ import { useConversationI18n } from '../i18n'
 import type { ConversationRewindPlan } from '../projection'
 import { useImagePreviewDialogMessages } from '../react-hooks/useImagePreviewDialogMessages'
 
-import {
-  MessageCopyButton,
-  MessageRewindButton,
-  MessageTimestamp,
-} from './MessageBubbleActions'
-import {
-  buildPreviewItems,
-  extractMessageText,
-} from './messageBubbleRenderModel'
+import { MessageCopyButton, MessageRewindButton, MessageTimestamp } from './MessageBubbleActions'
+import { buildPreviewItems, extractMessageText } from './messageBubbleRenderModel'
 import { buildMessageClipboardContent } from './messageClipboard'
 import { UserAttachmentGallery } from './UserAttachmentGallery'
 
 import styles from './MessageBubble.module.css'
 
-import type {
-  ChatAttachmentMeta,
-  ChatMessage,
-  SerializedImageAttachment,
-} from '#contracts'
+import type { ChatAttachmentMeta, ChatMessage, SerializedImageAttachment } from '#contracts'
 import {
   isConversationTurnInputMessage,
   isRunGuidanceMessage,
@@ -97,7 +86,7 @@ function UserMessageBubbleInner({
   // 能不能回退由按钮内部按 disabled 处理：图标隐藏，但已打开的弹窗留着并禁用确认。
   const canShowRewindAction = isConversationTurnInputMessage(message) && !!onRewindToMessage
   const hasUserActions = canShowRewindAction || !isBlank(clipboardContent.plainText)
-  const guidanceStatus = isRunGuidance ? message.guidanceStatus ?? 'sent' : null
+  const guidanceStatus = isRunGuidance ? (message.guidanceStatus ?? 'sent') : null
   const guidanceLabel =
     guidanceStatus === 'awaiting-decision'
       ? t('chat.awaitingUserDecision')
@@ -105,13 +94,13 @@ function UserMessageBubbleInner({
         ? t('chat.guidingConversation')
         : guidanceStatus === 'accepted'
           ? t('chat.guidanceAccepted')
-        : guidanceStatus === 'applied'
-          ? t('chat.guidanceApplied')
-        : guidanceStatus === 'paused'
-          ? t('chat.guidancePaused')
-        : guidanceStatus === 'sent'
-          ? t('chat.guidedConversation')
-          : null
+          : guidanceStatus === 'applied'
+            ? t('chat.guidanceApplied')
+            : guidanceStatus === 'paused'
+              ? t('chat.guidancePaused')
+              : guidanceStatus === 'sent'
+                ? t('chat.guidedConversation')
+                : null
   // 同伴署名：这条 user 消息是同组另一条会话写的，不是用户本人。
   //
   // 与引导标签**互斥且优先**：一条消息不可能既是用户的运行中引导、又是同伴投来的，而万一两个
@@ -119,7 +108,9 @@ function UserMessageBubbleInner({
   // 作者是谁，再谈它是不是引导。
   const peerOrigin = message.peerOrigin
   const peerLabel = peerOrigin
-    ? t(peerOrigin.relation === 'parent' ? 'chat.parentMessageFrom' : 'chat.peerMessageFrom', { name: peerOrigin.title ?? peerOrigin.sessionId })
+    ? t(peerOrigin.relation === 'parent' ? 'chat.parentMessageFrom' : 'chat.peerMessageFrom', {
+        name: peerOrigin.title ?? peerOrigin.sessionId,
+      })
     : null
   const statusLabel = peerLabel ?? guidanceLabel
   const statusIcon = peerLabel ? (
@@ -169,7 +160,6 @@ function UserMessageBubbleInner({
               )}
             </div>
           )}
-          <MessageTimestamp timestamp={message.timestamp} locale={locale} variant="user" />
           <div className={styles.userBubbleInner}>
             <UserAttachmentGallery
               attachments={attachments}
@@ -234,6 +224,7 @@ function UserMessageBubbleInner({
           messages={imagePreviewMessages}
         />
       </div>
+      <MessageTimestamp timestamp={message.timestamp} locale={locale} variant="user" />
     </div>
   )
 }

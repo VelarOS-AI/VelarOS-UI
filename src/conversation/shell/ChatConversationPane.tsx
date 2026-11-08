@@ -15,7 +15,6 @@ import {
 import { SessionStickyDock, type SessionStickyDockItem, StyleUtils } from '@velaros-ai/ui'
 import { Paragraph } from '@velaros-ai/ui/primitives/display/Paragraph'
 import { ScrollArea } from '@velaros-ai/ui/primitives/layout/ScrollArea'
-import { Stack } from '@velaros-ai/ui/primitives/layout/Stack'
 
 import { useChatThinkingVisibility } from '../blocks/chatThinkingVisibility'
 import { MessageBubble } from '../blocks/MessageBubble'
@@ -365,7 +364,10 @@ export function ChatConversationPane({
     if (inlineNotice?.tone !== 'running' || presentationRuntime.status !== 'running') return null
 
     return isPresent(visibleRuntimeSummary)
-      ? { runtime: presentationRuntime, liveTraceSummary: visibleRuntimeSummary }
+      ? {
+          runtime: presentationRuntime,
+          liveTraceSummary: visibleRuntimeSummary,
+        }
       : { runtime: presentationRuntime }
   }, [inlineNotice?.tone, presentationRuntime, visibleRuntimeSummary])
   const {
@@ -638,7 +640,11 @@ export function ChatConversationPane({
           <section
             className={cx('chatPane', variant === 'side' && 'chatPaneSide')}
             data-tour-id="chat-conversation"
-            style={{ '--chat-input-dock-height': `${inputDockHeight}px` } as CSSProperties}
+            style={
+              {
+                '--chat-input-dock-height': `${inputDockHeight}px`,
+              } as CSSProperties
+            }
           >
             <div
               key={stableConversationRefreshKey}
@@ -651,9 +657,8 @@ export function ChatConversationPane({
                 data-tour-id="chat-output"
                 aria-label={t('chat.messagesRegionAriaLabel')}
               >
-                <Stack
+                <div
                   className={cx('messageListInner', variant === 'side' && 'messageListInnerSide')}
-                  gap="lg"
                 >
                   {/* 向上翻页哨兵：窗口已在已加载顶端时，满屏前即触发从磁盘加载更旧消息 */}
                   {hasOlderMessages && isWindowAtLoadedTop && (
@@ -732,7 +737,7 @@ export function ChatConversationPane({
                         </div>
                       </div>
                     )}
-                </Stack>
+                </div>
                 {/* 夹底守卫占位：必须是滚动内容的最后一个元素，且在被 ResizeObserver 观测的内容栈之外，
                   改高度不会再触发一轮尺寸回调。平时高度为 0。 */}
                 <div aria-hidden="true" className={styles.scrollClampGuard} />

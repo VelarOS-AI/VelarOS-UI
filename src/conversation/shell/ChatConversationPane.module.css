@@ -27,14 +27,17 @@
 }
 
 .messageListInner {
-  @apply mx-auto flex w-full min-w-0 max-w-[48rem] flex-col gap-5 px-4 pb-44 pt-6;
+  @apply mx-auto flex w-full min-w-0 max-w-[48rem] flex-col px-4 pb-44 pt-6;
+  /* 宿主的会话节奏可覆盖两种形态；未覆盖时保留主区与侧区各自的密度。 */
+  gap: var(--chat-message-gap, var(--ui-space-5));
   padding-bottom: max(11rem, calc(var(--chat-input-dock-height, 0px) + 0.75rem));
 }
 
 .messageListInnerSide {
   /* Match the markdown shadow gutter so its negative inline margin ends at the
      pane edge instead of creating a horizontal overflow range. */
-  @apply max-w-none gap-3 px-4 pb-36 pt-4;
+  @apply max-w-none px-4 pb-36 pt-4;
+  gap: var(--chat-message-gap, var(--ui-space-3));
   padding-bottom: max(9rem, calc(var(--chat-input-dock-height, 0px) + 0.75rem));
 }
 
