@@ -26,10 +26,7 @@ const textBlock: TextBlock = { type: 'text', text: 'hello **world**' }
 /** 增强槽全填空实现；替换槽按用例决定填不填——「不填」正是被验的那条路。 */
 function createSlots(overrides: Partial<ConversationRenderSlots>): ConversationRenderSlots {
   return {
-    browserScreenshotGroup: () => null,
     workerThreadPanel: () => null,
-    askUser: () => null,
-    userActionCard: () => null,
     messageFileChangeSummary: () => null,
     conversationCardContent: () => null,
     renderMessageBoundary: ({ children }) => createElement('div', null, children),

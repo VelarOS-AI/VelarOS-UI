@@ -180,8 +180,6 @@ void describe('browser rows', () => {
       target('browser:list_page_targets', {}, { targets: [{ title: '首页', active: true }, { title: '文档', active: false }] }),
       '首页'
     )
-    assert.equal(target('browser:capture_screenshot', { fullPage: true }, { url: page.url, relativePath: 'shots/1.png' }), page.url)
-    assert.equal(target('browser:capture_screenshot', { region: { selector: '#cart' } }), '#cart')
   })
 
   void test('browser:act reads like its operation, and the composite tools name their action and subject', () => {

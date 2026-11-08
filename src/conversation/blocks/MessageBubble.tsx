@@ -2,7 +2,7 @@ import { memo, type ReactElement, type ReactNode } from 'react'
 
 import type { FileChangeSummaryListEntry } from '../cards/FileChangeSummaryList'
 import type { ConversationRewindPlan } from '../projection'
-import { type BrowserScreenshotDisplayMode, useConversationRenderSlots } from '../render-slots'
+import { useConversationRenderSlots } from '../render-slots'
 import type { ChatInlineNoticeMeta, ChatInlineNoticeRuntimeSource } from '../status/chatStatus'
 
 import { AssistantMessageBubble } from './AssistantMessageBubble'
@@ -21,7 +21,6 @@ import { isSystemNoticeMessage } from '#contracts'
 import { isPresent } from '#internal/runtime'
 
 interface MessageBubbleProps {
-  browserScreenshotDisplayMode?: BrowserScreenshotDisplayMode
   message: ChatMessage
   sessionId: string
   questionMessage?: LooseOptional<ChatMessage>
@@ -114,7 +113,6 @@ function renderMessageBubbleContent(props: MessageBubbleProps): ReactElement {
   ) : (
     <AssistantMessageBubble
       message={props.message}
-      browserScreenshotDisplayMode={props.browserScreenshotDisplayMode}
       sessionId={props.sessionId}
       questionMessage={props.questionMessage}
       isStreaming={props.isStreaming}
@@ -147,7 +145,6 @@ function areMessageBubblePropsEqual(
 ): boolean {
   return (
     prev.message === next.message &&
-    prev.browserScreenshotDisplayMode === next.browserScreenshotDisplayMode &&
     prev.sessionId === next.sessionId &&
     prev.questionMessage === next.questionMessage &&
     prev.isStreaming === next.isStreaming &&

@@ -1,5 +1,4 @@
 export type {
-  BrowserScreenshotDisplayMode,
   ConversationCardContent,
   ConversationCodeBlockSlotProps,
   ConversationMarkdownSlotProps,

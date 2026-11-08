@@ -7,7 +7,6 @@ import type { FileChangeSummaryListEntry } from '../cards/FileChangeSummaryList'
 import type { ConversationMessageRunMarker, ConversationRunMarkerStatus } from '../projection'
 import type { ConversationRewindPlan } from '../projection'
 import { type SectionMetric } from '../react-hooks/scrollBehavior'
-import type { BrowserScreenshotDisplayMode } from '../render-slots'
 import type { ChatInlineNoticeMeta, ChatInlineNoticeRuntimeSource } from '../status/chatStatus'
 
 import {
@@ -83,7 +82,6 @@ export interface ChatTranscriptNavigationHandle {
 }
 
 export interface ChatTranscriptProps {
-  browserScreenshotDisplayMode?: BrowserScreenshotDisplayMode
   /** 已经过 useChatTranscriptWindow 切片的窗口消息，全量渲染。 */
   messages: ChatMessage[]
   sessionId: string
@@ -124,7 +122,6 @@ export interface ChatTranscriptProps {
 }
 
 function ChatTranscriptInner({
-  browserScreenshotDisplayMode = 'original',
   messages,
   sessionId,
   className,
@@ -293,7 +290,6 @@ function ChatTranscriptInner({
         {/* 消息级渲染兜底（宿主 RenderErrorBoundary）在 MessageBubble 里面、memo 之内：气泡不变时连边界一起跳过。 */}
         <MessageBubble
           message={message}
-          browserScreenshotDisplayMode={browserScreenshotDisplayMode}
           sessionId={sessionId}
           questionMessage={toNullable(getQuestionMessage?.(message))}
           isStreaming={

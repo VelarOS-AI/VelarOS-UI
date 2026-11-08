@@ -33,10 +33,6 @@ function buildModelImageSrc(image: Pick<ToolModelImage, 'data' | 'mediaType'>): 
   return image.data.startsWith('data:') ? image.data : `data:${image.mediaType};base64,${image.data}`
 }
 
-function isBrowserScreenshotBackedBlock(block: ToolCallBlockType): boolean {
-  return block.toolName === 'browser:capture_screenshot'
-}
-
 function readDisplayPath(block: ToolCallBlockType): Nullable<string> {
   const args = isRecord(block.args) ? block.args : null
   const result = isRecord(block.result) ? block.result : null
@@ -62,8 +58,6 @@ function readImageDescription(block: ToolCallBlockType): string {
 }
 
 function readToolModelImage(block: ToolCallBlockType): Nullable<ToolModelImage> {
-  if (isBrowserScreenshotBackedBlock(block)) return null
-
   const image = block.modelImage
   if (!image || isBlank(image.data)) return null
 

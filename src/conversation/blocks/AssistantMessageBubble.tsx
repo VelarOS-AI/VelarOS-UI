@@ -5,7 +5,6 @@ import { StyleUtils } from '@velaros-ai/ui'
 import type { FileChangeSummaryListEntry } from '../cards/FileChangeSummaryList'
 import { useConversationI18n } from '../i18n'
 import {
-  type BrowserScreenshotDisplayMode,
   useConversationRenderSlots,
 } from '../render-slots'
 import {
@@ -25,7 +24,6 @@ import {
   AssistantProviderArtifactGroup,
   hasVisibleAssistantProviderArtifacts,
 } from './AssistantProviderArtifactGroup'
-import { hasVisibleBrowserScreenshots } from './browserScreenshotPresence'
 import { useChatThinkingVisibility } from './chatThinkingVisibility'
 import { useConversationBlockHooks } from './conversationBlockHooks'
 import { InlineRuntimeNotice } from './InlineRuntimeNotice'
@@ -75,7 +73,6 @@ function createPlanAwareToolActivityExclusionPredicate(
 }
 
 export function AssistantMessageBubble({
-  browserScreenshotDisplayMode = 'original',
   message,
   sessionId,
   questionMessage = null,
@@ -100,7 +97,6 @@ export function AssistantMessageBubble({
   onReviewFileChanges,
   onTranslateThinkingBlock,
 }: {
-  browserScreenshotDisplayMode?: BrowserScreenshotDisplayMode
   message: ChatMessage
   sessionId: string
   questionMessage?: LooseOptional<ChatMessage>
@@ -197,10 +193,6 @@ export function AssistantMessageBubble({
     showThinkingProcess,
     showToolDetails,
   ])
-  const hasBrowserScreenshotGroup = useMemo(
-    () => hasVisibleBrowserScreenshots(visibleBlocks),
-    [visibleBlocks]
-  )
   const hasToolModelImageGroup = useMemo(
     () => hasVisibleToolModelImages(visibleBlocks),
     [visibleBlocks]
@@ -212,15 +204,6 @@ export function AssistantMessageBubble({
   const slots = useConversationRenderSlots()
   const messageArtifactActivityTrailingElement = useMemo(() => {
     const elements: ReactElement[] = []
-
-    if (hasBrowserScreenshotGroup) {
-      const browserScreenshotElement = slots.browserScreenshotGroup({
-        blocks: visibleBlocks,
-        displayMode: browserScreenshotDisplayMode,
-        sessionId,
-      })
-      if (browserScreenshotElement) elements.push(browserScreenshotElement)
-    }
 
     if (hasToolModelImageGroup) {
       elements.push(<ToolModelImageGroup key="tool-model-images" blocks={visibleBlocks} />)
@@ -238,13 +221,9 @@ export function AssistantMessageBubble({
 
     return isEmpty(elements) ? null : <>{elements}</>
   }, [
-    browserScreenshotDisplayMode,
-    hasBrowserScreenshotGroup,
     hasProviderArtifactGroup,
     hasToolModelImageGroup,
     onOpenBrowserLink,
-    sessionId,
-    slots,
     visibleBlocks,
   ])
   const showInlineNotice =

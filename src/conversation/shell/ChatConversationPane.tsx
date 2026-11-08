@@ -28,7 +28,7 @@ import type { ConversationView, ConversationWorkerThread } from '../projection'
 import type { ConversationRewindPlan } from '../projection'
 import { ConversationScrollFollowProvider } from '../react-hooks/conversationScrollFollow'
 import { ConversationViewMemoryProvider } from '../react-hooks/conversationViewMemory'
-import { type BrowserScreenshotDisplayMode, useConversationRenderSlots } from '../render-slots'
+import { useConversationRenderSlots } from '../render-slots'
 import { getChatInlineNoticeMeta } from '../status/chatStatus'
 import {
   getPlanToolBlockSignature,
@@ -95,7 +95,6 @@ const LazyPlanToolRender = lazy(async () =>
 )
 
 export interface ChatConversationPaneProps {
-  browserScreenshotDisplayMode?: BrowserScreenshotDisplayMode
   conversation: ConversationView
   /** 对话代际刷新键：仅用于 remount 消息区，避免连带卸载输入区（如分支面板）。 */
   conversationRefreshKey?: string | number
@@ -134,7 +133,6 @@ export interface ChatConversationPaneProps {
 }
 
 export function ChatConversationPane({
-  browserScreenshotDisplayMode = 'original',
   conversation,
   conversationRefreshKey,
   composer,
@@ -679,7 +677,6 @@ export function ChatConversationPane({
                     : null}
                   <ChatTranscript
                     messages={windowMessages}
-                    browserScreenshotDisplayMode={browserScreenshotDisplayMode}
                     sessionId={sessionId}
                     className={styles.messageSequence}
                     getQuestionMessage={getTranscriptQuestionMessage}
@@ -711,7 +708,6 @@ export function ChatConversationPane({
                     <MessageBubble
                       message={RuntimeInlineNoticeMessage}
                       sessionId={sessionId}
-                      browserScreenshotDisplayMode={browserScreenshotDisplayMode}
                       inlineNotice={inlineNotice}
                       inlineNoticeRuntimeSource={inlineNoticeRuntimeSource}
                       showToolDetails

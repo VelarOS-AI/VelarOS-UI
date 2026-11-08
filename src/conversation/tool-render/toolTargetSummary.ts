@@ -712,18 +712,6 @@ function readObserveActions({ args, result }: TargetReadContext): Nullable<ToolT
   )
 }
 
-function readScreenshot(context: TargetReadContext): Nullable<ToolTargetSummary> {
-  const { args, result } = context
-  const region = asRecord(args.region)
-  return toSummary(
-    clipText(readString(args, 'selector')) ??
-      clipText(readString(region ?? {}, 'selector')) ??
-      describeCoordinates(region ?? args) ??
-      clipText(result?.url),
-    [readFirstString(result?.relativePath, result?.path), describeSize(result)]
-  )
-}
-
 function readSelectorTarget({ args }: TargetReadContext): Nullable<ToolTargetSummary> {
   return toSummary(clipText(args.selector))
 }
@@ -916,7 +904,6 @@ const ToolTargetReaders: Readonly<Record<string, ToolTargetReader>> = {
   'browser:list_page_targets': readPageTargets,
   'browser:switch_page_target': readSwitchPageTarget,
   'browser:observe_actions': readObserveActions,
-  'browser:capture_screenshot': readScreenshot,
   'browser:query_elements': readSelectorTarget,
   'browser:get_page_diagnostics': readDiagnosticsFilter,
   'browser:get_network_request': readNetworkRequest,

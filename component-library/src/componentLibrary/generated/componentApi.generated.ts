@@ -1166,12 +1166,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
   ],
   ChatConversationPane: [
     {
-      "name": "ChatConversationPane.browserScreenshotDisplayMode",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "BrowserScreenshotDisplayMode",
-      "defaultValue": "'original'"
-    },
-    {
       "name": "ChatConversationPane.conversation",
       "description": "Auto-generated from TypeScript props.",
       "type": "ConversationView",
@@ -1697,11 +1691,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
     }
   ],
   ChatTranscript: [
-    {
-      "name": "ChatTranscript.browserScreenshotDisplayMode",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "BrowserScreenshotDisplayMode"
-    },
     {
       "name": "ChatTranscript.messages",
       "description": "已经过 useChatTranscriptWindow 切片的窗口消息，全量渲染。",
@@ -4136,11 +4125,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
     }
   ],
   MessageBubble: [
-    {
-      "name": "MessageBubble.browserScreenshotDisplayMode",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "BrowserScreenshotDisplayMode"
-    },
     {
       "name": "MessageBubble.message",
       "description": "Auto-generated from TypeScript props.",

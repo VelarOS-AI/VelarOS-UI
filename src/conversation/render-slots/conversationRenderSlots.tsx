@@ -4,7 +4,7 @@ import type { FileChangeSummaryListEntry } from '../cards/FileChangeSummaryList'
 import type { ConversationRunMarkerView, UserActionResolution } from '../projection'
 import type { ConversationWorkerThread } from '../projection/conversationWorkerThread'
 
-import type { ChatGoalLifecycleAction, ChatMessage, ContentBlock, UserActionCard } from '#contracts'
+import type { ChatGoalLifecycleAction, ChatMessage, UserActionCard } from '#contracts'
 import type { GoalDockViewModel } from '#internal/goalLifecycle'
 
 /**
@@ -84,7 +84,7 @@ export interface ConversationCodeBlockSlotProps {
  * 会话渲染 render-slot 契约（§12.9 封闭）：**有限具名集合**，非任意 children 洞。
  *
  * 管线组件（`MessageContentBlock` / `AssistantMessageBubble`）不硬 import 宿主专属的黑名单卡件
- * （浏览器截图组 / worker 线程面板 / 消息文件变更汇总），而是经此注入面消费——每个 slot
+ * （worker 线程面板 / 消息文件变更汇总），而是经此注入面消费——每个 slot
  * 是一个具名、带类型 props 的渲染函数。宿主在装配点提供实现（`desktopConversationRenderSlots`）。
  * 缺注入时各 slot 默认渲染 `null`（这些卡是渲染增强，缺失即不显示，不影响正文），宿主装配后即生效。
  *
@@ -95,11 +95,6 @@ export interface ConversationCodeBlockSlotProps {
  *   而这两格空白掉的是消息正文本身。可选性就是那道机械防线：不写它 = 官方实现。
  */
 export interface ConversationRenderSlots {
-  browserScreenshotGroup: (props: {
-    blocks: ContentBlock[]
-    displayMode: BrowserScreenshotDisplayMode
-    sessionId: string
-  }) => Nullable<ReactElement>
   workerThreadPanel: (props: {
     threads: ConversationWorkerThread[]
     sessionId: string
@@ -161,9 +156,6 @@ export interface ConversationRenderSlots {
   runningRuntimeMark?: (props: { sessionId: string }) => Nullable<ReactElement>
 }
 
-/** 浏览器截图组展示模式（渲染侧单源，desktop 组件消费此定义）。 */
-export type BrowserScreenshotDisplayMode = 'original' | 'model-debug'
-
 export type ConversationWorkerThreadVariant = 'default' | 'side'
 
 /**
@@ -173,7 +165,6 @@ export type ConversationWorkerThreadVariant = 'default' | 'side'
  * 等于把「没人替换」写成「替换成空白」，正文会整块消失。缺席就是缺席，由调用点判 `undefined` 走官方件。
  */
 const defaultConversationRenderSlots: ConversationRenderSlots = {
-  browserScreenshotGroup: () => null,
   workerThreadPanel: () => null,
   messageFileChangeSummary: () => null,
   conversationCardContent: () => null,
