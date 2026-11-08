@@ -856,8 +856,6 @@ export interface ProjectRootEntry {
   path: string
   active: boolean
   exists: boolean
-  removable: boolean
-  source: 'project'
 }
 
 export interface ProjectBackgroundProcessInfo {
