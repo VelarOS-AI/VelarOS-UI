@@ -182,7 +182,6 @@ export interface ToolCallBlock {
   categoryId?: ToolCategoryId
   result?: unknown
   serializedResult?: string
-  resultStoredInWorkspace?: boolean
   error?: string
   isRunning?: boolean
   startedAt?: number
@@ -213,7 +212,6 @@ export interface AssistantGeneratedFileBlock {
   data?: string
   size: number
   filename?: string
-  storedInWorkspace?: boolean
 }
 
 export interface AssistantSourceBlock {
@@ -611,7 +609,6 @@ export interface ChatMessage {
       serializedResult?: string
     }>
   }
-  serializedStoredInWorkspace?: boolean
   /**
    * 系统通知（`conversationKind: 'system-notice'`）是哪一类宿主留痕，只决定通知行的图标；缺省是会话回溯。
    * `goal-continuation` = 目标还在进行中，宿主替用户接着开了一轮。
