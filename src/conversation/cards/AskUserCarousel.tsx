@@ -1,4 +1,4 @@
-import { type ReactElement, useState } from 'react'
+import { type KeyboardEvent, type ReactElement, useState } from 'react'
 import { CaretLeftIcon, CaretRightIcon, PaperPlaneTiltIcon } from '@phosphor-icons/react'
 
 import { StyleUtils } from '@velaros-ai/ui'
@@ -36,7 +36,10 @@ export interface AskUserDraft {
   text: string
 }
 
-export const EmptyAskUserDraft: AskUserDraft = Object.freeze({ choices: [], text: '' })
+export const EmptyAskUserDraft: AskUserDraft = Object.freeze({
+  choices: [],
+  text: '',
+})
 
 /** 选了至少一项，或者写了字，就算答过这道题。 */
 export function isAskUserDraftAnswered(draft: LooseOptional<AskUserDraft>): boolean {
@@ -48,7 +51,9 @@ export function canSendAskUserDrafts(
   questions: readonly AskUserQuestion[],
   drafts: Readonly<Record<string, AskUserDraft>>
 ): boolean {
-  return questions.every((question) => !question.required || isAskUserDraftAnswered(drafts[question.id]))
+  return questions.every(
+    (question) => !question.required || isAskUserDraftAnswered(drafts[question.id])
+  )
 }
 
 /**
@@ -90,12 +95,36 @@ export function AskUserCarousel({
   const toggleOption = (id: string): void => {
     const selected = draft.choices.includes(id)
     if (question?.multiple)
-      update({ choices: selected ? draft.choices.filter((item) => item !== id) : [...draft.choices, id] })
+      update({
+        choices: selected ? draft.choices.filter((item) => item !== id) : [...draft.choices, id],
+      })
     else update({ choices: selected ? [] : [id] })
   }
 
   const goPrev = (): void => setPageIndex(Math.max(0, safeIndex - 1))
   const goNext = (): void => setPageIndex(Math.min(questions.length - 1, safeIndex + 1))
+
+  // 输入法确认上屏可能已经结束 composing，229 仍表示这次回车不能触发操作。
+  const handleInputKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
+    if (
+      event.defaultPrevented ||
+      event.nativeEvent.isComposing ||
+      event.keyCode === 229 ||
+      event.repeat ||
+      event.key !== 'Enter' ||
+      event.shiftKey ||
+      event.ctrlKey ||
+      event.altKey ||
+      event.metaKey ||
+      locked ||
+      (isLast && sendDisabled)
+    )
+      return
+
+    event.preventDefault()
+    if (isLast) onSend?.()
+    else goNext()
+  }
 
   return (
     <div className={styles.cardFrame}>
@@ -132,7 +161,9 @@ export function AskUserCarousel({
               <span className={styles.wizardQuestion}>{question.label}</span>
               {!!question.options && (
                 <span className={styles.wizardQuestionTag}>
-                  {question.multiple ? t('userActionForm.wizardMulti') : t('userActionForm.wizardSingle')}
+                  {question.multiple
+                    ? t('userActionForm.wizardMulti')
+                    : t('userActionForm.wizardSingle')}
                 </span>
               )}
               {/* 多道题里才分必答与选答；只有一道题时它就是要答的那道 */}
@@ -153,7 +184,9 @@ export function AskUserCarousel({
                       aria-pressed={selected}
                       onClick={() => toggleOption(option.id)}
                     >
-                      <span className={styles.optionLetter}>{String.fromCharCode(65 + optionIndex)}</span>
+                      <span className={styles.optionLetter}>
+                        {String.fromCharCode(65 + optionIndex)}
+                      </span>
                       <span className={styles.optionBody}>
                         <span className={styles.optionButtonHeader}>
                           <span className={styles.optionButtonLabel}>{option.label}</span>
@@ -185,6 +218,7 @@ export function AskUserCarousel({
             value={draft.text}
             placeholder={question.placeholder}
             onChange={(event) => update({ text: event.currentTarget.value })}
+            onKeyDown={handleInputKeyDown}
           />
         )}
 
@@ -214,7 +248,12 @@ export function AskUserCarousel({
             )}
 
             {!isLast ? (
-              <Button size="sm" variant="ghost" className={styles.actionTextButton} onClick={goNext}>
+              <Button
+                size="sm"
+                variant="ghost"
+                className={styles.actionTextButton}
+                onClick={goNext}
+              >
                 {t('userActionForm.wizardNext')}
                 <span className={styles.actionTextButtonIcon} aria-hidden="true">
                   <CaretRightIcon size={15} weight="bold" />
