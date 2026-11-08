@@ -106,9 +106,12 @@ export function classifyChatStreamEvent(event: ChatStreamEvent): ChatStreamPacer
   if (isSmoothDrainTerminalEvent(event)) return { kind: 'terminal' }
   if (shouldApplyStreamEventImmediately(event)) return { kind: 'immediate' }
   if (event.type === 'reasoning')
-    return { kind: 'reasoning', id: event.payload.id, text: event.payload.text }
+    return {
+      kind: 'reasoning',
+      id: event.payload.id,
+      text: event.payload.text,
+    }
   if (isToolEvent(event)) return { kind: 'tool', toolCallId: event.payload.toolCallId }
-  if (event.type === 'worker-thread') return { kind: 'structural', batchKey: 'worker-thread' }
   return { kind: 'structural' }
 }
 
@@ -334,7 +337,7 @@ export class ChatStreamPacer<TEvent = ChatStreamEvent> {
       return
     }
 
-    // 带 batchKey 的相邻同键事件（worker-thread）并进同一块，同一帧里一起应用。
+    // 宿主分类器给出 batchKey 时，相邻同键结构事件在同一帧里一起应用。
     if (eventClass.batchKey) {
       const batchKey = `batch:${eventClass.batchKey}`
       const last = state.blocks.at(-1)

@@ -758,54 +758,6 @@ export type TeamExecutionPhase =
   | 'waiting-confirmation'
   | 'completed'
 
-export interface WorkspaceTaskTarget {
-  kind: 'session' | 'project' | 'browser-site' | 'system'
-  rootPath?: LooseOptional<string>
-  browserUrl?: LooseOptional<string>
-  browserSessionId?: LooseOptional<string>
-}
-
-export interface PlanTaskDagContract {
-  inputs: string[]
-  expectedOutputs: string[]
-  dependencies: string[]
-  artifactSchema: string
-  summaryPrompt: string
-  nodeId: string
-  dependencySummaries: Array<{
-    nodeId: string
-    summary: string
-  }>
-  latestSummary?: LooseOptional<string>
-}
-
-export interface StreamWorkerThreadPayload {
-  kind: 'worker-thread'
-  event: 'started' | 'status' | 'delta' | 'chat-event' | 'output' | 'completed' | 'failed'
-  threadId: string
-  activationId?: LooseOptional<string>
-  taskId?: LooseOptional<string>
-  nodeId?: LooseOptional<string>
-  title: string
-  agentName?: LooseOptional<string>
-  roleId?: LooseOptional<AgentRoleId>
-  phase?: LooseOptional<TeamExecutionPhase>
-  status?: LooseOptional<ExecutionTaskStatus>
-  workspaceTarget?: LooseOptional<WorkspaceTaskTarget>
-  dag?: LooseOptional<PlanTaskDagContract>
-  timestamp: number
-  input?: LooseOptional<string>
-  text?: LooseOptional<string>
-  summary?: LooseOptional<string>
-  error?: LooseOptional<string>
-  chatEvent?: LooseOptional<unknown>
-  subagentType?: LooseOptional<string>
-  customAgentName?: LooseOptional<string>
-  mode?: LooseOptional<'sync' | 'async'>
-  model?: LooseOptional<string>
-  result?: LooseOptional<unknown>
-}
-
 export interface ChatStreamReasoningEvent {
   type: 'reasoning'
   payload: { id: string; text: string }
@@ -845,7 +797,6 @@ export type ChatStreamEvent =
         modelImage?: { data: string; mediaType: 'image/png' | 'image/jpeg' }
       }
     }
-  | { type: 'worker-thread'; payload: StreamWorkerThreadPayload }
   | { type: 'state'; payload: { kind: string } }
   | { type: 'debug'; payload: { kind: string } }
   | { type: 'notice'; kind: string; payload: unknown }

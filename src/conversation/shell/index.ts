@@ -31,9 +31,7 @@ export { createConversationScrollPositionStore } from './conversationScrollPosit
 export { useQueuedLiveStatusText } from './useQueuedLiveStatusText'
 export type { WorkerThreadTranscriptPlacement } from './workerThreadTimeline.pure'
 export {
-  findWorkerThreadReplacementForDispatchPlaceholder,
   groupWorkerThreadsByTranscriptAnchor,
   isSameWorkerThreadPlacement,
-  listWorkerThreadsForTranscriptStage,
   listWorkerThreadsFromTranscriptPlacement,
 } from './workerThreadTimeline.pure'

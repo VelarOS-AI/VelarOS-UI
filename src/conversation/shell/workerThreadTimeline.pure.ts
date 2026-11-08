@@ -2,50 +2,25 @@ import type { ConversationWorkerThread } from '../projection'
 
 import type { ChatMessage } from '#contracts'
 import { isConversationTurnInputMessage } from '#contracts'
-import { isFiniteNumber } from '#internal/runtime'
-import { isArray, isEmpty, isRecord, isString, toNullable } from '#internal/runtime'
+import { toNullable } from '#internal/runtime'
 
-type ToolCallBlock = Extract<ChatMessage['blocks'][number], { type: 'tool-call' }>
-
-interface WorkerThreadTimestampAnchor {
+interface WorkerThreadMessageAnchor {
   timestamp: number
   order: number
-}
-
-interface WorkerThreadMessageAnchor extends WorkerThreadTimestampAnchor {
   messageId: string
   role: ChatMessage['role']
   isTurnInput: boolean
 }
 
-interface WorkerThreadDispatchAnchor extends WorkerThreadTimestampAnchor {
-  toolCallId: string
-  threadIds: ReadonlySet<string>
-  /**
-   * 派发参数里的任务说明。运行中的调用还没有结果，拿不到线程 id；派发器在线程事件里原样带着
-   * 这段说明（线程的 `input`），靠它把线程认回自己的那次调用。
-   */
-  prompt: Nullable<string>
-}
-
-interface PendingDispatchPlaceholder {
-  toolCallId: string
-  thread: ConversationWorkerThread
-}
-
 interface WorkerThreadTranscriptAnchorIndex {
-  /** 对话里的脚本卡：线程写明了派发它的卡时直接挂过去。 */
   scriptIds: ReadonlySet<string>
   messageAnchors: WorkerThreadMessageAnchor[]
-  dispatchAnchors: WorkerThreadDispatchAnchor[]
-  dispatchAnchorsByThreadId: Map<string, WorkerThreadDispatchAnchor[]>
-  pendingDispatchPlaceholders: PendingDispatchPlaceholder[]
 }
 
 export interface WorkerThreadTranscriptPlacement {
   beforeTranscript: ConversationWorkerThread[]
   afterMessageId: Map<string, ConversationWorkerThread[]>
-  /** 挂在某一步后面的线程，按那一步的身份：工具调用是 toolCallId，脚本卡是块 id。 */
+  /** 按派发脚本卡的稳定身份挂载线程。 */
   afterStepId: Map<string, ConversationWorkerThread[]>
 }
 
@@ -54,214 +29,39 @@ function sortWorkerThreadsByStartTime(
 ): ConversationWorkerThread[] {
   return [...threads].sort((left, right) => {
     const timestampDelta = left.startedAt - right.startedAt
-
-    if (timestampDelta !== 0) return timestampDelta
-
-    return left.threadId.localeCompare(right.threadId)
+    return timestampDelta !== 0 ? timestampDelta : left.threadId.localeCompare(right.threadId)
   })
 }
 
-function readFiniteTimestamp(value: unknown): Nullable<number> {
-  return isFiniteNumber(value) ? value : null
-}
-
-/** 去掉首尾空白后的非空文本：线程 id 与任务说明都按这个口径比（派发 schema 会 trim 任务说明）。 */
-function readNonBlankText(value: unknown): Nullable<string> {
-  if (!isString(value)) return null
-
-  const text = value.trim()
-
-  return isEmpty(text) ? null : text
-}
-
-function truncateDispatchTitle(value: string): string {
-  return value.length > 80 ? `${value.slice(0, 77).trimEnd()}...` : value
-}
-
-function readDispatchArg(args: Record<string, unknown>, key: string): Nullable<string> {
-  return readNonBlankText(args[key])
-}
-
-function readDispatchMode(value: unknown): Nullable<ConversationWorkerThread['mode']> {
-  return value === 'async' || value === 'sync' ? value : null
-}
-
-/**
- * 乐观占位按工具块缓存：流式输出时同一条消息里别的块在变，派发块对象本身不变；占位也就沿用
- * 同一个对象，整份落位才能与上一份判等（见 {@link isSameWorkerThreadPlacement}）。
- */
-const PendingDispatchThreads = new WeakMap<ToolCallBlock, ConversationWorkerThread>()
-
-function createPendingWorkerThreadFromDispatchToolCall(
-  message: ChatMessage,
-  block: ToolCallBlock
-): Nullable<ConversationWorkerThread> {
-  if (block.toolName !== 'agent:dispatch' || !block.isRunning) return null
-
-  const cached = PendingDispatchThreads.get(block)
-  if (cached) return cached
-  const thread = buildPendingWorkerThread(message, block)
-  PendingDispatchThreads.set(block, thread)
-  return thread
-}
-
-function buildPendingWorkerThread(
-  message: ChatMessage,
-  block: ToolCallBlock
-): ConversationWorkerThread {
-  const args = isRecord(block.args) ? block.args : {}
-  const prompt = readDispatchArg(args, 'prompt')
-  const description = readDispatchArg(args, 'description')
-  const title = truncateDispatchTitle(description ?? prompt ?? 'Sub-agent run')
-  const startedAt = readFiniteTimestamp(block.startedAt) ?? message.timestamp
-
-  return {
-    threadId: readDispatchArg(args, 'thread_id') ?? `dispatch:${block.toolCallId}`,
-    taskId: null,
-    nodeId: null,
-    title,
-    agentName: readDispatchArg(args, 'agent_name'),
-    roleId: null,
-    phase: null,
-    status: 'pending',
-    workspaceTarget: null,
-    dag: null,
-    subagentType: readDispatchArg(args, 'subagent_type'),
-    // 由 dispatch tool-call 参数重建的乐观线程还没有后端注入的展示名。
-    customAgentName: null,
-    mode: readDispatchMode(args.mode),
-    model: readDispatchArg(args, 'model'),
-    startedAt,
-    updatedAt: startedAt,
-    input: toNullable(prompt ?? description),
-    output: null,
-    summary: title,
-    error: null,
-    messages: [],
-  }
-}
-
-function collectThreadIdsFromString(value: string, threadIds: Set<string>): void {
-  const trimmed = value.trim()
-  if (isEmpty(trimmed)) return
-
-  const openMarker = '<subagent-result type="application/json">'
-  const closeMarker = '</subagent-result>'
-  let cursor = 0
-  while (cursor < trimmed.length) {
-    const open = trimmed.indexOf(openMarker, cursor)
-    if (open < 0) break
-    const bodyStart = open + openMarker.length
-    const close = trimmed.indexOf(closeMarker, bodyStart)
-    if (close < 0) break
-    const body = trimmed.slice(bodyStart, close).trim()
-    cursor = close + closeMarker.length
-    if (!body) continue
-
-    try {
-      collectThreadIdsFromValue(JSON.parse(body), threadIds)
-    } catch {
-      // arch-guard:silent-catch-ok 历史工具载荷损坏时保留时间戳回退，不让旧记录击穿时间线。
+function createWorkerThreadTranscriptAnchorIndex(
+  messages: readonly ChatMessage[]
+): WorkerThreadTranscriptAnchorIndex {
+  const scriptIds = new Set<string>()
+  const messageAnchors = messages.map((message, order): WorkerThreadMessageAnchor => {
+    for (const block of message.blocks)
+      if (block.type === 'script-execution') scriptIds.add(block.id)
+    return {
+      messageId: message.id,
+      role: message.role,
+      isTurnInput: isConversationTurnInputMessage(message),
+      timestamp: message.timestamp,
+      order,
     }
-  }
-
-  if (trimmed[0] !== '{' && trimmed[0] !== '[') return
-
-  try {
-    collectThreadIdsFromValue(JSON.parse(trimmed), threadIds)
-  } catch {
-    // arch-guard:silent-catch-ok 普通文本摘要不是 JSON，按文本路径继续处理。
-  }
-}
-
-function collectThreadIdsFromRecord(value: Record<string, unknown>, threadIds: Set<string>): void {
-  const directThreadId =
-    readNonBlankText(value.thread_id) ??
-    readNonBlankText(value.threadId) ??
-    readNonBlankText(value.worker_thread_id) ??
-    readNonBlankText(value.workerThreadId)
-  if (directThreadId) {
-    threadIds.add(directThreadId)
-  }
-
-  for (const directListKey of ['thread_ids', 'threadIds', 'worker_thread_ids', 'workerThreadIds']) {
-    const directListValue = value[directListKey]
-
-    if (!isArray(directListValue)) continue
-
-    directListValue.forEach((item) => {
-      const threadId = readNonBlankText(item)
-
-      if (threadId) threadIds.add(threadId)
-    })
-  }
-
-  for (const nestedKey of [
-    'result',
-    'data',
-    'payload',
-    'threads',
-    'workerThread',
-    'workerThreads',
-    'worker_thread',
-    'worker_threads',
-    'subagents',
-    'agents',
-  ]) {
-    if (nestedKey in value) {
-      collectThreadIdsFromValue(value[nestedKey], threadIds)
-    }
-  }
-}
-
-function collectThreadIdsFromValue(value: unknown, threadIds: Set<string>): void {
-  if (isString(value)) {
-    collectThreadIdsFromString(value, threadIds)
-    return
-  }
-
-  if (isArray(value)) {
-    value.forEach((item) => collectThreadIdsFromValue(item, threadIds))
-    return
-  }
-
-  if (isRecord(value)) {
-    collectThreadIdsFromRecord(value, threadIds)
-  }
-}
-
-function getDispatchAgentThreadIds(block: ToolCallBlock): Set<string> {
-  const threadIds = new Set<string>()
-
-  collectThreadIdsFromValue(block.args, threadIds)
-  collectThreadIdsFromValue(block.result, threadIds)
-  collectThreadIdsFromValue(block.serializedResult, threadIds)
-
-  return threadIds
-}
-
-function sortTimestampAnchors<T extends WorkerThreadTimestampAnchor>(anchors: readonly T[]): T[] {
-  return [...anchors].sort((left, right) => {
-    const timestampDelta = left.timestamp - right.timestamp
-
-    return timestampDelta !== 0 ? timestampDelta : left.order - right.order
   })
+  messageAnchors.sort((left, right) => left.timestamp - right.timestamp || left.order - right.order)
+  return { scriptIds, messageAnchors }
 }
 
-function findAnchorAtOrBefore<T extends WorkerThreadTimestampAnchor>(
-  anchors: readonly T[],
+function findAnchorAtOrBefore(
+  anchors: readonly WorkerThreadMessageAnchor[],
   timestamp: number
-): Nullable<T> {
+): Nullable<WorkerThreadMessageAnchor> {
   let low = 0
   let high = anchors.length - 1
-  let anchor: Nullable<T> = null
-
+  let anchor: Nullable<WorkerThreadMessageAnchor> = null
   while (low <= high) {
     const middle = Math.floor((low + high) / 2)
-    const middleAnchor = anchors[middle]
-
-    if (!middleAnchor) break
-
+    const middleAnchor = anchors[middle]!
     if (middleAnchor.timestamp <= timestamp) {
       anchor = middleAnchor
       low = middle + 1
@@ -269,168 +69,7 @@ function findAnchorAtOrBefore<T extends WorkerThreadTimestampAnchor>(
       high = middle - 1
     }
   }
-
   return anchor
-}
-
-function findAnchorAfter<T extends WorkerThreadTimestampAnchor>(
-  anchors: readonly T[],
-  timestamp: number
-): Nullable<T> {
-  let low = 0
-  let high = anchors.length - 1
-  let anchor: Nullable<T> = null
-
-  while (low <= high) {
-    const middle = Math.floor((low + high) / 2)
-    const middleAnchor = anchors[middle]
-
-    if (!middleAnchor) break
-
-    if (middleAnchor.timestamp > timestamp) {
-      anchor = middleAnchor
-      high = middle - 1
-    } else {
-      low = middle + 1
-    }
-  }
-
-  return anchor
-}
-
-function findNearestTranscriptAnchor<T extends WorkerThreadTimestampAnchor>(
-  anchors: readonly T[],
-  timestamp: number
-): Nullable<T> {
-  return findAnchorAtOrBefore(anchors, timestamp) ?? findAnchorAfter(anchors, timestamp)
-}
-
-function createWorkerThreadTranscriptAnchorIndex(
-  messages: readonly ChatMessage[]
-): WorkerThreadTranscriptAnchorIndex {
-  const scriptIds = new Set<string>()
-  const messageAnchors: WorkerThreadMessageAnchor[] = []
-  const dispatchAnchors: WorkerThreadDispatchAnchor[] = []
-  const pendingDispatchPlaceholders: PendingDispatchPlaceholder[] = []
-  let dispatchOrder = 0
-
-  messages.forEach((message, messageOrder) => {
-    messageAnchors.push({
-      messageId: message.id,
-      role: message.role,
-      isTurnInput: isConversationTurnInputMessage(message),
-      timestamp: message.timestamp,
-      order: messageOrder,
-    })
-
-    message.blocks.forEach((block) => {
-      if (block.type === 'script-execution') scriptIds.add(block.id)
-      if (block.type !== 'tool-call' || block.toolName !== 'agent:dispatch') return
-
-      const timestamp = readFiniteTimestamp(block.startedAt) ?? message.timestamp
-      dispatchAnchors.push({
-        toolCallId: block.toolCallId,
-        timestamp,
-        order: dispatchOrder,
-        threadIds: getDispatchAgentThreadIds(block),
-        prompt: readDispatchArg(isRecord(block.args) ? block.args : {}, 'prompt'),
-      })
-
-      const pendingThread = createPendingWorkerThreadFromDispatchToolCall(message, block)
-      if (pendingThread) {
-        pendingDispatchPlaceholders.push({
-          toolCallId: block.toolCallId,
-          thread: pendingThread,
-        })
-      }
-
-      dispatchOrder += 1
-    })
-  })
-
-  const sortedDispatchAnchors = sortTimestampAnchors(dispatchAnchors)
-  const dispatchAnchorsByThreadId = new Map<string, WorkerThreadDispatchAnchor[]>()
-
-  sortedDispatchAnchors.forEach((anchor) => {
-    anchor.threadIds.forEach((threadId) => {
-      const anchors = dispatchAnchorsByThreadId.get(threadId)
-
-      if (anchors) {
-        anchors.push(anchor)
-        return
-      }
-
-      dispatchAnchorsByThreadId.set(threadId, [anchor])
-    })
-  })
-
-  return {
-    scriptIds,
-    messageAnchors: sortTimestampAnchors(messageAnchors),
-    dispatchAnchors: sortedDispatchAnchors,
-    dispatchAnchorsByThreadId,
-    pendingDispatchPlaceholders,
-  }
-}
-
-/** 同一线程被续跑多次时，参数或结果都写着它的 id；任务说明相同的那次调用才是这次激活的来处。 */
-function preferSamePromptAnchors(
-  anchors: readonly WorkerThreadDispatchAnchor[],
-  prompt: Nullable<string>
-): readonly WorkerThreadDispatchAnchor[] {
-  const samePrompt = prompt ? anchors.filter((anchor) => anchor.prompt === prompt) : []
-
-  return isEmpty(samePrompt) ? anchors : samePrompt
-}
-
-/**
- * 线程挂到哪一步下面：先认身份，时间只作兜底。
- *
- * 0. 宿主写明了派发它的脚本卡（`anchorId`），而且那张卡在对话里：直接挂在它后面。
- * 1. `agent:dispatch` 调用的参数或结果里写明了这个线程 id（续跑的、已完成的调用）。
- * 2. 还没有结果的调用拿不到线程 id，按任务说明认领；一次调用只被认领一次（记进 `claimedToolCallIds`）。
- * 3. 两样都认不出（旧记录、不是派发出来的线程）才找时间上最近的调用；这样落上去的不算认领。
- *
- * 不能只看时间：工具块的开始时间与线程的开始时间出自两处时钟（Workbench 前者是渲染进程收到
- * tool-start 的时刻，后者是主进程发出 pending 的时刻），线程常比自己那次调用"早"几毫秒，最近邻
- * 就落到上一次调用上；同一轮并行派发时各调用也都早于各自的线程。落错之后，自己那次调用下面只剩
- * 乐观占位卡，同一个子 Agent 就出现两张卡。
- */
-function resolveWorkerThreadAnchorStepId(
-  anchorIndex: WorkerThreadTranscriptAnchorIndex,
-  thread: ConversationWorkerThread,
-  claimedToolCallIds: Set<string>
-): Nullable<string> {
-  if (thread.anchorId && anchorIndex.scriptIds.has(thread.anchorId)) return thread.anchorId
-  const prompt = readNonBlankText(thread.input)
-  const explicitAnchor = findNearestTranscriptAnchor(
-    preferSamePromptAnchors(
-      anchorIndex.dispatchAnchorsByThreadId.get(thread.threadId) ?? [],
-      prompt
-    ),
-    thread.startedAt
-  )
-  if (explicitAnchor) return explicitAnchor.toolCallId
-
-  const promptAnchor = prompt
-    ? findNearestTranscriptAnchor(
-        anchorIndex.dispatchAnchors.filter(
-          (anchor) =>
-            anchor.prompt === prompt &&
-            anchor.threadIds.size === 0 &&
-            !claimedToolCallIds.has(anchor.toolCallId)
-        ),
-        thread.startedAt
-      )
-    : null
-  if (promptAnchor) {
-    claimedToolCallIds.add(promptAnchor.toolCallId)
-    return promptAnchor.toolCallId
-  }
-
-  return toNullable(
-    findNearestTranscriptAnchor(anchorIndex.dispatchAnchors, thread.startedAt)?.toolCallId
-  )
 }
 
 function findWorkerThreadAnchorMessageId(
@@ -440,7 +79,7 @@ function findWorkerThreadAnchorMessageId(
   const anchor = findAnchorAtOrBefore(anchorIndex.messageAnchors, thread.startedAt)
   if (!anchor || anchor.role === 'assistant') return toNullable(anchor?.messageId)
 
-  // 线程可能先于本轮第一条助手消息出现；助手到达后，归入这轮的执行过程。
+  // 线程可能先于本轮第一条助手消息出现；助手到达后归入本轮，不跨越下一条用户输入。
   for (const next of anchorIndex.messageAnchors) {
     if (next.order <= anchor.order) continue
     if (next.isTurnInput) break
@@ -449,17 +88,7 @@ function findWorkerThreadAnchorMessageId(
   return anchor.messageId
 }
 
-function appendPendingDispatchAgentPlaceholders(
-  pendingDispatchPlaceholders: readonly PendingDispatchPlaceholder[],
-  afterStepId: Map<string, ConversationWorkerThread[]>
-): void {
-  pendingDispatchPlaceholders.forEach(({ toolCallId, thread }) => {
-    if (afterStepId.has(toolCallId)) return
-
-    afterStepId.set(toolCallId, [thread])
-  })
-}
-
+/** 优先挂到宿主声明的脚本卡；卡片缺席或在分页窗外时，按本轮消息时间落位。 */
 export function groupWorkerThreadsByTranscriptAnchor(
   messages: readonly ChatMessage[],
   threads: readonly ConversationWorkerThread[]
@@ -468,50 +97,25 @@ export function groupWorkerThreadsByTranscriptAnchor(
   const afterMessageId = new Map<string, ConversationWorkerThread[]>()
   const afterStepId = new Map<string, ConversationWorkerThread[]>()
   const anchorIndex = createWorkerThreadTranscriptAnchorIndex(messages)
-  const claimedToolCallIds = new Set<string>()
 
-  sortWorkerThreadsByStartTime(threads).forEach((thread) => {
-    const anchorStepId = resolveWorkerThreadAnchorStepId(anchorIndex, thread, claimedToolCallIds)
-
-    if (anchorStepId) {
-      const anchoredThreads = afterStepId.get(anchorStepId)
-
-      if (anchoredThreads) {
-        anchoredThreads.push(thread)
-        return
-      }
-
-      afterStepId.set(anchorStepId, [thread])
-      return
-    }
-
-    const anchorMessageId = findWorkerThreadAnchorMessageId(anchorIndex, thread)
-
-    if (!anchorMessageId) {
+  for (const thread of sortWorkerThreadsByStartTime(threads)) {
+    const stepId =
+      thread.anchorId && anchorIndex.scriptIds.has(thread.anchorId) ? thread.anchorId : null
+    const anchorId = stepId ?? findWorkerThreadAnchorMessageId(anchorIndex, thread)
+    if (!anchorId) {
       beforeTranscript.push(thread)
-      return
+      continue
     }
-
-    const anchoredThreads = afterMessageId.get(anchorMessageId)
-
-    if (anchoredThreads) {
-      anchoredThreads.push(thread)
-      return
-    }
-
-    afterMessageId.set(anchorMessageId, [thread])
-  })
-
-  appendPendingDispatchAgentPlaceholders(anchorIndex.pendingDispatchPlaceholders, afterStepId)
+    const anchoredThreads = stepId ? afterStepId : afterMessageId
+    const group = anchoredThreads.get(anchorId)
+    if (group) group.push(thread)
+    else anchoredThreads.set(anchorId, [thread])
+  }
 
   return { beforeTranscript, afterMessageId, afterStepId }
 }
 
-/**
- * 两份落位逐项同一：同样的锚点下是同一批线程对象。流式输出时消息数组每个 token 都换新，线程与
- * 派发块却没变——调用方据此沿用上一份落位，`renderAfterToolCall` 的引用不变，带派发卡的消息气泡
- * 就不必随正文重画。
- */
+/** 相同锚点下的线程引用未变时，正文增量不触发线程面板重画。 */
 export function isSameWorkerThreadPlacement(
   left: WorkerThreadTranscriptPlacement,
   right: WorkerThreadTranscriptPlacement
@@ -547,37 +151,12 @@ export function listWorkerThreadsFromTranscriptPlacement(
 ): ConversationWorkerThread[] {
   const byThreadId = new Map<string, ConversationWorkerThread>()
   const appendThreads = (threads: readonly ConversationWorkerThread[]): void => {
-    threads.forEach((thread) => {
-      if (!byThreadId.has(thread.threadId)) {
-        byThreadId.set(thread.threadId, thread)
-      }
-    })
+    for (const thread of threads)
+      if (!byThreadId.has(thread.threadId)) byThreadId.set(thread.threadId, thread)
   }
 
   appendThreads(placement.beforeTranscript)
-  placement.afterMessageId.forEach(appendThreads)
-  placement.afterStepId.forEach(appendThreads)
-
+  for (const threads of placement.afterMessageId.values()) appendThreads(threads)
+  for (const threads of placement.afterStepId.values()) appendThreads(threads)
   return sortWorkerThreadsByStartTime([...byThreadId.values()])
-}
-
-export function findWorkerThreadReplacementForDispatchPlaceholder(
-  placement: WorkerThreadTranscriptPlacement,
-  placeholderThreadId: string
-): Nullable<ConversationWorkerThread> {
-  if (!placeholderThreadId.startsWith('dispatch:')) return null
-
-  const toolCallId = placeholderThreadId.slice('dispatch:'.length)
-  const anchoredThreads = placement.afterStepId.get(toolCallId) ?? []
-
-  return toNullable(anchoredThreads.find((thread) => thread.threadId !== placeholderThreadId))
-}
-
-export function listWorkerThreadsForTranscriptStage(
-  messages: readonly ChatMessage[],
-  threads: readonly ConversationWorkerThread[]
-): ConversationWorkerThread[] {
-  return listWorkerThreadsFromTranscriptPlacement(
-    groupWorkerThreadsByTranscriptAnchor(messages, threads)
-  )
 }

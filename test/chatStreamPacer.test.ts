@@ -21,7 +21,7 @@ type HostEvent =
 function classifyHostEvent(event: HostEvent): ChatStreamPacerEventClass {
   if (event.type === 'thinking') return { kind: 'reasoning', id: event.streamId, text: event.text }
   if (event.type === 'tool') return { kind: 'tool', toolCallId: event.id }
-  if (event.type === 'worker') return { kind: 'structural', batchKey: 'worker-thread' }
+  if (event.type === 'worker') return { kind: 'structural', batchKey: 'workers' }
   return { kind: classifyChatStreamStateKind(event.kind) }
 }
 
@@ -65,7 +65,11 @@ function createHostPacer(options: { suspended?: () => boolean } = {}) {
   const pacer = new ChatStreamPacer<HostEvent>({
     timers: frames.timers,
     classifyEvent: classifyHostEvent,
-    createReasoningEvent: (id, text) => ({ type: 'thinking', streamId: id, text }),
+    createReasoningEvent: (id, text) => ({
+      type: 'thinking',
+      streamId: id,
+      text,
+    }),
     applyTextChunk: (_session, text) => log.push(`text:${text}`),
     applyDeferredLiveEvent: (_session, event) => log.push(`live:${JSON.stringify(event)}`),
     applyImmediateLiveEvent: (_session, event) => log.push(`now:${JSON.stringify(event)}`),
@@ -79,7 +83,10 @@ function createHostPacer(options: { suspended?: () => boolean } = {}) {
 }
 
 function joinedText(log: readonly string[]): string {
-  return log.filter((entry) => entry.startsWith('text:')).map((entry) => entry.slice(5)).join('')
+  return log
+    .filter((entry) => entry.startsWith('text:'))
+    .map((entry) => entry.slice(5))
+    .join('')
 }
 
 void describe('chat stream pacer with a host event shape', () => {
@@ -97,13 +104,20 @@ void describe('chat stream pacer with a host event shape', () => {
     assert.equal(joinedText(log), 'hello streaming world')
     const toolIndex = log.indexOf('live:{"type":"tool","id":"t1","step":"start"}')
     const doneIndex = log.indexOf('now:{"type":"runtime","kind":"done"}')
-    assert.ok(toolIndex > log.lastIndexOf(textChunks.at(-1)!), 'the tool lands after the text before it')
+    assert.ok(
+      toolIndex > log.lastIndexOf(textChunks.at(-1)!),
+      'the tool lands after the text before it'
+    )
     assert.ok(doneIndex > toolIndex, 'the smooth finish lands last')
   })
 
   void test('rebuilds paced thinking in the host shape', () => {
     const { pacer, frames, log } = createHostPacer()
-    pacer.enqueueLiveEvent('s', 1, { type: 'thinking', streamId: 'r1', text: 'let me think' })
+    pacer.enqueueLiveEvent('s', 1, {
+      type: 'thinking',
+      streamId: 'r1',
+      text: 'let me think',
+    })
     frames.runAll()
 
     const pieces = log.map((entry) => JSON.parse(entry.slice(entry.indexOf(':') + 1)) as HostEvent)
@@ -154,7 +168,11 @@ void describe('chat stream pacer batching and settling', () => {
     assert.equal(log.length, 40, 'all queued worker events in the first frame')
     assert.ok(log.every((entry) => entry.startsWith('live:{"type":"worker"')))
     frames.step()
-    assert.equal(log.at(-1), 'live:{"type":"tool","id":"t","step":"done"}', 'the tool behind them is not held back')
+    assert.equal(
+      log.at(-1),
+      'live:{"type":"tool","id":"t","step":"done"}',
+      'the tool behind them is not held back'
+    )
   })
 
   void test('reports pending output until the smooth finish has landed', () => {
@@ -186,15 +204,25 @@ void describe('chat stream pacer typing speed', () => {
     assert.ok(perFrame[0] <= 2, `starts at the usual pace (${perFrame[0]})`)
     assert.ok(Math.max(...perFrame) >= 8, 'speeds up while the backlog is large')
     for (let frame = 1; frame < perFrame.length; frame += 1)
-      assert.ok(Math.abs(perFrame[frame] - perFrame[frame - 1]) <= 2, `frame ${frame}: ${perFrame.join(',')}`)
-    assert.ok(perFrame.slice(-10).every((count) => count <= 3), 'the last words come at the usual pace')
+      assert.ok(
+        Math.abs(perFrame[frame] - perFrame[frame - 1]) <= 2,
+        `frame ${frame}: ${perFrame.join(',')}`
+      )
+    assert.ok(
+      perFrame.slice(-10).every((count) => count <= 3),
+      'the last words come at the usual pace'
+    )
   })
 
   void test('tool events between answers do not bank a burst of text', () => {
     const { pacer, frames, log } = createHostPacer()
     pacer.enqueueText('s', 1, 'intro')
     for (let n = 0; n < 30; n += 1)
-      pacer.enqueueLiveEvent('s', 2 + n, { type: 'tool', id: `t${n}`, step: 'start' })
+      pacer.enqueueLiveEvent('s', 2 + n, {
+        type: 'tool',
+        id: `t${n}`,
+        step: 'start',
+      })
     pacer.enqueueText('s', 40, 'y'.repeat(200))
     frames.runAll()
 
@@ -211,7 +239,10 @@ void describe('chat stream pacer typing speed', () => {
 
     const chunks = log.filter((entry) => entry.startsWith('text:')).map((entry) => entry.slice(5))
     assert.ok(chunks.length > 1)
-    assert.ok(chunks.every((chunk) => chunk.length % 2 === 0), chunks.join('|'))
+    assert.ok(
+      chunks.every((chunk) => chunk.length % 2 === 0),
+      chunks.join('|')
+    )
     assert.equal(chunks.join(''), '😀'.repeat(20))
   })
 })
@@ -239,7 +270,10 @@ function createReasoningPacer() {
       previous && incoming.startsWith(previous) ? incoming.slice(previous.length) : incoming,
   })
   const reasoning = (sequence: number, text: string): void =>
-    pacer.enqueueLiveEvent('s', sequence, { type: 'reasoning', payload: { id: '0', text } })
+    pacer.enqueueLiveEvent('s', sequence, {
+      type: 'reasoning',
+      payload: { id: '0', text },
+    })
   return { frames, slices, reasoning, thinking: () => thinking }
 }
 
@@ -253,7 +287,10 @@ void describe('chat stream pacer reasoning', () => {
     }
     frames.runAll()
 
-    assert.ok(slices.every((slice) => slice.length === 1), slices.join('|'))
+    assert.ok(
+      slices.every((slice) => slice.length === 1),
+      slices.join('|')
+    )
     assert.equal(thinking(), 'well"1200')
   })
 
@@ -281,11 +318,13 @@ void describe('chat stream pacer default classification', () => {
     assert.equal(classify({ type: 'error', payload: { message: 'x' } }), 'immediate')
     assert.equal(classify({ type: 'tool-call', payload: { toolCallId: 't' } }), 'tool')
     assert.equal(classify({ type: 'reasoning', payload: { id: 'r', text: 'x' } }), 'reasoning')
-    assert.equal(classify({ type: 'worker-thread', payload: {} }), 'structural')
-    const workerEvent: unknown = { type: 'worker-thread', payload: {} }
-    assert.deepEqual(classifyChatStreamEvent(workerEvent as ChatStreamEvent), {
+    const agentNotice: ChatStreamEvent = {
+      type: 'notice',
+      kind: 'conversation-agent',
+      payload: {},
+    }
+    assert.deepEqual(classifyChatStreamEvent(agentNotice), {
       kind: 'structural',
-      batchKey: 'worker-thread',
     })
   })
 })
