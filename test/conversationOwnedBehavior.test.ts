@@ -257,6 +257,14 @@ void describe('Platform-owned conversation composer behavior', () => {
       new URL('../src/styles/components/product.css', import.meta.url),
       'utf8'
     )
+    const compactToolRowStyles = readFileSync(
+      new URL('../src/styles/components/product/compact-tool-row.css', import.meta.url),
+      'utf8'
+    )
+    const toolDisclosureStyles = readFileSync(
+      new URL('../src/styles/components/product/tool-disclosure-card.css', import.meta.url),
+      'utf8'
+    )
 
     assert.match(bubbleStyles, /\.root\s*\{\s*@apply flex w-full min-w-0 max-w-full;/u)
     assert.match(bubbleStyles, /\.userRow\s*\{\s*@apply relative flex min-w-0/u)
@@ -271,12 +279,14 @@ void describe('Platform-owned conversation composer behavior', () => {
       /\.conversationBody\[data-scroll-navigator-hidden='false'\] \.messageListInner:not\(\.messageListInnerSide\)\s*\{\s*padding-inline-end: 5\.25rem;/u
     )
     // 工具行的截断全文与详情共用与行等宽的 HoverCard，全文在气泡里任意处折行。
+    assert.match(productStyles, /@import '\.\/product\/compact-tool-row\.css';/u)
+    assert.match(productStyles, /@import '\.\/product\/tool-disclosure-card\.css';/u)
     assert.match(
-      productStyles,
+      compactToolRowStyles,
       /\.velar-compact-tool-row-detail-full\s*\{[\s\S]*?overflow-wrap: anywhere;/u
     )
     assert.match(
-      productStyles,
+      toolDisclosureStyles,
       /\.velar-tool-disclosure-card\s*\{[\s\S]*?min-width: 0;[\s\S]*?max-width: 100%;/u
     )
   })
