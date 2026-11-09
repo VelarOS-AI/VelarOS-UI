@@ -20,8 +20,8 @@
 }
 
 .velar-description-list-cols2 .velar-description-list-row {
-    grid-template-columns: 140px minmax(0, 1fr);
-  }
+  grid-template-columns: 140px minmax(0, 1fr);
+}
 
 .velar-description-list-row {
   display: grid;
@@ -32,9 +32,11 @@
   padding-inline: var(--ui-space-control-x-sm);
 }
 
-.velar-description-list-cols2 .velar-description-list-row {
+@media (max-width: 640px) {
+  .velar-description-list-cols2 .velar-description-list-row {
     grid-template-columns: minmax(0, 1fr);
   }
+}
 
 .velar-description-list-bordered .velar-description-list-row {
   padding-inline: var(--ui-space-3);

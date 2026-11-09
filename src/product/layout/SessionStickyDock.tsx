@@ -5,7 +5,7 @@
  * 样式：`.velar-session-sticky-dock` · 见 styles/components/。
  * 注入：`barLabel`（无障碍条标签，由宿主注入 i18n 文案，本库不承载文案）。
  */
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { CaretDoubleDownIcon } from '@phosphor-icons/react'
 import type { ReactElement, ReactNode } from 'react'
 
@@ -50,6 +50,8 @@ export function SessionStickyDock({
   const prevAutoRevealKeyRef = useRef<string | undefined>(autoRevealKey)
   const prevAutoCollapseKeyRef = useRef<string | undefined>(autoCollapseKey)
   const skipMountPeekRef = useRef(true)
+  const fabricRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const spotlightIdSet = useMemo(() => new Set(spotlightItemIds), [spotlightItemIds])
 
   useEffect(() => {
@@ -98,6 +100,13 @@ export function SessionStickyDock({
     setSpotlightActive(false)
   }, [autoCollapseKey])
 
+  useLayoutEffect(() => {
+    const fabric = fabricRef.current
+    if (!fabric) return
+    if (collapsed && fabric.contains(fabric.ownerDocument.activeElement)) triggerRef.current?.focus()
+    fabric.inert = collapsed
+  }, [collapsed, items.length])
+
   if (items.length === 0) return null
 
   const handleTriggerClick = (): void => {
@@ -116,7 +125,7 @@ export function SessionStickyDock({
     >
       <div className="velar-session-sticky-dock-layer">
         <div className={cn('velar-session-sticky-dock-curtain', !collapsed && 'velar-session-sticky-dock-curtain-open')}>
-          <div className="velar-session-sticky-dock-fabric-clip">
+          <div ref={fabricRef} className="velar-session-sticky-dock-fabric-clip">
             <div className="velar-session-sticky-dock-fabric">
               <div className="velar-session-sticky-dock-fabric-inner">
                 {visibleItems.map((entry) => (
@@ -128,9 +137,11 @@ export function SessionStickyDock({
             </div>
           </div>
           <button
+            ref={triggerRef}
             type="button"
             className="velar-session-sticky-dock-trigger"
             onClick={handleTriggerClick}
+            aria-label={barLabel}
             aria-expanded={!collapsed}
           >
             <span className="velar-session-sticky-dock-trigger-center" aria-hidden>
