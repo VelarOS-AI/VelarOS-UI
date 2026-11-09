@@ -134,7 +134,6 @@ function SelectImpl<T extends string>({
           selectVariants({ variant, size: resolvedSize }),
           className,
         )}
-        aria-label={selected?.label ?? placeholder}
       >
         <span className={"velar-select-trigger-content"}>
           {!!selected?.icon && (
