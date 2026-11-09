@@ -15,6 +15,11 @@ import {
   registerConversationScrollFollow,
 } from './conversationScrollFollow'
 import {
+  bindConversationScrollScope,
+  type ConversationScrollAnchor,
+  type ConversationScrollView,
+} from './conversationScrollScope'
+import {
   AutoScrollSuspendEventName,
   resolveAutoScrollPinnedAfterReset,
   resolveAutoScrollPinnedAfterScroll,
@@ -39,9 +44,8 @@ const UpwardScrollTolerancePx = 1
 const ContentGrowthUpwardTolerancePx = 48
 const ClampGuardRestoreTolerancePx = 1
 const UnsetRestoreKey = Symbol('unset-scroll-restore-key')
-interface ScrollAnchor { messageId: string; offset: number }
-const rememberedViews = new Map<unknown, { scrollTop: number; following: boolean; anchor: Nullable<ScrollAnchor> }>()
-function readScrollAnchor(element: HTMLElement): Nullable<ScrollAnchor> {
+const rememberedViews = new Map<unknown, ConversationScrollView>()
+function readScrollAnchor(element: HTMLElement): Nullable<ConversationScrollAnchor> {
   const top = element.getBoundingClientRect().top
   for (const node of element.querySelectorAll<HTMLElement>('[data-message-id]')) {
     const rect = node.getBoundingClientRect()
@@ -49,7 +53,7 @@ function readScrollAnchor(element: HTMLElement): Nullable<ScrollAnchor> {
   }
   return null
 }
-function resolveAnchorTop(element: HTMLElement, anchor: Nullable<ScrollAnchor>): Nullable<number> {
+function resolveAnchorTop(element: HTMLElement, anchor: Nullable<ConversationScrollAnchor>): Nullable<number> {
   if (!anchor) return null
   const node = element.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(anchor.messageId)}"]`)
   if (!node?.getClientRects().length) return null
@@ -104,6 +108,8 @@ export function useScrollToBottom<T extends HTMLElement>(
   options: UseScrollToBottomOptions = {}
 ): UseScrollToBottomReturn<T> {
   const [scrollElement, setScrollElement] = useState<Nullable<T>>(null)
+  const { readScrollTop, restoreKey, writeScrollTop, rememberView = false } = options
+  const followLockedRef = useRef(false)
   // 宿主 hook 可比异步会话壳活得更久。回调 ref 把实际容器的挂载/替换纳入生命周期，
   // 同时保留 current 给导航与跟随上下文读取，避免终态刷新后仍监听已卸载的容器。
   const ref = useMemo<RefObject<Nullable<T>> & RefCallback<T>>(() => {
@@ -114,10 +120,14 @@ export function useScrollToBottom<T extends HTMLElement>(
       },
       { current: null as Nullable<T> }
     )
-    return viewportRef
-  }, [])
+    return bindConversationScrollScope(viewportRef, () => ({
+      restoreKey,
+      resetKey,
+      followLocked: followLockedRef.current,
+      view: rememberView ? rememberedViews.get(restoreKey) : undefined,
+    }))
+  }, [rememberView, resetKey, restoreKey])
   const lastScrollElementRef = useRef<Nullable<T>>(null)
-  const followLockedRef = useRef(false)
   const [followLocked, setFollowLockedState] = useState(false)
   const shouldStickToBottomRef = useRef(true)
   const lastScrollTopRef = useRef(0)
@@ -125,9 +135,8 @@ export function useScrollToBottom<T extends HTMLElement>(
   const lastRestoreKeyRef = useRef<unknown>(UnsetRestoreKey)
   const scrollTimers = useTimerScope('useScrollToBottom')
   const scrollFrameRef = useRef<Nullable<TimerLease>>(null)
-  const restoredAnchorRef = useRef<Nullable<ScrollAnchor>>(null)
+  const restoredAnchorRef = useRef<Nullable<ConversationScrollAnchor>>(null)
   const pendingRestoreScrollTopRef = useRef<Nullable<number>>(null)
-  const { readScrollTop, restoreKey, writeScrollTop, rememberView = false } = options
 
   const scrollFollow = useMemo<ConversationScrollFollow>(
     () => ({

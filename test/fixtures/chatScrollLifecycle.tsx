@@ -33,6 +33,50 @@ function WindowHarness({ generation = 0, entries = historyMessages }: { generati
   </div>
 }
 
+interface RememberedWindowScene {
+  session: 'a' | 'b'
+  entries: ChatMessage[]
+  rowHeight?: number
+  inputRevision?: number
+}
+
+const rememberedWindowKeys = { a: { id: 'window-memory-a' }, b: { id: 'window-memory-b' } }
+
+function RememberedWindowViewport({
+  scene: current,
+  scrollRef,
+  navigation,
+}: {
+  scene: RememberedWindowScene
+  scrollRef: React.RefObject<HTMLDivElement | null>
+  navigation: React.RefObject<ChatTranscriptNavigationHandle | null>
+}): React.ReactElement {
+  const { windowMessages } = useChatTranscriptWindow({
+    messages: current.entries, sessionId: `window-memory-${current.session}`, scrollRef,
+    transcriptNavigationRef: navigation,
+  })
+  return <div id="remembered-window-viewport" ref={scrollRef} style={{ height: 400, overflow: 'auto', overflowAnchor: 'none' }}>
+    <div>{windowMessages.map((message) => <div key={message.id} data-message-id={message.id}
+      data-message-role={message.role} data-conversation-kind={message.conversationKind}
+      style={{ height: current.rowHeight ?? 100 }}>{message.id}</div>)}
+      <div style={{ height: 'var(--velar-scroll-clamp-guard, 0px)' }} />
+    </div>
+  </div>
+}
+
+// 滚动钩子位于父组件，窗口钩子位于子组件，复现产品的 layout effect 顺序。
+function RememberedWindowHarness({ scene: current }: { scene: RememberedWindowScene }): React.ReactElement {
+  const { scrollRef, followLocked, setFollowLocked } = useScrollToBottom(current.entries, `${current.session}:${current.inputRevision ?? 0}`, {
+    rememberView: true, restoreKey: rememberedWindowKeys[current.session],
+  })
+  const navigation = useRef<ChatTranscriptNavigationHandle>(null)
+  return <ConversationLocalizationProvider value={{ locale: 'en-US', t: (key: string) => key }}>
+    <RememberedWindowViewport scene={current} scrollRef={scrollRef} navigation={navigation} />
+    <ChatScrollNavigator scrollRef={scrollRef} followLocked={followLocked}
+      onFollowLockedChange={setFollowLocked} transcriptNavigationRef={navigation} />
+  </ConversationLocalizationProvider>
+}
+
 let sentinelLoads = 0
 function SentinelHarness({ generation = 0 }: { generation?: number }): React.ReactElement {
   const { loadMoreSentinelRef } = useChatConversationScroll({ sessionId: 'sentinel', hasOlderMessages: true, onLoadOlderMessages: () => { sentinelLoads++ } })
@@ -245,6 +289,83 @@ Object.assign(window, {
     await settle()
     if (windowViewport.firstElementChild!.getAttribute('data-message-id') !== firstBeforePrepend) throw Error('History prepend shifted the fixed window to a different message identity')
     passed.push('fixed window start is stable by message identity after prepend')
+
+    const renderRemembered = async (next: RememberedWindowScene): Promise<void> => {
+      root.render(<RememberedWindowHarness scene={next} />)
+      await settle()
+    }
+    const rememberedViewport = (): HTMLDivElement => document.querySelector('#remembered-window-viewport')!
+    const visibleAnchor = (): { id: string; offset: number } => {
+      const element = rememberedViewport()
+      const top = element.getBoundingClientRect().top
+      const node = Array.from(element.querySelectorAll<HTMLElement>('[data-message-id]'))
+        .find((item) => item.getBoundingClientRect().bottom > top)!
+      return { id: node.dataset.messageId!, offset: node.getBoundingClientRect().top - top }
+    }
+    const expectAnchor = (anchor: { id: string; offset: number }, label: string): void => {
+      const actual = visibleAnchor()
+      if (actual.id !== anchor.id) throw Error(`${label}: ${actual.id}, expected ${anchor.id}`)
+      expectNear(actual.offset, anchor.offset, label)
+    }
+    const clickNavigation = async (label: string): Promise<void> => {
+      document.querySelector<HTMLButtonElement>(`[aria-label="${label}"]`)!.click()
+      await settle()
+    }
+    await renderRemembered({ session: 'a', entries: historyMessages })
+    await clickNavigation('chat.scrollToTop')
+    rememberedViewport().scrollTop = 1235
+    await settle()
+    const savedAnchor = visibleAnchor()
+    if (savedAnchor.id !== 'history-12') throw Error('Fixture did not read beyond the tail window')
+    await renderRemembered({ session: 'b', entries: historyMessages })
+    await clickNavigation('chat.scrollToTop')
+    rememberedViewport().scrollTop = 2225
+    await settle()
+    const otherAnchor = visibleAnchor()
+    const expandedHistory = [...prefix, ...historyMessages]
+    await renderRemembered({ session: 'a', entries: expandedHistory, rowHeight: 110 })
+    expectAnchor(savedAnchor, 'Returning long conversation restores message identity and offset')
+    if (rememberedViewport().querySelectorAll('[data-message-id]').length > 60) throw Error('Restoration rendered history outside the window budget')
+    await renderRemembered({ session: 'b', entries: historyMessages })
+    expectAnchor(otherAnchor, 'Distinct restore keys preserve independent reader positions')
+    await renderRemembered({ session: 'a', entries: expandedHistory, rowHeight: 110 })
+    expectAnchor(savedAnchor, 'Repeated switches preserve the restored anchor')
+    passed.push('long conversations restore their own anchors before the tail window mounts')
+
+    root.render(<div />)
+    await settle()
+    await renderRemembered({ session: 'a', entries: [], rowHeight: 110 })
+    await renderRemembered({ session: 'a', entries: expandedHistory, rowHeight: 110 })
+    expectAnchor(savedAnchor, 'Remount with delayed messages restores the remembered window')
+    const continuedHistory = [...expandedHistory, ...historyMessages.slice(0, 5).map((message) => ({ ...message, id: `continued-${message.id}` }))]
+    await renderRemembered({ session: 'a', entries: continuedHistory, rowHeight: 110 })
+    expectAnchor(savedAnchor, 'Incoming content preserves the restored reader window')
+    passed.push('unmount and delayed history retain the remembered message and viewport offset')
+
+    await clickNavigation('chat.scrollToBottom')
+    if (rememberedViewport().querySelector('[data-message-id]')?.getAttribute('data-message-id') === savedAnchor.id) throw Error('Explicit bottom did not leave the restored reader window')
+    expectNear(rememberedViewport().scrollTop, rememberedViewport().scrollHeight - rememberedViewport().clientHeight, 'Explicit bottom restores the tail window')
+    await renderRemembered({ session: 'b', entries: historyMessages })
+    await renderRemembered({ session: 'a', entries: continuedHistory, rowHeight: 110 })
+    expectNear(rememberedViewport().scrollTop, rememberedViewport().scrollHeight - rememberedViewport().clientHeight, 'Following conversation returns to the actual tail')
+    passed.push('explicit bottom replaces the remembered reader window and retains following')
+
+    await clickNavigation('chat.scrollToTop')
+    rememberedViewport().scrollTop = 1235
+    await settle()
+    const sentHistory: ChatMessage[] = [...continuedHistory, { ...historyMessages[0], id: 'new-turn-input' }]
+    await renderRemembered({ session: 'a', entries: sentHistory, rowHeight: 110, inputRevision: 1 })
+    if (!rememberedViewport().querySelector('[data-message-id="new-turn-input"]')) throw Error('Sending a new turn kept the earlier reader window')
+    expectNear(rememberedViewport().scrollTop, rememberedViewport().scrollHeight - rememberedViewport().clientHeight, 'Sending a new turn reaches the actual tail')
+    passed.push('a new outbound turn resets the reader window and bottom following together')
+
+    await clickNavigation('chat.scrollToTop')
+    rememberedViewport().scrollTop = 1235
+    await settle()
+    await clickNavigation('chat.keepFollowing')
+    if (!rememberedViewport().querySelector('[data-message-id="new-turn-input"]')) throw Error('Locked following kept the earlier reader window')
+    expectNear(rememberedViewport().scrollTop, rememberedViewport().scrollHeight - rememberedViewport().clientHeight, 'Locked following reaches the actual tail')
+    passed.push('locked following selects the real tail before following content')
     return passed
   },
 })

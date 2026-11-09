@@ -14,6 +14,10 @@ import { type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRe
 import { useLatest } from 'ahooks'
 
 import {
+  type ConversationScrollScope,
+  readConversationScrollScope,
+} from '../react-hooks/conversationScrollScope'
+import {
   AutoScrollSuspendEventName,
   resolveSectionNavigationTargetTop,
   resolveTranscriptWindowFollowEndAfterScroll,
@@ -74,6 +78,13 @@ export interface ChatTranscriptWindowAnchorState {
 }
 
 const InitialWindowState: TranscriptWindowState = { followEnd: true, anchorIndex: 0, nonce: 0 }
+
+function restoreWindowState(scope: ConversationScrollScope | undefined): TranscriptWindowState {
+  const view = scope?.view
+  if (scope?.followLocked || !view?.anchor || view.following) return InitialWindowState
+
+  return { followEnd: false, anchorIndex: 0, anchorMessageId: view.anchor.messageId, nonce: 0 }
+}
 
 /** turn-input 所在下标即 section 起点；开头不是 turn-input 时补 0。 */
 export function computeChatTranscriptSectionStarts(messages: ChatMessage[]): number[] {
@@ -212,18 +223,51 @@ export function useChatTranscriptWindow({
   hasOlderMessages = false,
   onLoadOlderMessages,
 }: UseChatTranscriptWindowOptions): UseChatTranscriptWindowReturn {
-  const [state, setState] = useState<TranscriptWindowState>(InitialWindowState)
+  const scrollScope = readConversationScrollScope(scrollRef)
+  const [window, setWindow] = useState(() => ({
+    sessionId,
+    scrollRef,
+    state: restoreWindowState(scrollScope),
+  }))
+  const { state } = window
+  // 范围与位置同次更新，旧监听或导航已排队的更新不能覆盖新范围。
+  const setState = useCallback(
+    (update: (current: TranscriptWindowState) => TranscriptWindowState): void => {
+      setWindow((current) => {
+        if (current.sessionId !== sessionId || current.scrollRef !== scrollRef) return current
+        const next = update(current.state)
+        return next === current.state ? current : { ...current, state: next }
+      })
+    },
+    [scrollRef, sessionId]
+  )
   const pendingScrollRef = useRef<Nullable<PendingScroll>>(null)
   const lastScrollTopRef = useRef(0)
-  // member=session：会话即工作区，transcript 窗口 scope key 就是 sessionId。
-  const transcriptWindowScopeKey = sessionId
+
+  // 在子树挂载前选中恢复窗口；被动 effect 重置会让父滚动钩子先把旧像素应用到末尾窗口。
+  if (window.sessionId !== sessionId || window.scrollRef !== scrollRef) {
+    const previousScrollScope = readConversationScrollScope(window.scrollRef)
+    const resetInCurrentScope = !!scrollScope && !!previousScrollScope &&
+      Object.is(scrollScope.restoreKey, previousScrollScope.restoreKey) &&
+      !Object.is(scrollScope.resetKey, previousScrollScope.resetKey)
+    setWindow({
+      sessionId,
+      scrollRef,
+      state: resetInCurrentScope ? InitialWindowState : restoreWindowState(scrollScope),
+    })
+  } else if (scrollScope?.followLocked && !state.followEnd) {
+    setWindow({ ...window, state: InitialWindowState })
+  }
 
   const sectionStarts = useMemo(() => computeChatTranscriptSectionStarts(messages), [messages])
   const range = useMemo(
     () => {
       const identityIndex = state.anchorMessageId ? messages.findIndex(message => message.id === state.anchorMessageId) : -1
-      const baseRange = deriveWindowRange(messages.length, sectionStarts,
-        identityIndex >= 0 ? { ...state, anchorIndex: identityIndex } : state) 
+      let windowState = state
+      if (state.anchorMessageId) {
+        windowState = identityIndex >= 0 ? { ...state, anchorIndex: identityIndex } : InitialWindowState
+      }
+      const baseRange = deriveWindowRange(messages.length, sectionStarts, windowState)
       const pinnedMessageIndex = pinnedMessageId
         ? messages.findIndex((message) => message.id === pinnedMessageId)
         : -1
@@ -243,12 +287,10 @@ export function useChatTranscriptWindow({
   const hasOlderRef = useLatest(hasOlderMessages)
   const loadOlderRef = useLatest(onLoadOlderMessages)
 
-  // 切换会话或 workspace context 时重置为末尾跟随窗口。
-  useEffect(() => {
+  useLayoutEffect(() => {
     pendingScrollRef.current = null
     lastScrollTopRef.current = scrollRef.current?.scrollTop ?? 0
-    setState(InitialWindowState)
-  }, [scrollRef, transcriptWindowScopeKey])
+  }, [scrollRef, sessionId])
 
   useEffect(() => {
     const scrollEl = scrollRef.current
@@ -256,6 +298,7 @@ export function useChatTranscriptWindow({
 
     lastScrollTopRef.current = scrollEl.scrollTop
     const suspendEndFollow = (): void => {
+      if (scrollRef.current !== scrollEl) return
       setState((current) =>
         current.followEnd
           ? {
@@ -268,6 +311,7 @@ export function useChatTranscriptWindow({
       )
     }
     const updateEndFollowAfterScroll = (): void => {
+      if (scrollRef.current !== scrollEl) return
       const previousScrollTop = lastScrollTopRef.current
       const currentScrollTop = scrollEl.scrollTop
       const isAtBottom =
@@ -342,7 +386,7 @@ export function useChatTranscriptWindow({
         nonce: current.nonce + 1,
       }))
     },
-    [messagesRef]
+    [messagesRef, setState]
   )
 
   // 应用窗口切换后的滚动定位。

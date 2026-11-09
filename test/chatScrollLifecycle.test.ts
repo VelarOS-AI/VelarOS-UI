@@ -19,6 +19,13 @@ void test(
       root,
       logLevel: 'error',
       define: { 'process.env.NODE_ENV': '"development"' },
+      resolve: {
+        alias: {
+          '#contracts': join(root, 'src/conversation/contracts/index.ts'),
+          '#internal': join(root, 'src/conversation/internal'),
+          '@velaros-ai/ui': join(root, 'src'),
+        },
+      },
       build: {
         outDir: join(output, 'bundle'),
         emptyOutDir: true,
@@ -69,7 +76,7 @@ app.whenReady().then(async()=>{
     try {
       const code = await new Promise((resolveExit, reject) => {
         child.on('error', reject)
-        child.on('exit', resolveExit)
+        child.on('close', resolveExit)
       })
       assert.equal(code, 0, log)
       assert.match(log, /SCROLL_REGRESSION_PASS/)
