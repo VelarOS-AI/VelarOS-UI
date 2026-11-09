@@ -1,7 +1,6 @@
 /**
  * 按文件类型渲染带品牌色的文件图标。
  */
-import type { IconProps } from '@phosphor-icons/react'
 import {
   BracketsCurlyIcon,
   FileArchiveIcon,
@@ -31,6 +30,7 @@ import {
   FileVueIcon,
   FileXlsIcon,
 } from '@phosphor-icons/react'
+import type { IconProps } from '@phosphor-icons/react/lib'
 import type { ComponentType, ReactElement } from 'react'
 
 import {
@@ -74,10 +74,7 @@ function VelarScriptMarkIcon({
         fill={color}
         d="M271 180c3-11 10-22 17-29l17-17c6-6 11-9 19-9h95l-86 153c1-9-1-19-6-27-4-7-12-14-19-20l-25-22c-10-8-14-18-12-29Z"
       />
-      <path
-        fill={color}
-        d="m237 383 82-81-46 84c-5 4-11 5-18 5s-13-3-18-8Z"
-      />
+      <path fill={color} d="m237 383 82-81-46 84c-5 4-11 5-18 5s-13-3-18-8Z" />
     </svg>
   )
 }

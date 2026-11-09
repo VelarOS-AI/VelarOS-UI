@@ -10,19 +10,11 @@
  * 注入——本库不承载产品品牌资产，也不认识「这条会话跑的是哪个外部执行体」。
  */
 import { type ReactElement } from 'react'
-import {
-  DesktopIcon,
-  FolderOpenIcon,
-  type IconWeight,
-  RobotIcon,
-} from '@phosphor-icons/react'
+import { DesktopIcon, FolderOpenIcon, RobotIcon } from '@phosphor-icons/react'
+import type { IconWeight } from '@phosphor-icons/react/lib'
 
 /** 空间 descriptor 的图标语义名词表（宿主声明轴，与本库的资产映射一一对应）。 */
-export type WorkspaceSpaceIconName =
-  | 'desktop'
-  | 'folder-open'
-  | 'browser'
-  | 'agent'
+export type WorkspaceSpaceIconName = 'desktop' | 'folder-open' | 'browser' | 'agent'
 
 export interface WorkspaceSpaceIconProps {
   iconName: WorkspaceSpaceIconName
