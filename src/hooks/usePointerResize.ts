@@ -1,4 +1,4 @@
-import { type PointerEvent as ReactPointerEvent, useCallback } from 'react'
+import { type PointerEvent as ReactPointerEvent, useCallback, useEffect, useRef } from 'react'
 
 import { isFunction } from '../lib/runtime'
 
@@ -22,10 +22,16 @@ export function usePointerResize<TTarget, TContext>({
   onResize,
   onResizeStart,
 }: UsePointerResizeOptions<TTarget, TContext>): PointerResizeStarter<TTarget> {
+  const stopActiveResizeRef = useRef<(() => void) | null>(null)
+  useEffect(() => () => stopActiveResizeRef.current?.(), [])
+
   return useCallback(
     (target: TTarget, event: ReactPointerEvent): void => {
+      if (event.button !== 0 || !event.isPrimary) return
       event.preventDefault()
+      stopActiveResizeRef.current?.()
 
+      const pointerId = event.pointerId
       const startX = event.clientX
       const startY = event.clientY
       const context = onResizeStart(target, event)
@@ -36,6 +42,7 @@ export function usePointerResize<TTarget, TContext>({
       document.body.style.userSelect = 'none'
 
       const handlePointerMove = (pointerEvent: PointerEvent): void => {
+        if (pointerEvent.pointerId !== pointerId) return
         onResize(
           target,
           {
@@ -50,15 +57,22 @@ export function usePointerResize<TTarget, TContext>({
 
       const stopResize = (): void => {
         window.removeEventListener('pointermove', handlePointerMove)
-        window.removeEventListener('pointerup', stopResize)
-        window.removeEventListener('pointercancel', stopResize)
+        window.removeEventListener('pointerup', handlePointerEnd)
+        window.removeEventListener('pointercancel', handlePointerEnd)
+        window.removeEventListener('blur', stopResize)
         document.body.style.cursor = previousCursor
         document.body.style.userSelect = previousUserSelect
+        if (stopActiveResizeRef.current === stopResize) stopActiveResizeRef.current = null
+      }
+      const handlePointerEnd = (pointerEvent: PointerEvent): void => {
+        if (pointerEvent.pointerId === pointerId) stopResize()
       }
 
+      stopActiveResizeRef.current = stopResize
       window.addEventListener('pointermove', handlePointerMove)
-      window.addEventListener('pointerup', stopResize)
-      window.addEventListener('pointercancel', stopResize)
+      window.addEventListener('pointerup', handlePointerEnd)
+      window.addEventListener('pointercancel', handlePointerEnd)
+      window.addEventListener('blur', stopResize)
     },
     [cursor, onResize, onResizeStart]
   )
