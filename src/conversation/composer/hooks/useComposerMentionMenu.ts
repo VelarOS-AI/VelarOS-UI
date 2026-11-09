@@ -105,6 +105,7 @@ export function useComposerMentionMenu({
       // 于是用中文过滤菜单时候选列表动不了、Esc 关不掉组合。判定必须在 switch 之前一次做完，
       // 不能逐 case 补——逐 case 补就是下一个键再漏一次。
       if (event.nativeEvent.isComposing) return false
+      if (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) return false
 
       switch (event.key) {
         case 'ArrowDown':

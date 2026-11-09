@@ -385,7 +385,6 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
   } = suggestion ?? {}
   const selectedMentionCount = mentionables?.selectedIds.length ?? 0
   const isComposing = useRef(false)
-  const dragDepthRef = useRef(0)
   const valueRef = useRef(value)
   const filesRef = useRef(files)
   const virtualPasteReferencesRef =
@@ -396,7 +395,7 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
   const textareaRef = useAutoResize(value, { maxHeight: optionalWhenLazy(isCompact, () => 104) })
   useAutoFocus(textareaRef)
   const composerRootRef = useRef<HTMLDivElement>(null)
-  const [isDragActive, setIsDragActive] = useState(false)
+  const [dragDepth, setDragDepth] = useState(0)
   const [draftLimitError, setDraftLimitError] = useState<Nullable<string>>(null)
   const [previewOpenIndex, setPreviewOpenIndex] = useState<Nullable<number>>(null)
   const [isStopPending, setIsStopPending] = useState(false)
@@ -633,6 +632,10 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
     closeComposerMenu: () => setComposerMenuOpenState(false),
     onAttachmentLimitViolation: showAttachmentLimitError,
   })
+  const isDragActive = canAcceptFiles && dragDepth > 0
+  useEffect(() => {
+    if (!canAcceptFiles) setDragDepth(0)
+  }, [canAcceptFiles])
   const handleHiddenFileInputChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>): void => {
       handleFileSelect(event.target.files)
@@ -1019,8 +1022,7 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
         if (!canAcceptFiles || !hasDraggedFiles(event.dataTransfer)) return
 
         event.preventDefault()
-        dragDepthRef.current += 1
-        setIsDragActive(true)
+        setDragDepth((depth) => depth + 1)
       }}
       onDragOver={(event) => {
         if (!canAcceptFiles || !hasDraggedFiles(event.dataTransfer)) return
@@ -1032,18 +1034,13 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
         if (!hasDraggedFiles(event.dataTransfer)) return
 
         event.preventDefault()
-        dragDepthRef.current = Math.max(dragDepthRef.current - 1, 0)
-
-        if (dragDepthRef.current === 0) {
-          setIsDragActive(false)
-        }
+        setDragDepth((depth) => Math.max(depth - 1, 0))
       }}
       onDrop={(event) => {
+        setDragDepth(0)
         if (!canAcceptFiles || !hasDraggedFiles(event.dataTransfer)) return
 
         event.preventDefault()
-        dragDepthRef.current = 0
-        setIsDragActive(false)
         appendFiles(Array.from(event.dataTransfer.files))
       }}
     >
