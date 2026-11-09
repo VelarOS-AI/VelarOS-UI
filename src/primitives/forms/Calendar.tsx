@@ -278,7 +278,6 @@ export const CalendarDatePicker = memo(function CalendarDatePicker({
           value={value}
           ariaLabel={calendarLabel ?? localization.calendar}
           localeCode={localeCode ?? localization.localeCode}
-          monthValue={value ?? todayValue}
           weekStartsOn={weekStartsOn}
           onChange={handleChange}
         />
@@ -415,7 +414,6 @@ export const CalendarDateRangePicker = memo(function CalendarDateRangePicker({
           localeCode={localeCode ?? localization.localeCode}
           maxValue={maxValue}
           minValue={minValue}
-          monthValue={draftValue?.start ?? value?.start ?? todayValue}
           weekStartsOn={weekStartsOn}
           onChange={handleRangeChange}
         />
