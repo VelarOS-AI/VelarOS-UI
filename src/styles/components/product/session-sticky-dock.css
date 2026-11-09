@@ -1,0 +1,253 @@
+/* @velaros-no-tailwind */
+
+/* ─── Session sticky dock (business) ─────────────────────────────────────── */
+/*
+ * @apply 展开：
+ *   fabric        flex min-w-0 flex-col
+ *   fabric-inner  flex min-w-0 flex-col gap-3 px-2   (gap-3=0.75rem、px-2=0.5rem)
+ *   trigger       flex min-w-0 cursor-pointer items-center justify-center
+ *   trigger-center relative flex shrink-0 items-center justify-center text-neutral-400
+ *                 （text-neutral-400 → --muted-foreground：§12.9 双色种子禁裸色值）
+ *   trigger-flip  flex items-center justify-center
+ *   item          min-w-0
+ */
+
+.velar-session-sticky-dock {
+  --sticky-dock-safe-top: 0.5rem;
+  --sticky-dock-pane-top-padding: 1.5rem;
+  --sticky-dock-trigger-size: 2.5rem;
+
+  position: sticky;
+  top: var(--sticky-dock-safe-top);
+  z-index: 12;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  height: 0;
+  min-height: 0;
+  flex: 0 0 0;
+  overflow: visible;
+  pointer-events: none;
+  /* 抵消消息列表顶 padding，同时给顶栏留出一小段安全距离。 */
+  margin-top: calc(
+    var(--sticky-dock-safe-top) - var(--sticky-dock-pane-top-padding)
+  );
+  margin-bottom: -1rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.velar-session-sticky-dock-side {
+  --sticky-dock-pane-top-padding: 1rem;
+  /* 侧栏抵消消息阅读栏的左右留白，让幕布铺满滚动视口。 */
+  width: calc(100% + 2rem);
+  margin-inline: -1rem;
+}
+
+.velar-session-sticky-dock-side .velar-session-sticky-dock-fabric-inner {
+  padding-inline: 0;
+}
+
+/*
+ * 展开时幕布进文档流、铺一层与页面同色的底：在顶部时占住自己的高度，第一条消息不被盖住；
+ * 往下滚时贴在顶上，正文从它下面过去，不会从卡片四周和上方透出来。收起时照旧零高度，只露拉手。
+ */
+.velar-session-sticky-dock:has(.velar-session-sticky-dock-curtain-open) {
+  top: 0;
+  height: auto;
+  flex: 0 0 auto;
+  margin-top: calc(0px - var(--sticky-dock-pane-top-padding));
+  margin-bottom: 0;
+  padding-top: var(--sticky-dock-safe-top);
+  background: var(--background);
+}
+
+.velar-session-sticky-dock:has(.velar-session-sticky-dock-curtain-open)
+  .velar-session-sticky-dock-layer {
+  height: auto;
+}
+
+.velar-session-sticky-dock-layer {
+  position: relative;
+  width: 100%;
+  height: 0;
+  overflow: visible;
+}
+
+.velar-session-sticky-dock-curtain {
+  position: absolute;
+  z-index: 11;
+  left: 0;
+  right: 0;
+  top: 0;
+  min-height: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+.velar-session-sticky-dock-curtain:not(
+  .velar-session-sticky-dock-curtain-open
+) {
+  min-height: var(--sticky-dock-trigger-size);
+  overflow: hidden;
+}
+
+.velar-session-sticky-dock-curtain.velar-session-sticky-dock-curtain-open {
+  position: relative;
+  overflow: visible;
+}
+
+.velar-session-sticky-dock-fabric-clip {
+  min-height: 0;
+  max-height: 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+  transition: max-height 0.82s cubic-bezier(0.22, 1, 0.4, 1);
+  will-change: max-height;
+}
+
+.velar-session-sticky-dock-curtain-open .velar-session-sticky-dock-fabric-clip {
+  max-height: min(62vh, 520px);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.velar-session-sticky-dock-fabric {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.velar-session-sticky-dock-curtain-open .velar-session-sticky-dock-fabric {
+  padding: 0.5rem 0.75rem 0.875rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.velar-session-sticky-dock-fabric-inner {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-inline: 0.5rem;
+  padding-top: 0;
+  padding-bottom: 0;
+  transform-origin: top center;
+  transition: transform 0.82s cubic-bezier(0.22, 1, 0.4, 1);
+  will-change: transform;
+}
+
+.velar-session-sticky-dock-curtain:not(.velar-session-sticky-dock-curtain-open)
+  .velar-session-sticky-dock-fabric-inner {
+  transform: translate3d(0, -100%, 0);
+}
+
+.velar-session-sticky-dock-curtain.velar-session-sticky-dock-curtain-open
+  .velar-session-sticky-dock-fabric-inner {
+  transform: translate3d(0, 0, 0);
+}
+
+.velar-session-sticky-dock-trigger {
+  position: absolute;
+  left: 50%;
+  right: auto;
+  top: -0.25rem;
+  bottom: auto;
+  z-index: 2;
+  display: flex;
+  min-width: 0;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  width: var(--sticky-dock-trigger-size);
+  height: var(--sticky-dock-trigger-size);
+  padding: 0;
+  background: transparent;
+  border: none;
+  transform: translateX(-50%);
+  pointer-events: auto;
+  perspective: 640px;
+  perspective-origin: 50% 0%;
+  transition: top 0.82s cubic-bezier(0.22, 1, 0.4, 1);
+  will-change: top;
+}
+
+.velar-session-sticky-dock-curtain.velar-session-sticky-dock-curtain-open
+  .velar-session-sticky-dock-trigger {
+  top: calc(100% - 0.25rem);
+}
+
+.velar-session-sticky-dock-trigger-center {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+  width: var(--sticky-dock-trigger-size);
+  height: var(--sticky-dock-trigger-size);
+  margin: 0;
+  padding: 0;
+}
+
+.velar-session-sticky-dock-trigger-flip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotateX(0deg);
+  transform-origin: top center;
+  transform-style: preserve-3d;
+  transition: transform 0.82s cubic-bezier(0.22, 1, 0.4, 1);
+  will-change: transform;
+}
+
+.velar-session-sticky-dock-trigger-flip-open {
+  transform: rotateX(180deg);
+}
+
+.velar-session-sticky-dock-chevron {
+  display: block;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  opacity: 0.72;
+  transform: scaleY(0.78);
+  transform-origin: center;
+}
+
+.velar-session-sticky-dock-item {
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  isolation: isolate;
+  background: color-mix(
+    in srgb,
+    var(--background-elevated) 92%,
+    var(--status-green-soft)
+  );
+  backdrop-filter: blur(26px) saturate(1.12);
+  -webkit-backdrop-filter: blur(26px) saturate(1.12);
+}
+
+.velar-session-sticky-dock-item > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .velar-session-sticky-dock-trigger,
+  .velar-session-sticky-dock-fabric-clip,
+  .velar-session-sticky-dock-fabric-inner,
+  .velar-session-sticky-dock-trigger-flip {
+    transition-duration: 0.01ms;
+  }
+}

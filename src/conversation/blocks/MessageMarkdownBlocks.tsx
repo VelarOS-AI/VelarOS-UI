@@ -6,6 +6,7 @@ import React, {
   type ReactNode,
   type ReactPortal,
   type RefObject,
+  use,
   useCallback,
   useContext,
   useEffect,
@@ -28,15 +29,15 @@ import {
 import { StyleUtils } from '@velaros-ai/ui'
 
 import { useConversationI18n } from '../i18n'
+import { useConversationMarkdownProfile } from '../markdown/conversationMarkdownProfile'
 import { activateMarkdownTailMarker } from '../markdown/markdownTailMarker.utils'
 import {
   resolveStreamdownMarkdownMode,
   STREAMDOWN_MARKDOWN_CONTROLS,
   STREAMDOWN_MARKDOWN_LINK_SAFETY,
-  STREAMDOWN_MARKDOWN_PLUGINS,
   STREAMDOWN_MARKDOWN_REHYPE_PLUGINS,
   transformMessageMarkdownUrl,
-} from '../markdown/streamdownMarkdown.config'
+} from '../markdown/streamdownMarkdownBase'
 import { prepareStreamdownMarkdownText } from '../markdown/streamdownMarkdownSource.utils'
 import { useConversationScrollFollow } from '../react-hooks/conversationScrollFollow'
 import { AutoScrollSuspendEventName } from '../react-hooks/scrollBehavior'
@@ -467,6 +468,8 @@ function MessageStreamdownInner({
   components: StreamdownComponents
   runtime: MessageMarkdownRuntime
 }): ReactElement {
+  const profile = useConversationMarkdownProfile()
+  const plugins = profile.kind === 'basic' ? profile.plugins : use(profile.loadPlugins())
   return (
     <MessageMarkdownRuntimeProvider runtime={runtime}>
       <StreamingTextAnimationKeyContext.Provider value={toNullable(animationKey)}>
@@ -476,7 +479,7 @@ function MessageStreamdownInner({
           animated={false}
           remend={{ linkMode: 'text-only' }}
           BlockComponent={animationKey ? PersistentStreamingTextBlock : undefined}
-          plugins={STREAMDOWN_MARKDOWN_PLUGINS}
+          plugins={plugins}
           linkSafety={STREAMDOWN_MARKDOWN_LINK_SAFETY}
           rehypePlugins={STREAMDOWN_MARKDOWN_REHYPE_PLUGINS}
           urlTransform={transformMessageMarkdownUrl}

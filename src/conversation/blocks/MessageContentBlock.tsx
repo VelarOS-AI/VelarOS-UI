@@ -254,7 +254,7 @@ function DeferredMessageMarkdownBlock({
  * `messageMarkdown` 替换槽的改道点 —— 就开在**官方件的硬 lazy-import 那一层**。
  *
  * 开在这里而不是 `MessageMarkdownBlocks` 内部，是因为「替换 markdown 渲染器」的全部意义就是不再
- * 为它付钱：官方件是 `lazy()` 分包（Streamdown + 高亮 + 数学），在此改道则替换件生效时那个分包
+ * 为它付钱：官方件是 `lazy()` 的共享 Markdown 分包，展示插件由入口的固定 profile 装配；在此改道则替换件生效时该分包
  * 根本不会被拉起；开在包内部则永远先加载一遍被替换掉的东西。
  *
  * `text` 给的是官方件逐字消费的那份（`prepareStreamdownMarkdownText` 产物），替换件与被替换件输入

@@ -15,6 +15,7 @@ import {
   type ConversationI18nContextValue,
   ConversationLocalizationProvider,
 } from '../src/conversation/i18n'
+import { FullConversationMarkdownProvider } from '../src/conversation/markdown/fullConversationComponents'
 import { STREAMDOWN_MARKDOWN_PLUGINS } from '../src/conversation/markdown/streamdownMarkdown.config'
 import {
   type ConversationRenderSlots,
@@ -158,7 +159,8 @@ function renderCodeFence(
       createElement(
         ConversationRenderSlotsProvider,
         { slots },
-        createElement(CodeFenceProbe, { languageClassName, isStreaming })
+        createElement(FullConversationMarkdownProvider, null,
+          createElement(CodeFenceProbe, { languageClassName, isStreaming }))
       )
     ) as ReactElement
   )

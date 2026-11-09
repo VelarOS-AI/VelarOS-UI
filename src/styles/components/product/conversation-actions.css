@@ -1,0 +1,449 @@
+/* @velaros-no-tailwind */
+
+.velar-copy-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition:
+    color var(--ui-transition-fast),
+    background-color var(--ui-transition-fast),
+    border-color var(--ui-transition-fast),
+    opacity var(--ui-transition-fast);
+  border-radius: var(--ui-radius-round);
+  border: 0;
+  background: transparent;
+  color: var(--foreground-tertiary);
+  box-shadow: none;
+  transform: none;
+}
+
+.velar-copy-button:hover {
+  background: rgba(17, 17, 17, 0.05);
+  color: var(--foreground);
+  transform: none;
+}
+
+.velar-copy-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.velar-copy-button-copied {
+  border-color: transparent;
+  background: rgba(21, 128, 61, 0.1);
+  color: var(--status-green);
+  box-shadow: none;
+}
+
+.velar-action-card {
+  --action-card-accent: var(--foreground-tertiary);
+  --action-card-accent-soft: var(--surface-subtle);
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--ui-space-3);
+  max-width: 760px;
+  padding: 12px;
+  border-radius: var(--ui-radius-panel);
+  background: var(--surface-interaction-card);
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.velar-action-card-flat {
+  background: var(--surface-interaction-card);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.velar-action-card-chromeless {
+  background: var(--surface-interaction-card);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.velar-action-card-tone-neutral {
+  --action-card-accent: var(--foreground-tertiary);
+  --action-card-accent-soft: var(--surface-subtle);
+}
+
+.velar-action-card-tone-info {
+  --action-card-accent: var(--status-blue);
+  --action-card-accent-soft: var(--status-blue-soft);
+}
+
+.velar-action-card-tone-success {
+  --action-card-accent: var(--status-green);
+  --action-card-accent-soft: var(--status-green-soft);
+}
+
+.velar-action-card-tone-warning {
+  --action-card-accent: var(--status-amber);
+  --action-card-accent-soft: var(--status-amber-soft);
+}
+
+.velar-action-card-tone-error {
+  --action-card-accent: var(--status-red);
+  --action-card-accent-soft: var(--status-red-soft);
+}
+
+.velar-action-card-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--ui-radius-control);
+  background: var(--action-card-accent-soft);
+  color: var(--action-card-accent);
+}
+
+.velar-action-card-body {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: var(--ui-space-3);
+}
+
+.velar-action-card-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.velar-action-card-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--foreground);
+  font-size: var(--ui-font-body);
+  font-weight: 650;
+  line-height: var(--ui-line-xs);
+}
+
+.velar-action-card-description,
+.velar-action-card-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--foreground-secondary);
+  font-size: var(--ui-font-body-sm);
+  line-height: var(--ui-line-compact);
+}
+
+.velar-action-card-description {
+  margin-top: 3px;
+}
+
+.velar-action-card-content {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.velar-action-card-code {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 6px 8px;
+  border: 1px solid rgba(15, 15, 15, 0.07);
+  border-radius: var(--ui-radius-control);
+  background: rgba(17, 17, 17, 0.035);
+  color: var(--foreground);
+  font-size: var(--ui-font-xs);
+  line-height: 17px;
+}
+
+.velar-action-card-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.velar-action-card-action-button {
+  border-color: transparent;
+  background: transparent !important;
+  color: var(--foreground-tertiary);
+  box-shadow: none !important;
+}
+
+.velar-action-card-action-button:hover {
+  background: rgba(17, 17, 17, 0.05) !important;
+  color: var(--foreground-secondary);
+}
+
+.velar-action-card-action-button-danger {
+  color: var(--destructive);
+}
+
+.velar-action-card-action-button-danger:hover {
+  background: rgba(220, 38, 38, 0.09) !important;
+  color: var(--destructive);
+}
+
+.velar-action-card {
+  align-items: flex-start;
+}
+
+.velar-action-card-body {
+  width: 100%;
+}
+
+.velar-action-card-actions {
+  flex-shrink: 0;
+}
+
+/* ─── ActionCard 富卡：stack 布局 / dismiss / muted ─────────────────────────── */
+
+/* stack：图标顶对齐、标题换行、正文纵向堆叠——取代各卡的 align-items/title-nowrap
+   覆盖与 grid+display:contents hack。 */
+.velar-action-card-stack {
+  align-items: flex-start;
+}
+
+.velar-action-card-stack .velar-action-card-icon {
+  margin-top: 1px;
+}
+
+.velar-action-card-stack .velar-action-card-body {
+  align-items: flex-start;
+}
+
+.velar-action-card-stack .velar-action-card-title,
+.velar-action-card-stack .velar-action-card-description {
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+}
+
+/* 关键：content 区子项必须能收缩到 0，否则长不可断内容（绝对路径/长 token）
+   会撑破卡宽横向溢出。单列 minmax(0,1fr) + 子项 min-width:0 兜住所有 stack 卡。 */
+.velar-action-card-stack .velar-action-card-content {
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.velar-action-card-stack .velar-action-card-content > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.velar-action-card-compact {
+  padding: 10px 12px;
+}
+
+.velar-action-card-muted {
+  opacity: 0.68;
+}
+
+.velar-action-card-dismissable {
+  position: relative;
+}
+
+.velar-action-card-dismiss {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: var(--ui-radius-control);
+  background: transparent;
+  color: var(--foreground-tertiary);
+  cursor: pointer;
+  transition:
+    background var(--ui-transition-fast),
+    color var(--ui-transition-fast);
+}
+
+.velar-action-card-dismiss:hover {
+  background: rgba(17, 17, 17, 0.06);
+  color: var(--foreground-secondary);
+}
+
+/* ─── CardKit 零件 ─────────────────────────────────────────────────────────── */
+
+/* tone → (soft 底, solid 字)。零件盒统一从这套变量取色，消除各卡 20+ 份 --status-* 死值。 */
+.velar-card-pill-neutral {
+  --card-accent: var(--foreground-tertiary);
+  --card-accent-soft: var(--surface-subtle);
+}
+.velar-card-pill-info {
+  --card-accent: var(--status-blue);
+  --card-accent-soft: var(--status-blue-soft);
+}
+.velar-card-pill-success {
+  --card-accent: var(--status-green);
+  --card-accent-soft: var(--status-green-soft);
+}
+.velar-card-pill-warning {
+  --card-accent: var(--status-amber);
+  --card-accent-soft: var(--status-amber-soft);
+}
+.velar-card-pill-error {
+  --card-accent: var(--status-red);
+  --card-accent-soft: var(--status-red-soft);
+}
+
+.velar-card-pill {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--card-accent-soft);
+  color: var(--card-accent);
+  font-size: var(--ui-font-xs);
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.velar-card-pill-mini {
+  padding: 1px 6px;
+  font-size: 10px;
+}
+
+.velar-card-meta {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: center;
+  gap: 4px;
+  color: var(--foreground-tertiary);
+  font-size: var(--ui-font-xs);
+  line-height: var(--ui-line-compact);
+}
+
+.velar-card-meta > :not(.velar-card-meta-icon) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.velar-card-meta-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.velar-card-disclosure {
+  font-size: var(--ui-font-xs);
+}
+
+.velar-card-disclosure-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--ui-radius-control);
+  color: var(--foreground-secondary);
+  font-size: var(--ui-font-xs);
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  transition: color var(--ui-transition-fast);
+}
+
+.velar-card-disclosure-summary::-webkit-details-marker {
+  display: none;
+}
+
+.velar-card-disclosure-summary:hover {
+  color: var(--foreground);
+}
+
+.velar-card-disclosure-caret {
+  flex-shrink: 0;
+  transition: transform var(--ui-transition-fast);
+}
+
+.velar-card-disclosure[open] .velar-card-disclosure-caret {
+  transform: rotate(90deg);
+}
+
+.velar-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.velar-card-footer-right {
+  justify-content: flex-end;
+}
+
+.velar-card-footer-between {
+  justify-content: space-between;
+}
+
+.velar-card-result {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: var(--ui-radius-control);
+  background: var(--card-accent-soft);
+  color: var(--foreground);
+  font-size: var(--ui-font-body-sm);
+  line-height: var(--ui-line-relaxed);
+  white-space: pre-wrap;
+}
+
+.velar-card-result.velar-card-pill-error {
+  color: var(--card-accent);
+}
+
+/* 文字动作按钮：ghost + tone 配色（对齐确认卡：正向绿、拒绝红、中性灰）。 */
+.velar-card-text-button.velar-button {
+  gap: 5px;
+  min-width: 0;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.velar-card-text-button.velar-button:hover,
+.velar-card-text-button.velar-button:focus-visible {
+  background: transparent;
+  transform: none;
+}
+
+.velar-card-text-button-approve.velar-button {
+  color: var(--status-green);
+}
+.velar-card-text-button-approve.velar-button:hover,
+.velar-card-text-button-approve.velar-button:focus-visible {
+  color: color-mix(in srgb, var(--status-green) 82%, var(--foreground));
+}
+
+.velar-card-text-button-reject.velar-button {
+  color: var(--status-red);
+}
+.velar-card-text-button-reject.velar-button:hover,
+.velar-card-text-button-reject.velar-button:focus-visible {
+  color: color-mix(in srgb, var(--status-red) 82%, var(--foreground));
+}
+
+.velar-card-text-button-neutral.velar-button {
+  color: var(--foreground-secondary);
+}
+.velar-card-text-button-neutral.velar-button:hover,
+.velar-card-text-button-neutral.velar-button:focus-visible {
+  color: var(--foreground);
+}
+
+.velar-card-text-button-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+}

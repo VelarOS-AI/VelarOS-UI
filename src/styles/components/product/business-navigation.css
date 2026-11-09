@@ -1,0 +1,172 @@
+/* @velaros-no-tailwind */
+
+.velar-business-surface-surface-base {
+  border-style: solid;
+  border-width: 0px;
+  color: var(--foreground);
+  outline-style: none;
+  border-radius: var(--ui-radius-panel);
+  box-shadow: none;
+  font-size: var(--ui-font-body-sm);
+  line-height: var(--ui-line-relaxed);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.velar-business-surface-padded {
+  padding: 14px;
+}
+
+.velar-business-surface-variant-default {
+  background: rgba(15, 15, 15, 0.035);
+}
+
+.velar-business-surface-variant-code {
+  max-height: 18rem;
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: var(--ui-font-body-sm);
+  background: rgba(15, 15, 15, 0.04);
+}
+
+.velar-business-surface-variant-danger {
+  background: rgba(220, 38, 38, 0.06);
+}
+
+.velar-collapsible-nav {
+  display: grid;
+  min-width: 0;
+  gap: 10px;
+}
+
+.velar-collapsible-nav-group {
+  min-width: 0;
+}
+
+.velar-collapsible-nav-group-button {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  border-radius: var(--ui-radius-control-sm);
+  background: transparent;
+  padding: 7px 8px;
+  color: var(--foreground-tertiary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.velar-collapsible-nav-group-button:hover {
+  background: rgba(15, 15, 15, 0.04);
+  color: var(--foreground-secondary);
+}
+
+.velar-collapsible-nav-group-button[aria-expanded="true"]
+  .velar-collapsible-nav-group-caret {
+  transform: rotate(90deg);
+}
+
+.velar-collapsible-nav-group-caret {
+  flex-shrink: 0;
+  transition: transform 150ms ease;
+}
+
+.velar-collapsible-nav-group-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 1px;
+}
+
+.velar-collapsible-nav-group-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--ui-font-caption);
+  font-weight: 650;
+  line-height: var(--ui-line-compact);
+}
+
+.velar-collapsible-nav-group-description {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  line-height: var(--ui-line-compact);
+}
+
+.velar-collapsible-nav-group-count,
+.velar-collapsible-nav-item-count {
+  flex-shrink: 0;
+  color: var(--foreground-tertiary);
+  font-size: var(--ui-font-caption);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--ui-line-compact);
+}
+
+.velar-collapsible-nav-item-list {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  margin-top: 2px;
+  padding-left: 12px;
+}
+
+.velar-collapsible-nav-item-button {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: var(--ui-radius-control-sm);
+  background: transparent;
+  padding: 7px 9px;
+  color: var(--foreground-secondary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.velar-collapsible-nav-item-button:hover {
+  background: rgba(15, 15, 15, 0.04);
+  color: var(--foreground);
+}
+
+.velar-collapsible-nav-item-button[data-selected="true"],
+.velar-collapsible-nav-item-button[data-selected="true"]:hover {
+  background: var(--status-blue-surface);
+  color: var(--status-blue-contrast);
+}
+
+.velar-collapsible-nav-item-copy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+}
+
+.velar-collapsible-nav-item-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: inherit;
+  font-size: var(--ui-font-body-sm);
+  font-weight: 550;
+  line-height: var(--ui-line-compact);
+}
+
+.velar-collapsible-nav-item-description {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--foreground-tertiary);
+  font-size: 10px;
+  line-height: var(--ui-line-compact);
+}
+
+.velar-collapsible-nav-item-button[data-selected="true"]
+  .velar-collapsible-nav-item-description {
+  color: #386ec8;
+}

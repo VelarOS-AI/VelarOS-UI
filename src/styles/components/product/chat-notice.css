@@ -1,0 +1,134 @@
+/* @velaros-no-tailwind */
+
+/* ─── Chat interaction notice (business) ─────────────────────────────────── */
+/* @apply 展开：flex items-start gap-3 border → 下列裸 CSS（gap-3=0.75rem、border=1px solid）。 */
+
+.velar-chat-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border-style: solid;
+  border-width: 1px;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--ui-radius-control);
+  padding-inline: var(--ui-space-control-x);
+  padding-block: var(--ui-space-control-y);
+  box-shadow: var(--shadow-xs);
+}
+
+.velar-chat-notice-icon {
+  margin-top: 0.125rem;
+  display: flex;
+  height: 1.5rem;
+  width: 1.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  border-radius: 8px;
+}
+
+.velar-chat-notice-body {
+  min-width: 0;
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.velar-chat-notice-title {
+  font-weight: 600;
+  color: var(--foreground);
+  font-size: var(--ui-font-body);
+}
+
+.velar-chat-notice-description {
+  margin-top: 0.25rem;
+  white-space: pre-wrap;
+  color: var(--muted-foreground);
+  font-size: var(--ui-font-body-sm);
+  line-height: var(--ui-line-default);
+}
+
+.velar-chat-notice-actions {
+  margin-top: 0.75rem;
+}
+
+.velar-chat-notice-running {
+  background: var(--status-green-soft);
+  border-color: color-mix(in srgb, var(--status-green) 16%, transparent);
+  color: var(--status-green);
+  animation: velar-chat-notice-breathe 2.6s ease-in-out infinite;
+}
+
+.velar-chat-notice-running .velar-chat-notice-title,
+.velar-chat-notice-running .velar-chat-notice-description {
+  color: color-mix(in srgb, var(--status-green) 78%, var(--foreground));
+}
+
+.velar-chat-notice-running::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--card) 55%, transparent),
+    transparent
+  );
+  pointer-events: none;
+  animation: velar-chat-notice-shine 3.8s ease-in-out infinite;
+}
+
+.velar-chat-notice-warning {
+  background: var(--status-amber-soft);
+  border-color: color-mix(in srgb, var(--status-amber) 14%, transparent);
+}
+
+.velar-chat-notice-warning .velar-chat-notice-icon {
+  background: color-mix(in srgb, var(--status-amber) 12%, transparent);
+  color: var(--status-amber);
+}
+
+.velar-chat-notice-error {
+  background: var(--status-red-soft);
+  border-color: color-mix(in srgb, var(--status-red) 14%, transparent);
+}
+
+.velar-chat-notice-error .velar-chat-notice-icon {
+  background: color-mix(in srgb, var(--status-red) 12%, transparent);
+  color: var(--status-red);
+}
+
+@keyframes velar-chat-notice-breathe {
+  0%,
+  100% {
+    box-shadow: var(--shadow-xs);
+  }
+
+  50% {
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--status-green) 6%, transparent);
+  }
+}
+
+@keyframes velar-chat-notice-shine {
+  0%,
+  70%,
+  100% {
+    transform: translateX(-120%);
+  }
+
+  32% {
+    transform: translateX(120%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .velar-chat-notice-running,
+  .velar-chat-notice-running::after {
+    animation: none;
+  }
+}

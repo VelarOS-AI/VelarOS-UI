@@ -1,0 +1,119 @@
+/* @velaros-no-tailwind */
+
+.velar-tool-disclosure-card {
+  margin-block: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  --disclosure-summary-padding-x: 12px;
+  --disclosure-summary-padding-y: 12px;
+  --disclosure-content-padding-x: 12px;
+  --disclosure-content-padding-y: 4px;
+  border-radius: 14px;
+  border: 0 !important;
+  background: rgba(250, 250, 250, 0.98) !important;
+  box-shadow: none !important;
+}
+
+.velar-tool-disclosure-card[data-tone="running"] {
+  background: rgba(var(--status-blue-rgb), 0.045) !important;
+}
+
+.velar-tool-disclosure-card[data-tone="success"] {
+  background: rgba(21, 128, 61, 0.04) !important;
+}
+
+.velar-tool-disclosure-card[data-tone="warning"] {
+  background: rgba(217, 119, 6, 0.05) !important;
+}
+
+.velar-tool-disclosure-card[data-tone="error"] {
+  background: rgba(220, 38, 38, 0.05) !important;
+}
+
+.velar-tool-disclosure-card-header-layout {
+  display: flex;
+  min-width: 0;
+  width: 100%;
+}
+
+.velar-tool-disclosure-card-header-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.velar-tool-disclosure-card-title-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.velar-tool-disclosure-card-status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--foreground-tertiary);
+}
+
+.velar-tool-disclosure-card-status-icon-running {
+  color: var(--status-green);
+}
+
+.velar-tool-disclosure-card-status-icon-success {
+  color: var(--status-green);
+}
+
+.velar-tool-disclosure-card-status-icon-warning {
+  color: var(--status-amber);
+}
+
+.velar-tool-disclosure-card-status-icon-error {
+  color: var(--status-red);
+}
+
+.velar-tool-disclosure-card-leading-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--foreground-tertiary);
+}
+
+.velar-tool-disclosure-card-title-label {
+  min-width: 0;
+  overflow: visible;
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  white-space: normal;
+  color: var(--foreground);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.velar-tool-disclosure-card-status-icon
+  + .velar-tool-disclosure-card-leading-icon,
+.velar-tool-disclosure-card-status-icon
+  + .velar-tool-disclosure-card-title-label,
+.velar-tool-disclosure-card-leading-icon
+  + .velar-tool-disclosure-card-title-label {
+  margin-left: 0.5rem;
+}
+
+.velar-tool-disclosure-card-meta {
+  margin-left: var(--ui-space-2);
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--ui-space-2);
+}
+
+.velar-tool-disclosure-card-subtitle {
+  margin-top: var(--ui-space-2);
+  min-width: 0;
+  max-width: 100%;
+  font-size: 12px;
+  color: var(--foreground-secondary);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}

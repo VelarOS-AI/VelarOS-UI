@@ -1,0 +1,157 @@
+/* @velaros-no-tailwind */
+
+/* ─── Cross-product top bar controls ─────────────────────────────────────── */
+
+.velar-topbar-control-frame {
+  position: relative;
+  display: inline-flex;
+  height: 36px;
+  max-width: min(520px, 48vw);
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0;
+  overflow: hidden;
+  padding: 2px;
+  border: 0;
+  border-radius: var(--ui-radius-control);
+  background: var(--control-gray-bg);
+  color: var(--foreground);
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 500;
+  transform: none;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.velar-topbar-control-frame:hover,
+.velar-topbar-control-frame:active,
+.velar-topbar-control-frame-busy {
+  background: var(--control-gray-bg);
+  transform: none;
+}
+
+.velar-topbar-control-frame-accent::before {
+  content: "";
+  width: 3px;
+  flex-shrink: 0;
+  align-self: stretch;
+  margin: 5px 4px 5px 2px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 76%, transparent);
+}
+
+.velar-topbar-control-frame-muted {
+  color: var(--muted-foreground);
+}
+
+.velar-topbar-control-frame-plain {
+  max-width: none;
+  overflow: visible;
+}
+
+.velar-topbar-control-frame-plain,
+.velar-topbar-control-frame-plain:hover,
+.velar-topbar-control-frame-plain:active,
+.velar-topbar-control-frame-plain.velar-topbar-control-frame-busy {
+  background: transparent;
+}
+
+.velar-topbar-control-main {
+  display: inline-flex;
+  height: 100%;
+  min-width: 0;
+  max-width: min(480px, 46vw);
+  flex: 1 1 auto;
+}
+
+.velar-topbar-control-main-button {
+  display: inline-flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  align-items: center;
+  border: 0;
+  border-radius: var(--ui-radius-control-sm);
+  outline: none;
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+  text-align: left;
+  transform: none;
+}
+
+.velar-topbar-control-main-button:hover:not(:disabled),
+.velar-topbar-control-main-button:focus-visible {
+  background: var(--control-gray-hover-bg);
+  transform: none;
+}
+
+.velar-topbar-control-main-button:active {
+  transform: none;
+}
+
+.velar-topbar-control-action-group {
+  display: inline-flex;
+  height: 100%;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+  padding-left: 4px;
+  border-left: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+.velar-topbar-control-divider {
+  display: block;
+  width: 1px;
+  height: 20px;
+  flex-shrink: 0;
+  margin: 0 2px 0 1px;
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+.velar-topbar-control-action-button {
+  border: 0;
+  border-radius: var(--ui-radius-control-sm);
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+.velar-topbar-control-action-button:hover:not(:disabled),
+.velar-topbar-control-action-button:focus-visible,
+.velar-topbar-control-action-button:active {
+  transform: none;
+}
+
+.velar-topbar-control-panel[data-topbar-panel="picker"] {
+  /* Shared picker geometry; project and Git content only own their internal layout. */
+  --topbar-panel-row-height: 30px;
+  --topbar-panel-detail-row-height: 38px;
+  --topbar-panel-section-height: 24px;
+  --topbar-panel-list-max-height: min(256px, 50vh);
+  --topbar-panel-padding: 4px;
+  --topbar-panel-item-padding: 6px;
+  --topbar-panel-gap: 2px;
+  --topbar-panel-icon-gap: 6px;
+  --topbar-panel-font-size: 11px;
+  --topbar-panel-detail-font-size: 9.5px;
+}
+
+.velar-topbar-control-panel[data-topbar-panel="picker"][data-slot="popover-content"] {
+  display: flex;
+  width: min(304px, calc(100vw - 16px));
+  min-width: min(304px, calc(100vw - 16px));
+  max-width: min(304px, calc(100vw - 16px));
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  padding: var(--topbar-panel-padding);
+}
+
+.velar-topbar-control-panel,
+.velar-topbar-control-panel[data-slot="popover-content"],
+.velar-topbar-control-panel .velar-cascading-menu-submenu-panel {
+  border-radius: var(--ui-radius-control);
+}

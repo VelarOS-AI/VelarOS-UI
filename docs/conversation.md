@@ -105,6 +105,7 @@ Render Slot 组合接入。
 | 入口 | 装什么 |
 | --- | --- |
 | `.` | 会话壳(`ChatConversationPane` / `ChatTranscript` / `ChatScrollNavigator`)、气泡族、消息块分发器、消息动作行、渲染模型与纯 util、`ConversationBlockHooks` |
+| `./basic` | 同一会话组件与展示合同的基础入口；普通代码保留复制/下载/展开，不装配图表、数学和完整语言高亮 |
 | `./contracts` | 框架无关的纯展示 DTO 与结构化 `Result<T>` 契约 |
 | `./composer` | 会话表面输入框(`ChatSurfaceComposer`)、底层组合器(`ChatComposer` / `ChatInput`)+ 全部零件 + `ConversationComposerPort` |
 | `./stream` | `ChatStreamPacer` + `streamPaceBudget` |
@@ -117,6 +118,16 @@ Render Slot 组合接入。
 
 **重件走独立子路径是有意的**:`./artifacts` 与 `./html-preview` 按需 lazy 加载,
 这样任意 root import 都不会预载沙箱。
+
+`conversation` 保持原有完整 Markdown 展示；`conversation/basic` 复用同一组件和状态机，
+只在入口装配基础展示配置。配置按最外层会话实例固定，嵌套完整门面不会覆盖基础实例。
+基础代码围栏保持可读和代码操作，Mermaid 围栏显示为普通代码；未装配数学公式插件。
+安全链接过滤、流式尾标、消息滚动与交互确认均走原实现。基础入口不经过完整插件模块，
+而不只是等到显示时才加载它；这不承诺整个包归档或产品首屏有某个固定体积。
+
+基础入口配套样式为 `@velaros-ai/ui/styles/components/conversation-basic.css`，包含设计令牌
+及会话所需的原语和产品样式；主题文件仍由宿主选择。原 `index.css` 与 `product.css`
+继续提供完整组件样式，拆分后的产品样式保持原有规则与层叠顺序。
 
 Desktop 与 Workbench 的普通会话面统一使用 `ChatSurfaceComposer`:宿主只传
 `control` 与会话表面的 `variant`,组件库负责把主会话映射为默认密度、侧栏映射为紧凑密度。

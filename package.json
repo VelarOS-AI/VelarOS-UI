@@ -1,6 +1,6 @@
 {
   "name": "@velaros-ai/ui",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A reusable React component library with accessible primitives, application shells, and design tokens, plus the host-agnostic conversation UI (message blocks, tool renderers, stream pacing) under ./conversation and the HTML artifacts unit under ./html-artifacts (framework-neutral sandboxed iframe documents for HTML previews).",
   "license": "Apache-2.0",
   "engines": {
@@ -35,6 +35,7 @@
     "./styles/tokens/theme-dark.css": "./dist/styles/tokens/theme-dark.css",
     "./styles/components/index.css": "./dist/styles/components/index.css",
     "./styles/components/product.css": "./dist/styles/components/product.css",
+    "./styles/components/conversation-basic.css": "./dist/styles/components/conversation-basic.css",
     "./hooks/usePointerResize": {
       "types": "./dist/hooks/usePointerResize.d.ts",
       "import": "./dist/hooks/usePointerResize.js"
@@ -386,6 +387,10 @@
     "./conversation": {
       "types": "./dist/conversation/index.d.ts",
       "import": "./dist/conversation/index.js"
+    },
+    "./conversation/basic": {
+      "types": "./dist/conversation/basic.d.ts",
+      "import": "./dist/conversation/basic.js"
     },
     "./conversation/composer": {
       "types": "./dist/conversation/composer/index.d.ts",

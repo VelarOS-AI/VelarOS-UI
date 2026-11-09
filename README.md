@@ -27,6 +27,7 @@ tone 与主题一律走 CSS 变量单源。需要单点特殊外貌 → 在**消
 | `@velaros-ai/ui/primitives/**` | 跨产品复用、**无业务语义**的原子(buttons / display / forms / layout / overlays) |
 | `@velaros-ai/ui/product/**` | VelarOS 产品壳层组合件(AppShell / ActionCard + CardKit / 业务表面 / 设置版式 …) |
 | `@velaros-ai/ui/conversation` | 会话渲染门面:消息块管线、工具卡族、流式起搏、组合层(见下节) |
+| `@velaros-ai/ui/conversation/basic` | 基础会话门面：共用消息、交互、滚动与代码操作，不装配图表、数学或完整语言高亮 |
 | `@velaros-ai/ui/conversation/**` | 会话件的按需子入口(`contracts` / `composer` / `stream` / `tool-render` / `render-slots` / `markdown` / `artifacts` / `html-preview` / `i18n` / `status`) |
 | `@velaros-ai/ui/styles/tokens/**` | 设计令牌 CSS(`design-tokens.css` 是入口) |
 | `@velaros-ai/ui/styles/components/**` | 组件类 CSS(`index.css` + `product.css`) |
@@ -39,6 +40,19 @@ tone 与主题一律走 CSS 变量单源。需要单点特殊外貌 → 在**消
 
 **只有 `package.json#exports` 里声明的路径属于公共 API**;未声明的 `src` / `dist` 深路径
 是**刻意私有**的。组件清单不在本文手工维护——看下面的组件图鉴。
+
+基础会话从 `@velaros-ai/ui/conversation/basic` 导入 `ChatConversationPane`、`ChatTranscript`、
+`MessageBubble` 及同一套展示合同与宿主 Provider；输入仍从 `@velaros-ai/ui/conversation/composer`
+导入 `ChatSurfaceComposer`。普通围栏代码保留复制、下载与展开；Mermaid 围栏显示代码，数学内容
+不启用公式插件。原 `conversation` 入口继续提供完整展示，已有组件属性与类型保持一致。
+展示配置在最外层会话实例固定，嵌套组件沿用该实例，不通过全局注册切换。
+
+基础会话的样式从 `@velaros-ai/ui/styles/components/conversation-basic.css` 导入；
+它复用设计令牌、所需原语和产品组件样式，不加载图表、公式或完整高亮样式。
+主题继续单独导入 `styles/tokens/theme-light.css` 或 `theme-dark.css`。
+
+两个入口共享正文、流式尾标、安全链接、滚动和交互实现。基础入口的源码依赖图不引用完整
+高亮、数学和图表插件，包括懒加载边；这项边界不代表完整安装归档或具体产品的首屏下载量。
 
 ## 安装
 

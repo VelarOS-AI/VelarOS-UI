@@ -29,6 +29,7 @@ import { Link } from '@velaros-ai/ui/primitives/display/Link'
 
 import { ExpandableContentControls } from '../cards/ExpandableContentControls'
 import { useConversationI18n } from '../i18n'
+import { useConversationMarkdownProfile } from '../markdown/conversationMarkdownProfile'
 import {
   resolveMessageMarkdownHrefTarget,
 } from '../markdown/messageMarkdownLinks.utils'
@@ -384,13 +385,15 @@ function renderOfficialCodeBlock({
   language,
   code,
   isStreaming,
+  renderDiagrams,
 }: {
   blockChild: ReactElement
   language: string
   code: string
   isStreaming: boolean
+  renderDiagrams: boolean
 }): ReactElement {
-  if (DiagramCodeBlockLanguages.has(language))
+  if (renderDiagrams && DiagramCodeBlockLanguages.has(language))
     return (
       <RenderableDiagramCodeBlockFrame code={code} language={language} isStreaming={isStreaming}>
         {blockChild}
@@ -420,6 +423,7 @@ function MarkdownPreWithExpandableCode({
   isStreaming = false,
 }: React.ComponentPropsWithoutRef<'pre'> & { isStreaming?: boolean }): ReactElement {
   const slots = useConversationRenderSlots()
+  const profile = useConversationMarkdownProfile()
 
   if (!React.isValidElement(children)) return <>{children}</>
 
@@ -439,6 +443,7 @@ function MarkdownPreWithExpandableCode({
     language,
     code: readCodeText(childProps.children),
     isStreaming,
+    renderDiagrams: profile.kind === 'full',
   })
 
   const slot = slots.messageCodeBlock

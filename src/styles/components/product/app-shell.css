@@ -1,0 +1,60 @@
+/* @velaros-no-tailwind */
+
+.velar-app-shell {
+  overflow: hidden;
+  background: transparent;
+}
+
+.velar-app-shell:not(.velar-app-shell-root-embedded) {
+  height: 100vh;
+}
+
+.velar-app-shell-root-embedded {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+}
+
+.velar-app-shell-main {
+  display: flex;
+  flex-direction: column;
+  transition:
+    color var(--ui-transition-fast),
+    background-color var(--ui-transition-fast),
+    border-color var(--ui-transition-fast),
+    opacity var(--ui-transition-fast);
+  background: var(--background);
+  &.velar-app-shell-expanded {
+    margin-left: var(--shell-sidebar-expanded-width);
+  }
+  &.velar-app-shell-collapsed {
+    margin-left: var(--shell-sidebar-collapsed-width);
+  }
+}
+
+@media (max-width: 900px) {
+  .velar-app-shell:not(.velar-app-shell-root-embedded)
+    .velar-app-shell-main.velar-app-shell-expanded {
+    margin-left: 0;
+  }
+}
+
+.velar-app-shell:not(.velar-app-shell-root-embedded) .velar-app-shell-main {
+  height: 100vh;
+}
+
+.velar-app-shell-root-embedded .velar-app-shell-main {
+  flex: 1 1 0%;
+  min-height: 0;
+  height: auto;
+}
+
+.velar-app-shell-content {
+  position: relative;
+  min-height: 0;
+  flex: 1;
+  background: var(--background);
+}
