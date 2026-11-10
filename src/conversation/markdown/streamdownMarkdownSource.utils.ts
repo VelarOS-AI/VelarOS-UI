@@ -11,6 +11,18 @@ const PlainCurrencyAmountPattern =
 const DirectoryTreeMarkerPattern = /[│├└─┬┴┼]/
 const DirectoryTreeRootLinePattern = /^[^\n│├└─┬┴┼]+[/\\]\s*$/u
 
+/** 关闭围栏必须同字符、至少同长度且只带空白，内部的短围栏或代码行不能结束保护。 */
+function resolveFenceDelimiter(line: string, current: Nullable<string>): Nullable<string> {
+  const match = line.match(FenceLinePattern)
+  if (!match) return current
+  const delimiter = match[1]
+  const suffix = line.slice(match[0].length)
+  if (current) return delimiter[0] === current[0] && delimiter.length >= current.length && /^[\t ]*\r?$/u.test(suffix)
+      ? null
+      : current
+  return delimiter[0] === '`' && suffix.includes('`') ? null : delimiter
+}
+
 export function prepareStreamdownMarkdownText(markdown: string): string {
   const normalizedMarkdown = wrapUnfencedDirectoryTreeBlocks(markdown)
   const lines = normalizedMarkdown.split(/(\n)/)
@@ -20,18 +32,10 @@ export function prepareStreamdownMarkdownText(markdown: string): string {
     .map((part) => {
       if (part === '\n') return part
 
-      const fenceMatch = part.match(FenceLinePattern)
-      if (fenceMatch) {
-        const delimiter = fenceMatch[1][0]
-        if (!fenceDelimiter) {
-          fenceDelimiter = delimiter
-        } else if (delimiter === fenceDelimiter) {
-          fenceDelimiter = null
-        }
-        return part
-      }
-
-      if (fenceDelimiter) return part
+      const nextDelimiter = resolveFenceDelimiter(part, fenceDelimiter)
+      const protectedLine = !!fenceDelimiter || !!nextDelimiter
+      fenceDelimiter = nextDelimiter
+      if (protectedLine) return part
 
       return prepareInlineMarkdownText(part)
     })
@@ -46,8 +50,7 @@ function isDirectoryTreeLine(line: string): boolean {
 
 function wrapUnfencedDirectoryTreeBlocks(markdown: string): string {
   const lines = markdown.split('\n')
-  let inFence = false
-  let fenceDelimiter = ''
+  let fenceDelimiter: Nullable<string> = null
   const output: string[] = []
   let treeRun: string[] = []
 
@@ -65,22 +68,11 @@ function wrapUnfencedDirectoryTreeBlocks(markdown: string): string {
   }
 
   for (const line of lines) {
-    const fenceMatch = line.match(FenceLinePattern)
-    if (fenceMatch) {
+    const nextDelimiter = resolveFenceDelimiter(line, fenceDelimiter)
+    const protectedLine = !!fenceDelimiter || !!nextDelimiter
+    fenceDelimiter = nextDelimiter
+    if (protectedLine) {
       flushTreeRun()
-      const delimiter = fenceMatch[1][0]
-      if (!inFence) {
-        inFence = true
-        fenceDelimiter = delimiter
-      } else if (delimiter === fenceDelimiter) {
-        inFence = false
-        fenceDelimiter = ''
-      }
-      output.push(line)
-      continue
-    }
-
-    if (inFence) {
       output.push(line)
       continue
     }
