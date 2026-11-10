@@ -589,7 +589,7 @@ void test('真正的运行中引导在回执后显示已纳入状态', () => {
 void test('同伴通知显示独立署名气泡且不进入已处理折叠', () => {
   const peer: ChatMessage = {
     ...message('peer-answer', 'user', 'system-notice'),
-    peerOrigin: { sessionId: 'peer', title: '同伴', folderId: 'folder' },
+    peerOrigin: { sessionId: 'peer', title: '同伴' },
     blocks: [{ type: 'text', text: '独立通信正文' }],
   }
   const messages = [...guidanceTranscriptMessages(), peer]
@@ -635,7 +635,7 @@ void test('父来源仅改变署名，缺省保持同组来源与原结构边界
     for (const kind of ['turn-input', 'run-guidance', 'system-notice'] as const) {
       const entry: ChatMessage = {
         ...message('origin', 'user', kind),
-        peerOrigin: { sessionId: 'source-id', title: null, folderId: 'group', relation },
+        peerOrigin: { sessionId: 'source-id', title: null, relation },
       }
       const markup = renderToStaticMarkup(createElement(ConversationLocalizationProvider,
         { value: localization }, createElement(UserMessageBubble, { message: entry })))
@@ -765,7 +765,7 @@ void test('失败和中止仍统一折叠活动并在外面保留真实终态', 
 void test('通信边界保持独立且其后的执行片段仍统一折叠', () => {
   const peer: ChatMessage = {
     ...message('peer', 'user', 'system-notice'),
-    peerOrigin: { sessionId: 'other', title: '同伴', folderId: 'folder' },
+    peerOrigin: { sessionId: 'other', title: '同伴' },
     blocks: [{ type: 'text', text: '独立通信标记' }],
   }
   const entries: ChatMessage[] = [

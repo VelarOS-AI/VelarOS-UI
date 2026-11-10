@@ -85,8 +85,7 @@
           "peerOrigin": {
             "relation": "parent",
             "sessionId": "fixture-parent",
-            "title": "父会话验收",
-            "folderId": "session-1793691981026-1"
+            "title": "父会话验收"
           },
           "runId": "fixture-child-run",
           "turnId": "turn-1",
@@ -119,8 +118,7 @@
           "peerOrigin": {
             "relation": "parent",
             "sessionId": "fixture-parent",
-            "title": "父会话验收",
-            "folderId": "session-1793691981026-1"
+            "title": "父会话验收"
           },
           "runId": "fixture-child-run",
           "turnId": "turn-2",

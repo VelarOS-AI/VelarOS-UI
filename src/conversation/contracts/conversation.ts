@@ -616,7 +616,7 @@ export interface ChatMessage {
   systemNoticeKind?: 'rewind' | 'goal-continuation'
   guidanceStatus?: 'awaiting-decision' | 'pending' | 'sent' | 'accepted' | 'applied' | 'paused'
   /**
-   * 非空 = 这条 `role: 'user'` 的消息由**同组的另一条会话**写入，不是用户本人。
+   * 非空 = 这条 `role: 'user'` 的消息由另一条会话写入，不是用户本人。
    *
    * 为什么是独立字段而不是新增一个 `conversationKind`：两者是正交的两根轴。
    * `conversationKind` 是**结构轴**——这条消息起不起一轮、能不能回退到它、是不是分段边界；
@@ -625,14 +625,12 @@ export interface ChatMessage {
    * 「最近一次用户请求」映射、活动分组的轮次边界——而且一处编译错误都不会有。
    */
   peerOrigin?: {
-    /** 父会话来源；缺省时保持同组会话展示，不影响消息的结构语义。 */
+    /** 父会话来源；缺省时按同伴展示，不影响消息的结构语义。 */
     relation?: 'parent'
     /** 发信同伴的会话 id。 */
     sessionId: string
     /** 发信同伴的会话标题；未知时为 null。 */
     title: Nullable<string>
-    /** 双方所在的会话组 id。 */
-    folderId: string
   }
   timestamp: number
 }

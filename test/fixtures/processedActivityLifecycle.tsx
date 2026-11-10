@@ -308,7 +308,7 @@ function renderGuidanceRegression(withGuidance: boolean, showThinking = true): v
 function renderPeerOrigin(parent: boolean, locale: 'zh-CN' | 'en-US', title: string | null): void {
   const message: ChatMessage = {
     id: 'origin', role: 'user', conversationKind: 'run-guidance', timestamp: 1,
-    peerOrigin: { sessionId: 'source-id', title, folderId: 'group', ...(parent ? { relation: 'parent' as const } : {}) },
+    peerOrigin: { sessionId: 'source-id', title, ...(parent ? { relation: 'parent' as const } : {}) },
     blocks: [{ type: 'text', text: '通信正文保留' }],
   }
   renderMessage(message, false, false,
