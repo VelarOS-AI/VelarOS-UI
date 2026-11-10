@@ -536,11 +536,13 @@ function useMarkdownTailMarkerPortal(
 
 function MessageMarkdownBlockInner({
   block,
+  expansionScope,
   tailMarker,
   onOpenBrowserLink,
   onOpenProjectPath,
 }: {
   block: TextBlock
+  expansionScope?: string
   tailMarker?: LooseOptional<SettledRunMarker>
   formatPathForDisplay?: (path: string) => string
   onOpenBrowserLink?: (url: string) => void | Promise<void>
@@ -557,7 +559,7 @@ function MessageMarkdownBlockInner({
     onOpenBrowserLink,
     onOpenProjectPath,
     t('browser.openExternal'),
-    { isStreaming: false, withTailMarkerSlots: !!tailMarkerNode }
+    { isStreaming: false, withTailMarkerSlots: !!tailMarkerNode, expansionScope }
   )
   const tailMarkerPortal = useMarkdownTailMarkerPortal(
     markdownContentRef,

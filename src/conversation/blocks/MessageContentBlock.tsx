@@ -221,12 +221,14 @@ function useAfterFirstPaint(): boolean {
 
 function DeferredMessageMarkdownBlock({
   block,
+  expansionScope,
   tailMarker,
   formatPathForDisplay,
   onOpenBrowserLink,
   onOpenProjectPath,
 }: {
   block: TextBlock;
+  expansionScope: string;
   tailMarker?: LooseOptional<SettledRunMarker>;
   formatPathForDisplay?: (path: string) => string;
   onOpenBrowserLink?: (url: string) => void | Promise<void>;
@@ -241,6 +243,7 @@ function DeferredMessageMarkdownBlock({
     <Suspense fallback={fallback}>
       <LazyMessageMarkdownBlock
         block={block}
+        expansionScope={expansionScope}
         tailMarker={tailMarker}
         formatPathForDisplay={formatPathForDisplay}
         onOpenBrowserLink={onOpenBrowserLink}
@@ -345,6 +348,7 @@ function MessageContentBlockInner({
   }
 
   if (isBlank(block.text)) return null;
+  const markdownScope = `${messageId}:${blockAnimationKey ?? blockIndex ?? "text"}`;
 
   if (useLiveTextRenderer)
     return renderReplaceableMarkdown({
@@ -355,7 +359,7 @@ function MessageContentBlockInner({
         <Suspense fallback={<PlainTextBlockFallback block={block} />}>
           <LazyStreamingTextBlock
             block={block}
-            animationKey={`${messageId}:${blockAnimationKey ?? blockIndex ?? "text"}`}
+            animationKey={markdownScope}
             animateText={isStreaming && animateStreamingText}
             isMessageStreaming={isStreaming}
             tailMarker={isStreaming ? null : settledRunMarker(runMarker)}
@@ -376,6 +380,7 @@ function MessageContentBlockInner({
     official: (
       <DeferredMessageMarkdownBlock
         block={block}
+        expansionScope={markdownScope}
         tailMarker={settledRunMarker(runMarker)}
         formatPathForDisplay={formatPathForDisplay}
         onOpenBrowserLink={onOpenBrowserLink}

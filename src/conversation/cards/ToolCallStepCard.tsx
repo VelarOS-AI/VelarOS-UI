@@ -85,9 +85,15 @@ function ToolCallStepDetails({ block }: { block: ToolCallBlock }): ReactElement 
 
   return (
     <div className={styles.section}>
-      {args && <ExecutionStepPayload label={t('debug.toolArgs')} text={args.text} />}
+      {args && <>
+        <ExecutionStepPayload label={t('debug.toolArgs')} text={args.text} />
+        {args.truncated && <p className={styles.note}>{t('scriptExecution.sourceTruncated')}</p>}
+      </>}
       {!!progress && <ExecutionStepPayload label={t('debug.toolProgress')} text={progress} />}
-      {result && <ExecutionStepPayload label={t('debug.toolResult')} text={result.text} />}
+      {result && <>
+        <ExecutionStepPayload label={t('debug.toolResult')} text={result.text} />
+        {result.truncated && <p className={styles.note}>{t('scriptExecution.sourceTruncated')}</p>}
+      </>}
       {!!errorText && (
         <ExecutionStepPayload label={t('debug.toolError')} text={errorText} tone="error" />
       )}

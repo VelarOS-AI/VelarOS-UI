@@ -24,12 +24,13 @@ export async function runBrowserScene(fixture, functionName) {
       build: { outDir: join(output, 'bundle'), emptyOutDir: true, lib: { entry: join(root, fixture), formats: ['iife'], name: 'BrowserScene', fileName: () => 'scene.js', cssFileName: 'scene' } },
     })
     const style = existsSync(join(output, 'bundle/scene.css')) ? '<link rel="stylesheet" href="scene.css">' : ''
-    await writeFile(join(output, 'bundle/index.html'), `<html><head>${style}</head><body><div id="root"></div><script src="scene.js"></script></body></html>`)
+    await writeFile(join(output, 'bundle/index.html'), `<html><head><meta charset="utf-8">${style}</head><body><div id="root"></div><script src="scene.js"></script></body></html>`)
     await writeFile(join(output, 'main.cjs'), `
 const { app, BrowserWindow } = require('electron');
 app.setPath('userData', ${JSON.stringify(join(output, 'user-data'))});
 app.whenReady().then(async () => {
   const win = new BrowserWindow({ show: false, width: 1000, height: 800, webPreferences: { backgroundThrottling: false, offscreen: true } });
+  win.webContents.on('console-message', event => console.error(event.message));
   try {
     await win.loadFile(${JSON.stringify(join(output, 'bundle/index.html'))});
     const result = await win.webContents.executeJavaScript(${JSON.stringify(`${functionName}().catch(error => ({ error: error.stack }))`)});

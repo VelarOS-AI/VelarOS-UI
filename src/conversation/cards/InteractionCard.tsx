@@ -196,7 +196,7 @@ function PendingTextAnswer({ block, onAnswer }: PendingProps): ReactElement {
     if (canSend) submit({ text: text.trim() })
   }
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>): void => {
-    if (composingRef.current || event.key !== 'Enter' || event.shiftKey) return
+    if (composingRef.current || event.nativeEvent.isComposing || event.keyCode === 229 || event.repeat || event.key !== 'Enter' || event.shiftKey) return
     event.preventDefault()
     send()
   }
