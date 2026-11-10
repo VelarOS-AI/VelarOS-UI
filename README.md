@@ -61,7 +61,7 @@ tone 与主题一律走 CSS 变量单源。需要单点特殊外貌 → 在**消
 
 ```json
 {
-  "@velaros-ai/ui": "https://github.com/VelarOS-AI/VelarOS-UI/releases/download/v1.1.1/velaros-ai-ui-1.1.1.tgz"
+  "@velaros-ai/ui": "https://github.com/VelarOS-AI/VelarOS-UI/releases/download/v1.1.2/velaros-ai-ui-1.1.2.tgz"
 }
 ```
 
@@ -91,7 +91,11 @@ bun run build                          # 产出 dist/
 bun run check                          # 构建、类型、lint、测试与全部门禁
 ```
 
-临时打包核验用 `bun run check:package-pack`,所有 tarball 流程复用 `scripts/release/safe-package-pack.mjs`。
+正式打包与临时归档核验均经过 `scripts/release/pack-release-package.mjs`：
+它从已构建文件建立独立发布清单，移除 `overrides`、`resolutions`、`devDependencies`、
+`scripts` 和 `packageManager`，保留运行依赖、peer、exports 等公共合同，不修改开发仓清单。
+底层仍复用 `scripts/release/safe-package-pack.mjs` 的路径和进程保护。
+临时打包核验使用 `bun run check:package-pack`。
 
 **本机给兄弟仓用。** 消费方只按 `package.json#exports` 读编译后的 `dist/`,不引源码。在本仓根执行一次 `bun link`,
 消费方把依赖写成 `"@velaros-ai/ui": "link:@velaros-ai/ui"` 再 `bun install`;本仓改完跑 `bun run build`,消费方就读到新的 `dist/`。

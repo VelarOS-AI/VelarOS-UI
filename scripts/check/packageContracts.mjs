@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { safePackPackage } from "../release/safe-package-pack.mjs";
+import { packReleasePackage } from "../release/pack-release-package.mjs";
 
 // 仓根就是 @velaros-ai/ui 包（conversation 与 html-artifacts 都是它的子路径）。
 const packageDirectory = path.resolve(
@@ -84,7 +84,7 @@ async function verifyPackage() {
 
   const temporary = await mkdtemp(path.join(tmpdir(), "velaros-ui-contract-"));
   try {
-    await safePackPackage({
+    await packReleasePackage({
       destination: temporary,
       packageDirectory,
     });
@@ -122,7 +122,7 @@ async function verifyPackage() {
 async function verifyExternalConsumer() {
   const temporary = await mkdtemp(path.join(tmpdir(), "velaros-ui-consumer-"));
   try {
-    await safePackPackage({
+    await packReleasePackage({
       destination: temporary,
       packageDirectory,
     });
