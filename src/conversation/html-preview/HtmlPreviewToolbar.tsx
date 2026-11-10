@@ -55,6 +55,7 @@ export function HtmlPreviewToolbar({
   const copyButtonLabel = copied ? copiedLabel : copyLabel
   const handleCopy = useCallback((): void => {
     void navigator.clipboard.writeText(copyValue).then(() => {
+      if (timers.isDisposed) return
       setCopied(true)
       copiedResetTimerRef.current?.cancel()
       copiedResetTimerRef.current = timers.after(
@@ -65,7 +66,7 @@ export function HtmlPreviewToolbar({
         },
         { label: 'html-preview-toolbar.copy-reset' }
       )
-    })
+    }, () => undefined)
   }, [copyValue, timers])
 
   return (
