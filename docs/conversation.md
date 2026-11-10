@@ -116,8 +116,8 @@ Render Slot 组合接入。
 | `./markdown` | streamdown 渲染配置、链接与围栏处理、流式冲刷纯 util |
 | `./artifacts`、`./html-preview` | HTML 源码视图与沙箱 iframe 预览簇（Widget 用） |
 
-**重件走独立子路径是有意的**:`./artifacts` 与 `./html-preview` 按需 lazy 加载,
-这样任意 root import 都不会预载沙箱。
+`./artifacts` 与 `./html-preview` 提供独立消费入口，根门面的消息和 Widget 组件也静态引用这些模块。
+iframe 在预览实际展示时创建、隐藏或卸载时回收；这不等同于预览模块在 root import 时尚未加载。
 
 `conversation` 保持原有完整 Markdown 展示；`conversation/basic` 复用同一组件和状态机，
 只在入口装配基础展示配置。配置按最外层会话实例固定，嵌套完整门面不会覆盖基础实例。
