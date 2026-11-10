@@ -5,7 +5,6 @@ import {
   type ReactNode,
   Suspense,
   useCallback,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -44,10 +43,11 @@ import {
   type ConversationRefreshGeneration,
   resolveConversationRefreshGeneration,
 } from './conversationRefreshGeneration'
-import { getGoalLifecycleRefreshKey, getLatestCurrentTurnToolBlock } from './currentTurnToolBlocks'
+import { getLatestCurrentTurnToolBlock } from './currentTurnToolBlocks'
 import { useChatConversationScroll } from './useChatConversationScroll'
 import { useChatConversationTranscriptModel } from './useChatConversationTranscriptModel'
 import { useChatTranscriptWindow } from './useChatTranscriptWindow'
+import { useGoalDock } from './useGoalDock'
 import { useQueuedLiveStatusText } from './useQueuedLiveStatusText'
 import { useStableHostCallback } from './useStableHostCallback'
 import {
@@ -59,7 +59,6 @@ import {
 import styles from './ChatConversationPane.module.css'
 
 import type {
-  ActiveContextArtifact,
   ChatMessage,
   ConversationStepBlock,
   ProjectRootEntry,
@@ -70,14 +69,12 @@ import { buildGoalDockViewModel } from '#internal/goalLifecycle'
 import {
   isEmpty,
   isPresent,
-  Log,
   optionalWhenLazy,
   toNullable,
   toOptional,
 } from '#internal/runtime'
 
 const cx = StyleUtils.bindCx(styles)
-const log = Log.tag('chat-conversation-pane')
 const EmptyQueuedMessages: ChatMessage[] = []
 const EmptyWorkerThreads: ConversationWorkerThread[] = []
 const EmptyProjectRoots: ProjectRootEntry[] = []
@@ -204,9 +201,6 @@ export function ChatConversationPane({
     conversationRefreshGenerationRef.current = conversationRefreshGeneration
   }, [conversationRefreshGeneration])
   const stableConversationRefreshKey = conversationRefreshGeneration.key
-  const [goalLifecycleArtifact, setGoalLifecycleArtifact] =
-    useState<Nullable<ActiveContextArtifact>>(null)
-  const [goalLifecycleBusy, setGoalLifecycleBusy] = useState(false)
 
   useLayoutEffect(() => {
     const inputDock = inputDockRef.current
@@ -252,99 +246,14 @@ export function ChatConversationPane({
     interactionState === 'awaiting-input' || interactionState === 'awaiting-confirmation'
   const answerInteraction = useStableHostCallback(onAnswerInteraction)
 
-  const refreshGoalLifecycle = useCallback(async (): Promise<void> => {
-    try {
-      const result = await actionPort.getGoalLifecycle(sessionId)
-      if (result.ok) {
-        setGoalLifecycleArtifact(result.goal)
-      }
-    } catch (error) {
-      log.warn('读取目标生命周期状态失败', { error, sessionId })
-    }
-  }, [actionPort, sessionId])
-
-  const goalLifecycleRefreshKey = useMemo(() => getGoalLifecycleRefreshKey(messages), [messages])
-
-  useEffect(() => {
-    let active = true
-    void actionPort
-      .getGoalLifecycle(sessionId)
-      .then((result) => {
-        if (active && result.ok) {
-          setGoalLifecycleArtifact(result.goal)
-        }
-      })
-      .catch((error) => {
-        if (active) {
-          log.warn('刷新目标生命周期状态失败', { error, sessionId })
-        }
-      })
-
-    return () => {
-      active = false
-    }
-  }, [
-    actionPort,
-    sessionId,
-    messages.length,
-    runtime.lastRunFinishedAt,
-    runtime.status,
-    goalLifecycleRefreshKey,
-  ])
+  const { goalLifecycleArtifact, goalLifecycleBusy, handleGoalLifecycleAction, handleContinueGoal } = useGoalDock({
+    sessionId, actionPort, messages, runtime, isRunActive, onContinueGoal,
+  })
 
   const goalDockModel = useMemo(
     () => (goalLifecycleArtifact ? buildGoalDockViewModel(goalLifecycleArtifact) : null),
     [goalLifecycleArtifact]
   )
-
-  const handleGoalLifecycleAction = useCallback(
-    async (action: Parameters<typeof actionPort.updateGoalLifecycle>[1]): Promise<boolean> => {
-      if (goalLifecycleBusy) return false
-      setGoalLifecycleBusy(true)
-      try {
-        const result = await actionPort.updateGoalLifecycle(sessionId, action)
-        if (result.ok) {
-          setGoalLifecycleArtifact(action === 'remove' ? null : result.goal)
-          return true
-        }
-        await refreshGoalLifecycle()
-        return false
-      } catch (error) {
-        log.warn('更新目标生命周期状态失败', { action, error, sessionId })
-        await refreshGoalLifecycle()
-        return false
-      } finally {
-        setGoalLifecycleBusy(false)
-      }
-    },
-    [actionPort, goalLifecycleBusy, refreshGoalLifecycle, sessionId]
-  )
-
-  const handleContinueGoal = useCallback(async (): Promise<void> => {
-    const resumed = await handleGoalLifecycleAction('resume')
-    if (!resumed) return
-
-    const guidance = t('chat.goalDockContinueGuidance')
-    if (!isRunActive) {
-      await onContinueGoal?.(guidance)
-      return
-    }
-
-    try {
-      await actionPort.provideExecutionGuidance(sessionId, guidance)
-    } catch (error) {
-      log.warn('发送目标继续引导失败', { error, sessionId })
-      await refreshGoalLifecycle()
-    }
-  }, [
-    actionPort,
-    handleGoalLifecycleAction,
-    isRunActive,
-    onContinueGoal,
-    refreshGoalLifecycle,
-    sessionId,
-    t,
-  ])
 
   const canRewindToMessage = interactionState === 'idle'
   const presentationRuntime = runtime
