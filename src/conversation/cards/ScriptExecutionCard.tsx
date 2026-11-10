@@ -153,12 +153,16 @@ function ScriptExecutionResult({ call }: { call: ScriptExecutionCall }): ReactEl
 /** 连续原文字段共用一个折叠，字段正文仍按原文展示。 */
 export function ScriptBlobsCard({ blocks }: { blocks: ScriptExecutionBlock[] }): ReactElement {
   const { t } = useConversationI18n()
+  const status = blocks.find((block) => block.status === 'failed')?.status
+    ?? blocks.find((block) => block.status === 'cancelled')?.status
+    ?? blocks.find((block) => block.status !== 'succeeded')?.status
+    ?? 'succeeded'
   return (
     <ExecutionStepFrame
       viewStateKey={`blobs:${blocks[0]?.id}`}
       slot="script-execution"
-      tone="success"
-      statusLabel={t('scriptExecution.blobsTitle')}
+      tone={resolveScriptExecutionTone(status)}
+      statusLabel={t(ScriptStatusMessageKeys[status])}
       icon={<FileTextIcon size={StepIconSize} />}
       title={t('scriptExecution.blobsTitle')}
       renderDetails={() => blocks.map((block) => (

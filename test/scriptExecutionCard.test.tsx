@@ -643,3 +643,25 @@ void test('blob fields share one collapsed frame without eagerly rendering paylo
   assert.ok(markup.includes('aria-expanded="false"'))
   assert.ok(!markup.includes('literal-list'))
 })
+
+void test('blob groups preserve pending, cancelled and failed facts without claiming success', () => {
+  for (const [status, tone, label] of [
+    ['writing', 'running', '编写中'],
+    ['queued', 'running', '排队中'],
+    ['succeeded', 'success', '已完成'],
+    ['cancelled', 'cancelled', '已取消'],
+    ['failed', 'error', '失败'],
+  ] as const) {
+    const markup = render(createElement(ScriptBlobsCard, { blocks: [script({ kind: 'blobs', status })] }))
+    assert.match(markup, new RegExp(`data-tone="${tone}"`, 'u'))
+    assert.ok(markup.includes(label))
+  }
+  for (const [statuses, tone] of [
+    [['succeeded', 'queued'], 'running'],
+    [['succeeded', 'cancelled'], 'cancelled'],
+    [['writing', 'failed'], 'error'],
+  ] as const) {
+    const blocks = statuses.map((status, index) => script({ id: `mixed-${index}`, kind: 'blobs', status }))
+    assert.match(render(createElement(ScriptBlobsCard, { blocks })), new RegExp(`data-tone="${tone}"`, 'u'))
+  }
+})
