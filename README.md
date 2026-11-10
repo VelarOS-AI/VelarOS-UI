@@ -56,15 +56,21 @@ tone 与主题一律走 CSS 变量单源。需要单点特殊外貌 → 在**消
 
 ## 安装
 
-`@velaros-ai/ui` 是托管在 GitHub Packages 上的**公开包（public package）**。GitHub 的 npm registry 目前安装公开包**仍然需要认证**：
-在本机或其他受控消费环境中，使用至少带 `read:packages` 权限的 personal access token（classic），通过进程环境或凭据管理器注入。
-把 `@velaros-ai` scope 映射到 `https://npm.pkg.github.com`，提供 token 后：
+正式消费直接固定已核验的 GitHub Release 归档。在产品现有的 `dependencies` 或
+`devDependencies` 中声明完整 URL；依赖分类仍按产品实际运行时和打包边界决定。例如：
 
-```bash
-npm install @velaros-ai/ui
+```json
+{
+  "@velaros-ai/ui": "https://github.com/VelarOS-AI/VelarOS-UI/releases/download/v1.1.1/velaros-ai-ui-1.1.1.tgz"
+}
 ```
 
-> 在 VelarOS-UI 仓库内，`dist/` 不入版本库（仓根 `.gitignore` 忽略 `dist/`），由构建产出；走 npm 包的消费方拿到的是发布时打进 tarball 的 `dist/`。
+使用 Bun 更新并提交锁文件，在产品固定来源清单记录版本、源提交和归档摘要；冻结安装使用
+`bun install --frozen-lockfile`。正式清单不通过 root `overrides` 将数字版本映射到归档。
+`override` 或本机链接只用于开发联调，不进入正式依赖清单。上述归档来自公开 Release，
+不依赖 npm registry 凭据。
+
+> 在 VelarOS-UI 仓库内，`dist/` 不入版本库（仓根 `.gitignore` 忽略 `dist/`），由构建产出；消费方拿到的是归档内编译完成的 `dist/`。
 
 ## 仓库与开发
 
