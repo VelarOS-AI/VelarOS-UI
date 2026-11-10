@@ -128,6 +128,7 @@ class FakeNode {
   public parentNode: Nullable<FakeNode> = null
   public attributes: Array<{ name: string, value: string }> = []
   public executable = false
+  public onload?: () => void
 
   public constructor(
     public readonly nodeType: number,
@@ -191,7 +192,10 @@ class FakeNode {
     this.childNodes[this.childNodes.indexOf(previous)] = next
     next.parentNode = this
     previous.parentNode = null
-    if (next.executable) this.runs.push(next.text)
+    if (next.executable) {
+      this.runs.push(next.getAttribute('src') ?? next.text)
+      next.onload?.()
+    }
     return previous
   }
 
@@ -244,6 +248,7 @@ function createRenderHarness() {
   }
   const window = {
     parent,
+    location: { href: 'https://example.test/preview' },
     addEventListener: (type: string, listener: (event: unknown) => void) => {
       if (type === 'message') listeners.push(listener)
     },
@@ -254,7 +259,7 @@ function createRenderHarness() {
     .map((match) => match[1] ?? '')
     .find((source) => source.includes('function render('))
   expect(tail).toBeTruthy()
-  vm.runInNewContext(tail ?? '', { document, window, setTimeout: () => 0, Event: class {} })
+  vm.runInNewContext(tail ?? '', { document, window, URL, setTimeout: () => 0, Event: class {} })
 
   const render = (...children: FakeNode[]) => {
     pending = node('#fragment', children)
@@ -265,6 +270,15 @@ function createRenderHarness() {
 }
 
 describe('外壳文档的渲染', () => {
+  test('INV-9 相同外链脚本重发不重跑，外链变化才按顺序重新激活', () => {
+    const { render, runs, node, script } = createRenderHarness()
+    render(node('SCRIPT', [], { src: 'https://cdn.example/v1.js' }), script('draw(1)'))
+    render(node('SCRIPT', [], { src: 'https://cdn.example/v1.js' }), script('draw(1)'))
+    expect(runs).toEqual(['https://cdn.example/v1.js', 'draw(1)'])
+    render(node('SCRIPT', [], { src: 'https://cdn.example/v2.js' }), script('draw(2)'))
+    expect(runs).toEqual(['https://cdn.example/v1.js', 'draw(1)', 'https://cdn.example/v2.js', 'draw(2)'])
+  })
+
   test('INV-9 跑过的脚本内容没变，再渲染（内容变长、宿主重发）不再跑第二遍', () => {
     const { render, runs, node, text, script } = createRenderHarness()
 

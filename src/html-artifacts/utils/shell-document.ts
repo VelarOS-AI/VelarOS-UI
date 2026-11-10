@@ -306,12 +306,12 @@ function renderRuntimeScript(rootExpression: string): string {
     + `var script=scripts[index];`
     + `var next=document.createElement('script');`
     + `next.setAttribute('data-velaros-script-activated','true');`
+    + `next.__velarosScriptSource=scriptSource(script);`
     + `var hasAllowedSrc=false;var hasBlockedSrc=false;`
     + `Array.prototype.slice.call(script.attributes).forEach(function(attr){var attrName=String(attr.name||'').toLowerCase();if(attrName==='src'){if(isAllowedExternalScript(attr.value)){hasAllowedSrc=true;next.setAttribute(attr.name,attr.value);return;}hasBlockedSrc=true;next.setAttribute('data-blocked-src',attr.value);return;}next.setAttribute(attr.name,attr.value);});`
     + `next.onerror=function(event){reportPatchError(event&&event.error||'制品脚本加载失败',{type:'script',scriptId:next.getAttribute('data-artifact-script')||next.src||'inline'},'script');};`
     + `if(hasAllowedSrc){next.async=false;next.onload=function(){activateScriptAt(index+1);};next.onerror=function(event){reportPatchError(event&&event.error||'制品脚本加载失败',{type:'script',scriptId:next.getAttribute('data-artifact-script')||next.src||'inline'},'script');activateScriptAt(index+1);};if(script.parentNode){script.parentNode.replaceChild(next,script);}else{activateScriptAt(index+1);}return;}`
     + `if(hasBlockedSrc){reportPatchError('已拦下非 https 的外部脚本: '+next.getAttribute('data-blocked-src'),{type:'script',scriptId:next.getAttribute('data-artifact-script')||next.getAttribute('data-blocked-src')||'inline'},'script');}`
-    + `next.__velarosScriptSource=scriptSource(script);`
     + `next.text=script.text||script.textContent||'';`
     + `if(script.parentNode){script.parentNode.replaceChild(next,script);}`
     + `activateScriptAt(index+1);`
