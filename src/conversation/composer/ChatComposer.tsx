@@ -98,6 +98,8 @@ export interface ChatComposerControl {
   scopeKey?: string
   input: ChatComposerInputControl
   modelSelector?: ChatComposerModelSelectorControl
+  /** Action for a host that has no model service configured. */
+  modelSetup?: { label: string; onOpen: () => void }
   /** 摘要按钮文案覆盖；只在宿主能给出比包内回落更真的一份时传。 */
   modelRunSummary?: ChatComposerModelRunSummary
   reasoning?: ChatComposerReasoningControl
@@ -122,6 +124,7 @@ export function ChatComposer({ control, density = 'default' }: ChatComposerProps
   const {
     input,
     modelSelector,
+    modelSetup,
     modelRunSummary,
     reasoning,
     leftSlot,
@@ -133,6 +136,7 @@ export function ChatComposer({ control, density = 'default' }: ChatComposerProps
 
   const combinedModelRunSelectorAction = !!(
     modelSelector ||
+    modelSetup ||
     reasoning ||
     input.runProfile ||
     input.thinkingDepth ||
@@ -140,8 +144,10 @@ export function ChatComposer({ control, density = 'default' }: ChatComposerProps
     input.pureChat
   ) && (
     <ComposerModelRunSelector
+      key={modelSetup ? 'setup' : 'selector'}
       t={t}
       modelSelector={modelSelector}
+      modelSetup={modelSetup}
       modelRunSummary={modelRunSummary}
       reasoning={reasoning}
       runProfile={input.runProfile}

@@ -10,6 +10,7 @@ import {
 import {
   CaretDownIcon,
   CaretRightIcon,
+  GearIcon,
   QuestionIcon,
 } from "@phosphor-icons/react";
 
@@ -30,6 +31,7 @@ import {
   ComposerMenuSwitchIndicator,
 } from "./addMenu/ComposerMenuItemChrome";
 import type {
+  ChatComposerControl,
   ChatComposerModelRunSummary,
   ChatComposerModelSelectorControl,
   ChatComposerProviderModelSelectOption,
@@ -75,6 +77,7 @@ interface ComposerThinkingDepthOption {
 export interface ComposerModelRunSelectorProps {
   t: (key: MessageKey) => string;
   modelSelector?: ChatComposerModelSelectorControl;
+  modelSetup?: ChatComposerControl["modelSetup"];
   /** 摘要按钮文案覆盖（宿主给的如实摘要优先于包内回落，见 ChatComposerModelRunSummary）。 */
   modelRunSummary?: ChatComposerModelRunSummary;
   reasoning?: ChatComposerReasoningControl;
@@ -172,6 +175,7 @@ function MenuSectionHeader({
 function ComposerModelRunSelectorImpl({
   t,
   modelSelector,
+  modelSetup,
   modelRunSummary,
   reasoning,
   runProfile,
@@ -287,6 +291,23 @@ function ComposerModelRunSelectorImpl({
         closeMenu,
       );
   }, [handleOpenChange]);
+
+  if (modelSetup) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className={styles.composerModelRunSelectorButton}
+        data-tour-id="chat-model-run-controls"
+        onClick={modelSetup.onOpen}
+      >
+        <Text tone="strong" truncate className={styles.composerModelRunSelectorModelLabel}>
+          {modelSetup.label}
+        </Text>
+        <GearIcon size={12} />
+      </Button>
+    );
+  }
 
   return (
     <BusinessCascadingMenu

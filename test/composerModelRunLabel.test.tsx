@@ -64,3 +64,10 @@ void test('运行档与推理力度都没有时，那一格空着', () => {
   assert.ok(markup.includes('title="gpt-5.5"'), markup)
   assert.ok(!markup.includes(autoLabel), markup)
 })
+
+void test('a model setup action renders a button without menu semantics', () => {
+  const markup = renderSelector({ modelSetup: { label: '配置模型', onOpen: () => undefined } })
+
+  assert.ok(markup.includes('>配置模型<'), markup)
+  assert.doesNotMatch(markup, /aria-haspopup|gpt-5\.5/)
+})
