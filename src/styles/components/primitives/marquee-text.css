@@ -27,24 +27,27 @@
   white-space: nowrap;
 }
 
-.velar-marquee-text[data-marquee-active='true'] .velar-marquee-text-track {
-  display: inline-flex;
-  align-items: baseline;
-  max-width: none;
-  animation: velar-marquee-text-loop var(--velar-marquee-text-duration) linear infinite;
-  will-change: transform;
+.velar-marquee-text-item[aria-hidden='true'] {
+  display: none;
 }
 
-.velar-marquee-text[data-marquee-active='true'] .velar-marquee-text-item {
-  flex: 0 0 auto;
-  max-width: none;
-  overflow: visible;
-  text-overflow: clip;
-}
+@media (prefers-reduced-motion: no-preference) {
+  .velar-marquee-text[data-marquee-active='true'] .velar-marquee-text-track {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--velar-marquee-text-gap);
+    max-width: none;
+    animation: velar-marquee-text-loop var(--velar-marquee-text-duration) linear infinite;
+    will-change: transform;
+  }
 
-.velar-marquee-text-gap {
-  flex: 0 0 var(--velar-marquee-text-gap-distance);
-  width: var(--velar-marquee-text-gap-distance);
+  .velar-marquee-text[data-marquee-active='true'] .velar-marquee-text-item {
+    display: block;
+    flex: 0 0 auto;
+    max-width: none;
+    overflow: visible;
+    text-overflow: clip;
+  }
 }
 
 @keyframes velar-marquee-text-loop {
@@ -53,13 +56,7 @@
   }
 
   100% {
-    transform: translateX(calc(-1 * var(--velar-marquee-text-loop-distance)));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .velar-marquee-text[data-marquee-active='true'] .velar-marquee-text-track {
-    animation: none;
-    transform: translateX(0);
+    /* 两份文字共用一个间距；跨过第一份后第二份正好回到起点。 */
+    transform: translateX(calc(-50% - var(--velar-marquee-text-gap) / 2));
   }
 }

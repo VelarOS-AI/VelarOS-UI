@@ -23,15 +23,11 @@ const MarqueePixelsPerSecond = 48
 
 interface MarqueeState {
   overflowing: boolean
-  gapDistancePx: number
-  loopDistancePx: number
   durationMs: number
 }
 
 const EmptyMarqueeState: MarqueeState = {
   overflowing: false,
-  gapDistancePx: 0,
-  loopDistancePx: 0,
   durationMs: MarqueeMinDurationMs,
 }
 
@@ -52,28 +48,22 @@ function makeMarqueeState(
   const overflowing = !disabled && textWidth > viewportWidth + 1
   if (!overflowing) return EmptyMarqueeState
 
-  const gapDistancePx = Math.ceil(viewportWidth + MarqueeGapPx)
-  const loopDistancePx = Math.ceil(textWidth + gapDistancePx)
   const durationMs = Math.min(
     MarqueeMaxDurationMs,
-    Math.max(MarqueeMinDurationMs, Math.round((loopDistancePx / MarqueePixelsPerSecond) * 1000))
+    Math.max(
+      MarqueeMinDurationMs,
+      Math.round(((textWidth + MarqueeGapPx) / MarqueePixelsPerSecond) * 1000)
+    )
   )
 
   return {
     overflowing: true,
-    gapDistancePx,
-    loopDistancePx,
     durationMs,
   }
 }
 
 function areMarqueeStatesEqual(left: MarqueeState, right: MarqueeState): boolean {
-  return (
-    left.overflowing === right.overflowing &&
-    left.gapDistancePx === right.gapDistancePx &&
-    left.loopDistancePx === right.loopDistancePx &&
-    left.durationMs === right.durationMs
-  )
+  return left.overflowing === right.overflowing && left.durationMs === right.durationMs
 }
 
 export function MarqueeText({
@@ -91,11 +81,7 @@ export function MarqueeText({
     const textNode = textRef.current
     if (!viewportNode || !textNode) return
 
-    const next = makeMarqueeState(
-      viewportNode.clientWidth,
-      textNode.scrollWidth > viewportNode.clientWidth ? textNode.scrollWidth : textNode.clientWidth,
-      disabled
-    )
+    const next = makeMarqueeState(viewportNode.clientWidth, textNode.scrollWidth, disabled)
     setMarquee((current) => (areMarqueeStatesEqual(current, next) ? current : next))
   }, [disabled])
 
@@ -108,10 +94,12 @@ export function MarqueeText({
     if (!ResizeObserverCtor) return undefined
 
     const viewportNode = viewportRef.current
-    if (!viewportNode) return undefined
+    const textNode = textRef.current
+    if (!viewportNode || !textNode) return undefined
 
     const observer = new ResizeObserverCtor(syncMarqueeState)
     observer.observe(viewportNode)
+    observer.observe(textNode)
     syncMarqueeState()
 
     return () => {
@@ -121,8 +109,7 @@ export function MarqueeText({
 
   const marqueeStyle = marquee.overflowing
     ? ({
-        '--velar-marquee-text-gap-distance': `${marquee.gapDistancePx}px`,
-        '--velar-marquee-text-loop-distance': `${marquee.loopDistancePx}px`,
+        '--velar-marquee-text-gap': `${MarqueeGapPx}px`,
         '--velar-marquee-text-duration': `${marquee.durationMs}ms`,
       } as CSSProperties)
     : undefined
@@ -141,13 +128,10 @@ export function MarqueeText({
         <span ref={textRef} className="velar-marquee-text-item">
           {children ?? title}
         </span>
-        {!!marquee.overflowing && (
-          <>
-            <span className="velar-marquee-text-gap" aria-hidden="true" />
-            <span className="velar-marquee-text-item" aria-hidden="true">
-              {children ?? title}
-            </span>
-          </>
+        {marqueeActive && (
+          <span className="velar-marquee-text-item" aria-hidden="true">
+            {children ?? title}
+          </span>
         )}
       </span>
     </span>
