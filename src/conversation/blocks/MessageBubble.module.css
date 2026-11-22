@@ -1728,6 +1728,12 @@
   text-decoration-color: rgba(var(--chat-markdown-file-link-rgb), 0.4);
 }
 
+.markdownFileRevealButton {
+  flex: none;
+  color: var(--chat-markdown-file-link);
+  vertical-align: text-bottom;
+}
+
 .markdownExternalOpenButton {
   display: inline-flex;
   width: 16px;

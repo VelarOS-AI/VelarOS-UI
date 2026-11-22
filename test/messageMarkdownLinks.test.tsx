@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { FolderIcon } from '@phosphor-icons/react'
 import { Streamdown } from 'streamdown'
 
-import { MessageMarkdownRuntimeProvider, useMessageMarkdownComponents } from '../src/conversation/blocks/useMessageMarkdownComponents'
+import { MessageFileRevealContext, MessageMarkdownRuntimeProvider, useMessageMarkdownComponents } from '../src/conversation/blocks/useMessageMarkdownComponents'
 import { resolveMessageMarkdownHrefTarget } from '../src/conversation/markdown/messageMarkdownLinks.utils'
 import { STREAMDOWN_MARKDOWN_REHYPE_PLUGINS, transformMessageMarkdownUrl } from '../src/conversation/markdown/streamdownMarkdown.config'
 import { prepareStreamdownMarkdownText } from '../src/conversation/markdown/streamdownMarkdownSource.utils'
@@ -63,6 +63,16 @@ void describe('explicit Markdown link protocols', () => {
     assert.match(markup, /<svg\b/u)
     assert.match(render('[报告](file:///tmp/report "model title")'), /title="file:\/\/\/tmp\/report"/u)
     assert.doesNotMatch(render('[报告](file:///tmp/report)', false, false), /<a\b/u)
+  })
+  void test('the host reveal action is a separate button beside the local file link', () => {
+    const label = 'Show in folder'
+    const markup = renderToStaticMarkup(createElement(
+      MessageFileRevealContext.Provider,
+      { value: { label, onReveal: () => {} } },
+      createElement(MarkdownProbe, { text: '[报告](D:/work/report.txt) [网页](https://example.com)' })
+    ))
+    assert.match(markup, /报告<\/a><button[^>]+aria-label="Show in folder"/u)
+    assert.equal(markup.match(/aria-label="Show in folder"/gu)?.length, 1)
   })
   void test('inline code, plain paths and relative links have no file-opening behavior', () => {
     for (const source of ['D:/work/a.ts', '`D:/work/a.ts`', '`/tmp/a.ts`', '`file:///tmp/a.ts`', '[代码](src/a.ts)'])

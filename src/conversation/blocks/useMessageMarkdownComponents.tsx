@@ -14,6 +14,7 @@ import {
   CodeIcon,
   EyeIcon,
   FolderIcon,
+  FolderOpenIcon,
 } from '@phosphor-icons/react'
 import { useMemoizedFn } from 'ahooks'
 import {
@@ -49,6 +50,11 @@ const TailMarkerCandidateTags = ['p', 'li', 'h1', 'h2', 'h3', 'h4'] as const
 
 const ConversationExpandableViewportHeightPx = 400
 const ConversationExpandableViewportOverflowTolerancePx = 1
+
+export const MessageFileRevealContext = createContext<Nullable<{
+  label: string
+  onReveal: (path: string) => void | Promise<void>
+}>>(null)
 
 function readCodeLanguage(className: unknown): string {
   if (!isString(className)) return ''
@@ -520,13 +526,14 @@ function MarkdownLink({
   const { openBrowserLink, openProjectPath, externalOpenLabel } = useContext(
     MessageMarkdownRuntimeContext
   )
+  const fileReveal = useContext(MessageFileRevealContext)
   const link = isString(href) ? href : ''
   const linkTarget = resolveMessageMarkdownHrefTarget(link)
   const shouldOpenInBrowser = linkTarget.kind === 'web' && !!openBrowserLink
   const shouldOpenExternally = linkTarget.kind === 'external-protocol'
 
-  if (linkTarget.kind === 'file' && openProjectPath)
-    return (
+  if (linkTarget.kind === 'file' && openProjectPath) {
+    const fileLink = (
       <Link
         href={linkTarget.uri}
         className={styles.markdownFileLink}
@@ -551,6 +558,27 @@ function MarkdownLink({
         {props.children}
       </Link>
     )
+    if (!fileReveal) return fileLink
+
+    return (
+      <span className={styles.markdownWebLinkGroup}>
+        {fileLink}
+        <IconButton
+          label={fileReveal.label}
+          title={fileReveal.label}
+          size={20}
+          variant="ghost"
+          className={styles.markdownFileRevealButton}
+          onClick={(event) => {
+            event.stopPropagation()
+            void fileReveal.onReveal(linkTarget.path)
+          }}
+        >
+          <FolderOpenIcon size={14} aria-hidden />
+        </IconButton>
+      </span>
+    )
+  }
 
   if (linkTarget.kind === 'text' || linkTarget.kind === 'file') return <span>{props.children}</span>
 

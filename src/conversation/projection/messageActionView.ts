@@ -39,4 +39,5 @@ export interface MessageActionView {
   formatPathForDisplay: (path: string) => string
   hasActionItems: boolean
   openPathInLight: (path: string) => Promise<void>
+  revealMessagePath?: (path: string) => void | Promise<void>
 }

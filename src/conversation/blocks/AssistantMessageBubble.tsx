@@ -1,4 +1,5 @@
 import { type ReactElement, type ReactNode, useCallback, useMemo } from 'react'
+import { useMemoizedFn } from 'ahooks'
 
 import { StyleUtils } from '@velaros-ai/ui'
 
@@ -43,6 +44,7 @@ import {
   hasVisibleToolModelImages,
   ToolModelImageGroup,
 } from './ToolModelImageGroup'
+import { MessageFileRevealContext } from './useMessageMarkdownComponents'
 
 import styles from './MessageBubble.module.css'
 
@@ -150,6 +152,7 @@ export function AssistantMessageBubble({
     formatPathForDisplay: formatMessagePathForDisplay,
     hasActionItems,
     openPathInLight,
+    revealMessagePath,
   } = useMessageActionView({
     activeProjectRoot,
     message,
@@ -157,6 +160,12 @@ export function AssistantMessageBubble({
     sessionId,
     projectRoots,
   })
+  const revealFile = useMemoizedFn((path: string) => revealMessagePath?.(path))
+  const fileRevealLabel = t('chat.openContainingFolder')
+  const fileReveal = useMemo(
+    () => ({ label: fileRevealLabel, onReveal: revealFile }),
+    [fileRevealLabel, revealFile]
+  )
   const {
     messageRenderSegments,
     visibleBlocks,
@@ -263,27 +272,29 @@ export function AssistantMessageBubble({
     >
       <div className={cx('assistantRow', hasVisibleToolBlocks && 'assistantRowWithTools')}>
         <div className={cx('assistantBubble', hasVisibleToolBlocks && 'assistantBubbleWithTools')}>
-          <AssistantMessageSegments
-            messageRenderSegments={messageRenderSegments}
-            isStreaming={isStreaming}
-            implicitlyCompletedRun={implicitlyCompletedRun}
-            messageId={message.id}
-            lastTextSegmentKey={lastTextSegmentKey}
-            streamingTextSegmentKey={streamingTextSegmentKey}
-            sessionId={sessionId}
-            runMarker={runMarker}
-            getBlockIndex={getBlockIndex}
-            formatPathForDisplay={formatMessagePathForDisplay}
-            onOpenBrowserLink={onOpenBrowserLink}
-            onOpenProjectPath={openPathInLight}
-            onTranslateThinkingBlock={onTranslateThinkingBlock}
-            goalCompletionSummary={goalCompletionSummary}
-            questionMessage={questionMessage}
-            activityLeadingElement={activityLeadingElement}
-            activityTrailingElement={combinedActivityTrailingElement}
-            hasGroupedRunActivity={hasGroupedRunActivity}
-            renderAfterStep={renderAfterStep}
-          />
+          <MessageFileRevealContext.Provider value={revealMessagePath ? fileReveal : null}>
+            <AssistantMessageSegments
+              messageRenderSegments={messageRenderSegments}
+              isStreaming={isStreaming}
+              implicitlyCompletedRun={implicitlyCompletedRun}
+              messageId={message.id}
+              lastTextSegmentKey={lastTextSegmentKey}
+              streamingTextSegmentKey={streamingTextSegmentKey}
+              sessionId={sessionId}
+              runMarker={runMarker}
+              getBlockIndex={getBlockIndex}
+              formatPathForDisplay={formatMessagePathForDisplay}
+              onOpenBrowserLink={onOpenBrowserLink}
+              onOpenProjectPath={openPathInLight}
+              onTranslateThinkingBlock={onTranslateThinkingBlock}
+              goalCompletionSummary={goalCompletionSummary}
+              questionMessage={questionMessage}
+              activityLeadingElement={activityLeadingElement}
+              activityTrailingElement={combinedActivityTrailingElement}
+              hasGroupedRunActivity={hasGroupedRunActivity}
+              renderAfterStep={renderAfterStep}
+            />
+          </MessageFileRevealContext.Provider>
 
           {canShowFileChangeSummary &&
             showGeneratedArtifacts &&
