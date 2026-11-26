@@ -22,6 +22,7 @@ import {
 import { ReplaceableRenderSlot } from "../render-slots/ReplaceableRenderSlot";
 
 import { shouldUseLiveTextRenderer } from "./liveTextRendererMode";
+import { MediaGenerationCard } from "./MediaGenerationCard";
 import {
   areRunMarkersEqual,
   type ConversationMessageRunMarker,
@@ -35,8 +36,6 @@ import {
 } from "./ToolActivityMotion";
 
 import styles from "./MessageBubble.module.css";
-
-import { MediaGenerationCard } from "./MediaGenerationCard";
 
 import type { ContentBlock, TextBlock } from "#contracts";
 import { isBlank, toNullable } from "#internal/runtime";

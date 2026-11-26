@@ -61,7 +61,7 @@ tone 与主题一律走 CSS 变量单源。需要单点特殊外貌 → 在**消
 
 ```json
 {
-  "@velaros-ai/ui": "https://github.com/VelarOS-AI/VelarOS-UI/releases/download/v1.1.6/velaros-ai-ui-1.1.6.tgz"
+  "@velaros-ai/ui": "https://github.com/VelarOS-AI/VelarOS-UI/releases/download/v1.1.7/velaros-ai-ui-1.1.7.tgz"
 }
 ```
 

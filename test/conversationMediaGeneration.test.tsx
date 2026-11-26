@@ -1,18 +1,18 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import {
-  ConversationBlockHooksProvider,
   type ConversationBlockHooks,
+  ConversationBlockHooksProvider,
 } from "../src/conversation/blocks/conversationBlockHooks";
 import { MessageBubble } from "../src/conversation/blocks/MessageBubble";
 import type { ChatMessage, ContentBlock } from "../src/conversation/contracts";
-
 import {
-  ConversationLocalizationProvider,
   type ConversationI18nContextValue,
+  ConversationLocalizationProvider,
 } from "../src/conversation/i18n";
 
 type MediaBlock = Extract<ContentBlock, { type: "media-generation" }>;
@@ -70,9 +70,9 @@ void test("媒体助手消息显示对应的无文案骨架和内联成品", () 
       kind,
       status: "generating",
     });
-    assert.match(pending, new RegExp('data-media-kind="' + kind + '"'));
+    assert.match(pending, new RegExp(`data-media-kind="${  kind  }"`));
     assert.match(pending, /role="status"/u);
-    assert.doesNotMatch(pending, new RegExp("<" + element + "\\b"));
+    assert.doesNotMatch(pending, new RegExp(`<${  element  }\\b`));
 
     const ready = render({
       type: "media-generation",
@@ -82,7 +82,7 @@ void test("媒体助手消息显示对应的无文案骨架和内联成品", () 
       src: "https://example.test/media",
     });
     assert.doesNotMatch(ready, /data-media-kind=/u);
-    assert.match(ready, new RegExp("<" + element + "\\b"));
+    assert.match(ready, new RegExp(`<${  element  }\\b`));
     if (kind !== "image") assert.match(ready, /controls=""/u);
   }
 });
