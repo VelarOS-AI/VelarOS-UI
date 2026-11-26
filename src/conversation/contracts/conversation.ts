@@ -205,6 +205,15 @@ export interface StreamToolResultEffects {
   changedRoot?: string
 }
 
+export type MediaGenerationBlock = {
+  type: 'media-generation'
+  id: string
+  kind: 'image' | 'video' | 'audio'
+} & (
+  | { status: 'generating' | 'failed' | 'cancelled' }
+  | { status: 'ready'; src: string }
+)
+
 export interface AssistantGeneratedFileBlock {
   type: 'assistant-generated-file'
   id: string
@@ -487,6 +496,7 @@ export type ContentBlock =
   | ScriptExecutionBlock
   | InteractionBlock
   | WidgetBlock
+  | MediaGenerationBlock
   | AssistantGeneratedFileBlock
   | AssistantSourceBlock
 

@@ -36,6 +36,8 @@ import {
 
 import styles from "./MessageBubble.module.css";
 
+import { MediaGenerationCard } from "./MediaGenerationCard";
+
 import type { ContentBlock, TextBlock } from "#contracts";
 import { isBlank, toNullable } from "#internal/runtime";
 
@@ -162,6 +164,9 @@ const STRUCTURED_BLOCK_RENDERERS = {
   ),
   widget: (block) => (
     <WidgetCard block={block as Extract<ContentBlock, { type: "widget" }>} />
+  ),
+  "media-generation": (block) => (
+    <MediaGenerationCard block={block as Extract<ContentBlock, { type: "media-generation" }>} />
   ),
   "assistant-generated-file": () => null,
   "assistant-source": () => null,
@@ -447,6 +452,7 @@ function areMessageContentBlockPropsEqual(
       return areStepBlockPropsEqual(prev, next);
     case "interaction":
     case "widget":
+    case "media-generation":
     case "assistant-generated-file":
     case "assistant-source":
       return true;

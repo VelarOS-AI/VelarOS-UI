@@ -236,7 +236,9 @@ export function AssistantMessageBubble({
     visibleBlocks,
   ])
   const showInlineNotice =
-    !!inlineNotice && (!hasRenderableContent || inlineNotice.tone === 'running')
+    !!inlineNotice &&
+    !visibleBlocks.some((block) => block.type === 'media-generation') &&
+    (!hasRenderableContent || inlineNotice.tone === 'running')
   const showGeneratedArtifacts = shouldShowAssistantGeneratedArtifacts({
     isStreaming,
     runInProgress,

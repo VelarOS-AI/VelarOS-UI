@@ -1,0 +1,125 @@
+.skeleton {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  inline-size: min(100%, 23rem);
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  color: var(--muted-foreground);
+  background: var(--background-muted);
+}
+
+.skeleton::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  background: linear-gradient(
+    110deg,
+    transparent 26%,
+    var(--background-muted-strong) 50%,
+    transparent 74%
+  );
+  background-size: 260% 100%;
+  animation: media-shimmer 1.8s ease-in-out infinite;
+}
+
+.skeleton[data-media-kind="video"] {
+  inline-size: min(100%, 36rem);
+  aspect-ratio: 16 / 9;
+}
+
+.skeleton[data-media-kind="audio"] {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0 0.75rem;
+  block-size: 3.5rem;
+  aspect-ratio: auto;
+  border-radius: 999px;
+}
+
+.symbol {
+  display: grid;
+  flex: none;
+  place-items: center;
+  inline-size: 3.25rem;
+  block-size: 3.25rem;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--card);
+}
+
+.skeleton[data-media-kind="audio"] .symbol {
+  inline-size: 2rem;
+  block-size: 2rem;
+}
+
+.track {
+  flex: 1;
+  block-size: 0.375rem;
+  margin-inline-end: 1rem;
+  border-radius: 999px;
+  background: var(--background-muted-strong);
+}
+
+.imageButton,
+.video {
+  display: block;
+  overflow: hidden;
+  max-inline-size: 100%;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  background: var(--background-muted);
+}
+
+.imageButton {
+  cursor: zoom-in;
+}
+
+.image,
+.video {
+  display: block;
+  max-block-size: 28rem;
+  object-fit: contain;
+}
+
+.image {
+  max-inline-size: min(100%, 23rem);
+}
+
+.video {
+  inline-size: min(100%, 36rem);
+  aspect-ratio: 16 / 9;
+}
+
+.audio {
+  display: block;
+  inline-size: min(100%, 23rem);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+@keyframes media-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::before {
+    animation: none;
+  }
+}

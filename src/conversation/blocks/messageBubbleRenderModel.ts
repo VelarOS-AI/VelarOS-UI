@@ -267,6 +267,7 @@ export function hasVisibleSegmentContent(segment: ToolRenderSegment): boolean {
     case 'script-execution':
     case 'interaction':
     case 'widget':
+    case 'media-generation':
       return true
     case 'text':
       return !isBlank(segment.block.text)
@@ -286,6 +287,7 @@ export function shouldRenderSegmentOutsideProcessedActivityDisclosure(
     case 'tool-call':
       return isToolActivitySummaryExcludedToolCall(block)
     case 'widget':
+    case 'media-generation':
       return true
     default:
       return false
