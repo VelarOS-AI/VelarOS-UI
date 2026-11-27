@@ -128,19 +128,26 @@ export function shouldUseProcessedActivitySummaryBoundary({
 
 export function getAssistantResponseDurationMs(options: {
   questionMessage?: LooseOptional<Pick<ChatMessage, 'timestamp'>>
-  runMarker?: LooseOptional<Pick<ConversationMessageRunMarker, 'status' | 'timestamp'>>
+  runMarker?: LooseOptional<
+    Pick<ConversationMessageRunMarker, 'status' | 'timestamp' | 'startedAt' | 'durationMs'>
+  >
   isStreaming?: boolean
 }): Nullable<number> {
   if (options.isStreaming) return null
-
-  const startedAt = options.questionMessage?.timestamp
-  if (!isResponseDurationTimestamp(startedAt)) return null
 
   const runMarker = options.runMarker
   if (!runMarker) return null
 
   if (runMarker.status === 'awaiting-input' || runMarker.status === 'awaiting-confirmation')
     return null
+
+  if (isResponseDurationTimestamp(runMarker.durationMs)) return runMarker.durationMs
+
+  // 失败后重发和任务续跑可能沿用同一条提问，以每次执行的起点计算。
+  const startedAt = isResponseDurationTimestamp(runMarker.startedAt)
+    ? runMarker.startedAt
+    : options.questionMessage?.timestamp
+  if (!isResponseDurationTimestamp(startedAt)) return null
 
   const finishedAt = runMarker.timestamp
   if (!isResponseDurationTimestamp(finishedAt)) return null

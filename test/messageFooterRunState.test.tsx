@@ -8,7 +8,10 @@ import {
   type ConversationBlockHooks,
   ConversationBlockHooksProvider,
 } from '../src/conversation/blocks/conversationBlockHooks'
-import { shouldShowAssistantGeneratedArtifacts } from '../src/conversation/blocks/messageBubbleRenderModel'
+import {
+  getAssistantResponseDurationMs,
+  shouldShowAssistantGeneratedArtifacts,
+} from '../src/conversation/blocks/messageBubbleRenderModel'
 import type { ChatMessage } from '../src/conversation/contracts'
 import {
   type ConversationI18nContextValue,
@@ -92,6 +95,24 @@ function inProgressIds(
 }
 
 void describe('回答收尾件（复制与时间）什么时候出现', () => {
+  void test('失败后重发按本次运行计时，提问与重发之间的等待不计入', () => {
+    const questionMessage = { timestamp: 1_000 }
+    const runMarker = {
+      ...marker('retried-answer', 'failed'),
+      startedAt: 331_000,
+      timestamp: 332_400,
+    }
+    assert.equal(getAssistantResponseDurationMs({ questionMessage, runMarker }), 1_400)
+    assert.equal(
+      getAssistantResponseDurationMs({ questionMessage, runMarker: { ...runMarker, durationMs: 1_350 } }),
+      1_350
+    )
+    assert.equal(
+      getAssistantResponseDurationMs({ questionMessage, runMarker, isStreaming: true }),
+      null
+    )
+  })
+
   void test('本条流式、或所属执行还在往后跑时都不出现；带标记的只在正常完成时出现', () => {
     assert.equal(shouldShowAssistantGeneratedArtifacts({ isStreaming: true }), false)
     assert.equal(shouldShowAssistantGeneratedArtifacts({ isStreaming: false, runInProgress: true }), false)
