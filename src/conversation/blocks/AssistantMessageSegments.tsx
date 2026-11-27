@@ -193,6 +193,7 @@ function measureStreamedTextLength(segments: readonly MessageRenderSegment[]): n
 function AssistantMessageSegmentsInner({
   messageRenderSegments,
   isStreaming,
+  runInProgress = false,
   implicitlyCompletedRun = false,
   messageId,
   lastTextSegmentKey,
@@ -213,6 +214,7 @@ function AssistantMessageSegmentsInner({
 }: {
   messageRenderSegments: MessageRenderSegment[]
   isStreaming: boolean
+  runInProgress?: boolean
   implicitlyCompletedRun?: boolean
   messageId: string
   lastTextSegmentKey?: string
@@ -306,12 +308,13 @@ function AssistantMessageSegmentsInner({
   )
   const shouldUseProcessedActivityBoundary = useMemo(
     () =>
-      implicitlyCompletedRun ||
-      shouldUseProcessedActivitySummaryBoundary({
-        isStreaming,
-        runMarker,
-      }),
-    [implicitlyCompletedRun, isStreaming, runMarker]
+      !runInProgress &&
+      (implicitlyCompletedRun ||
+        shouldUseProcessedActivitySummaryBoundary({
+          isStreaming,
+          runMarker,
+        })),
+    [implicitlyCompletedRun, isStreaming, runInProgress, runMarker]
   )
   const processedActivitySummaryBoundaryIndex = useMemo(
     () =>
@@ -426,16 +429,32 @@ function AssistantMessageSegmentsInner({
       return children
     }
 
-    if (shouldRenderProcessedActivity) return (
-      <React.Fragment key={segment.key}>{renderActivityGroupChildren()}</React.Fragment>
-    )
+    if (shouldRenderProcessedActivity)
+      return <React.Fragment key={segment.key}>{renderActivityGroupChildren()}</React.Fragment>
+
+    const hasThinking = segment.segments.some(({ block }) => block.type === 'thinking')
+    let label: Optional<string>
+    if (hasThinking && isStreaming) {
+      label = t(
+        segment.segments.at(-1)?.block.type === 'thinking'
+          ? 'status.phaseResearching'
+          : 'status.phaseExecuting'
+      )
+    } else if (hasThinking && !runInProgress) {
+      label = getProcessedActivityDisclosureLabel(
+        [],
+        locale,
+        { responseDurationMs },
+        translatorRuntime
+      )
+    }
 
     return (
       <ToolActivityDisclosure
         key={segment.key}
         viewStateKey={`${messageId}:${segment.key}`}
         blocks={segment.blocks}
-        label={segment.segments.some(({ block }) => block.type === 'thinking') ? (isStreaming ? t(segment.segments.at(-1)?.block.type === 'thinking' ? 'status.phaseResearching' : 'status.phaseExecuting') : getProcessedActivityDisclosureLabel([], locale, { responseDurationMs }, translatorRuntime)) : undefined}
+        label={label}
         isRunning={
           segment.segments.at(-1)?.block.type === 'thinking'
             ? isStreaming && segment === visibleMessageRenderSegments.at(-1)

@@ -360,10 +360,12 @@ export function ChatConversationPane({
     () => [goalLifecycleDockItemId, activeDockPlanItemId].filter(isPresent),
     [activeDockPlanItemId, goalLifecycleDockItemId]
   )
-  // 新一轮已发出、助手还没开口时不回落到上一轮的助手消息：那条消息在新输入上方，
-  // 提示应由下方的独立提示气泡承载，出现在新输入之后。
-  const inlineNoticeMessageId =
-    activeAssistantMessageId ?? (hasTurnInputAfterLatestAssistant ? null : latestAssistantMessageId)
+  // 新执行还没有助手消息时，运行提示直接排在新输入之后。终态提示才使用历史消息锚点。
+  const inlineNoticeMessageId = isTranscriptRunActive
+    ? activeAssistantMessageId
+    : hasTurnInputAfterLatestAssistant
+      ? null
+      : latestAssistantMessageId
   const conversationCards = runtime.conversationCards
   const inlineConversationCards = useMemo<ReactElement[]>(() => {
     const cards: ReactElement[] = []

@@ -191,6 +191,22 @@ void describe('会话消息语义', () => {
     )
   })
 
+  void test('中断后立即发消息时，上一条助手终态不再承载新执行的状态行', () => {
+    for (const status of ['failed', 'aborted'] as const) {
+      for (const streamingAssistantMessageId of [undefined, 'interrupted', 'resumed']) {
+        assert.equal(
+          resolveActiveTranscriptAssistantMessageId({
+            isRunActive: true,
+            latestAssistantMessageId: 'interrupted',
+            latestAssistantRunMarker: { status },
+            streamingAssistantMessageId,
+          }),
+          streamingAssistantMessageId === 'resumed' ? 'resumed' : null
+        )
+      }
+    }
+  })
+
   void test('运行中把引导后的片段挂到引导前 assistant，保持原组件身份', () => {
     const turn = message('turn', 'user', 'turn-input')
     const firstAssistant = message('assistant-1', 'assistant')
@@ -685,7 +701,8 @@ void test('完成运行之后的引导不能把新执行归入旧完成锚点', 
 function renderSettledTranscript(
   entries: ChatMessage[],
   finalId: string,
-  status: 'completed' | 'failed' | 'aborted'
+  status: 'completed' | 'failed' | 'aborted',
+  priorMarkers: Record<string, 'failed' | 'aborted'> = {}
 ): string {
   return renderToStaticMarkup(
     createElement(
@@ -697,22 +714,52 @@ function renderSettledTranscript(
         createElement(ChatTranscript, {
           messages: entries,
           sessionId: 'settled-fragments',
-          getRunMarker: (entry) =>
-            entry.id === finalId
+          getRunMarker: (entry) => {
+            const markerStatus = entry.id === finalId ? status : priorMarkers[entry.id]
+            return markerStatus
               ? {
                   messageId: entry.id,
-                  status,
-                  detail: status === 'failed' ? '真实错误详情' : null,
+                  status: markerStatus,
+                  detail: markerStatus === 'failed' ? '真实错误详情' : null,
                   turnCount: 1,
                   turnKind: 'turn',
                   timestamp: 2,
                 }
-              : null,
+              : null
+          },
         })
       )
     )
   )
 }
+
+void test('同一轮中断后续跑完成，只在最终答复上方显示一个已处理', () => {
+  const entries: ChatMessage[] = [
+    message('task', 'user', 'turn-input'),
+    {
+      ...message('interrupted-activity', 'assistant'),
+      blocks: [{ type: 'thinking', text: '错误前的执行' }],
+    },
+    message('interrupted', 'assistant'),
+    message('continue', 'user', 'run-guidance'),
+    {
+      ...message('resumed', 'assistant'),
+      blocks: [
+        { type: 'thinking', text: '继续后的执行' },
+        { type: 'text', text: '最终答复' },
+      ],
+    },
+  ]
+
+  for (const status of ['failed', 'aborted'] as const) {
+    const markup = renderSettledTranscript(entries, 'resumed', 'completed', {
+      interrupted: status,
+    })
+    const disclosure = 'data-slot="tool-activity-disclosure"'
+    assert.equal(markup.split(disclosure).length - 1, 1)
+    assert.ok(markup.indexOf(disclosure) < markup.indexOf('最终答复'))
+  }
+})
 
 void test('完成时没有引导的多个助手片段也只保留一个已处理入口', () => {
   const entries: ChatMessage[] = [

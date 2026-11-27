@@ -95,6 +95,22 @@ test(
       }
       assert.deepEqual(report.afterActions.copied, ['First line\nSecond line'])
       assert.deepEqual(report.afterActions.rewound, ['first'])
+      const { starting, reconnecting, executing, completed, expanded } = report.resumedRun
+      for (const phase of [starting, ...reconnecting, executing]) {
+        assert.equal(phase.statuses.length, 1)
+        assert.ok(phase.statuses[0].top >= phase.userBottom)
+      }
+      assert.deepEqual(
+        reconnecting.map(({ statuses }) => statuses[0].text),
+        ['Reconnecting 1/5', 'Reconnecting 1/7']
+      )
+      for (const phase of [completed, expanded]) {
+        assert.equal(phase.processedCount, 1)
+        assert.equal(phase.hasFinalAnswer, true)
+        assert.deepEqual(phase.statuses, [])
+      }
+      assert.equal(expanded.hasInterruptedMessage, true)
+      assert.equal(expanded.hasFailedMarker, true)
     } finally {
       clearTimeout(timeout)
       if (child && child.exitCode === null && child.signalCode === null) child.kill('SIGKILL')

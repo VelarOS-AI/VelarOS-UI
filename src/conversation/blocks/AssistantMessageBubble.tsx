@@ -279,6 +279,7 @@ export function AssistantMessageBubble({
             <AssistantMessageSegments
               messageRenderSegments={messageRenderSegments}
               isStreaming={isStreaming}
+              runInProgress={runInProgress}
               implicitlyCompletedRun={implicitlyCompletedRun}
               messageId={message.id}
               lastTextSegmentKey={lastTextSegmentKey}

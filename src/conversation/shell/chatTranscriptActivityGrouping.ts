@@ -173,18 +173,34 @@ export function buildChatTranscriptMessagePresentations(
 
   const presentations: ChatTranscriptMessagePresentation[] = []
   let sectionStartIndex = 0
+  let lastRunEndIndex = -1
 
-  for (let index = 1; index < messages.length; index += 1) {
+  for (let index = 1; index <= messages.length; index += 1) {
     const message = messages[index]
-    // 外部来源消息保持原位，活动分组不能跨过它搬动前后助手正文。
-    const previous = messages[index - 1]
-    const followsEndedRun = previous?.role === 'assistant' && !!options.isRunEnd?.(previous)
-    if (!message || (!isConversationTurnInputMessage(message) && !message.peerOrigin && !followsEndedRun)) continue
+    const previous = messages[index - 1]!
+    const followsCompletedRun =
+      previous.role === 'assistant' && !!options.isCompletedAssistant?.(previous)
+    if (previous.role === 'assistant' && options.isRunEnd?.(previous)) {
+      lastRunEndIndex = index - 1
+    }
+    // 正常完成、独立输入与外部通信是活动边界。失败与中止后的续跑仍属于同一轮。
+    if (
+      message &&
+      !isConversationTurnInputMessage(message) &&
+      !message.peerOrigin &&
+      !followsCompletedRun
+    )
+      continue
 
+    // 下一次执行还没结束时，保留已停止的活动与终态，新的输入及输出按原顺序留在后面。
+    const pendingStartIndex = lastRunEndIndex + 1
+    if (pendingStartIndex > sectionStartIndex && pendingStartIndex < index) {
+      appendTurnPresentations(messages, sectionStartIndex, pendingStartIndex, presentations, options)
+      sectionStartIndex = pendingStartIndex
+    }
     appendTurnPresentations(messages, sectionStartIndex, index, presentations, options)
     sectionStartIndex = index
   }
 
-  appendTurnPresentations(messages, sectionStartIndex, messages.length, presentations, options)
   return presentations
 }

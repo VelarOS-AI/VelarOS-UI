@@ -1,4 +1,4 @@
-import type { ConversationMessageRunMarker } from '../projection'
+import type { ConversationMessageRunMarker, ConversationRunMarkerStatus } from '../projection'
 
 import type { ChatMessage } from '#contracts'
 import { isConversationTurnInputMessage } from '#contracts'
@@ -21,6 +21,14 @@ export interface ChatTranscriptDerivedIndexes {
   assistantQuestionMap: Map<string, ChatMessage>
 }
 
+export function isRunPausedMarkerStatus(status: LooseOptional<ConversationRunMarkerStatus>): boolean {
+  return status === 'awaiting-confirmation' || status === 'awaiting-input'
+}
+
+export function isRunEndMarkerStatus(status: LooseOptional<ConversationRunMarkerStatus>): boolean {
+  return !!status && !isRunPausedMarkerStatus(status)
+}
+
 export function resolveActiveTranscriptAssistantMessageId({
   isRunActive,
   streamingAssistantMessageId,
@@ -35,13 +43,13 @@ export function resolveActiveTranscriptAssistantMessageId({
   hasTurnInputAfterLatestAssistant?: boolean
 }): Nullable<string> {
   if (!isRunActive) return null
-  if (streamingAssistantMessageId) return streamingAssistantMessageId
-  if (!latestAssistantMessageId || latestAssistantRunMarker?.status === 'completed') return null
-  // 其后已有新一轮输入：它属于上一轮。不写运行 marker 的宿主（Workbench）靠这一条，
-  // 否则新一轮开口前它会被当成流式消息重渲染，运行提示也挂到新输入上方。
-  if (hasTurnInputAfterLatestAssistant) return null
+  if (streamingAssistantMessageId && streamingAssistantMessageId !== latestAssistantMessageId)
+    return streamingAssistantMessageId
+  // 上一条助手已经收尾，或其后已有独立输入。新执行还没有助手消息时由列表尾部承载提示。
+  if (hasTurnInputAfterLatestAssistant || isRunEndMarkerStatus(latestAssistantRunMarker?.status))
+    return null
 
-  return latestAssistantMessageId
+  return toNullable(latestAssistantMessageId)
 }
 
 export function buildChatTranscriptDerivedIndexes({

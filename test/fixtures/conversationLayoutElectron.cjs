@@ -75,6 +75,21 @@ app.whenReady().then(async () => {
     await proof('render', true, 360)
     await proof('frame')
     results.narrow = await proof('measure')
+    results.resumedRun = {}
+    await proof('renderResumedRun', 'starting')
+    results.resumedRun.starting = await proof('measureResumedRun')
+    results.resumedRun.reconnecting = []
+    for (const maxAttempts of [5, 7]) {
+      await proof('renderResumedRun', 'reconnecting', maxAttempts)
+      results.resumedRun.reconnecting.push(await proof('measureResumedRun'))
+    }
+    for (const phase of ['executing', 'completed']) {
+      await proof('renderResumedRun', phase)
+      results.resumedRun[phase] = await proof('measureResumedRun')
+    }
+    await proof('expandProcessedRun')
+    await proof('frame')
+    results.resumedRun.expanded = await proof('measureResumedRun')
     fs.writeFileSync(path.join(directory, 'report.json'), JSON.stringify(results, null, 2))
   } catch (error) {
     console.error(error)

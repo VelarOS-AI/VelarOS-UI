@@ -3,13 +3,22 @@ import { type CSSProperties, type ReactElement, useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { createRoot } from 'react-dom/client'
 
+import {
+  ConversationBlockHooksProvider,
+  emptyConversationBlockHooks,
+} from '../../src/conversation/blocks/conversationBlockHooks'
 import { UserMessageBubble } from '../../src/conversation/blocks/UserMessageBubble'
 import type { ChatMessage } from '../../src/conversation/contracts'
 import {
+  conversationEnUSMessages,
   type ConversationI18nContextValue,
   ConversationLocalizationProvider,
 } from '../../src/conversation/i18n'
-import type { ConversationRewindPlan, ConversationView } from '../../src/conversation/projection'
+import type {
+  ConversationMessageRunMarker,
+  ConversationRewindPlan,
+  ConversationView,
+} from '../../src/conversation/projection'
 import { ChatConversationPane } from '../../src/conversation/shell/ChatConversationPane'
 import {
   ConversationActionPortProvider,
@@ -25,7 +34,12 @@ const rewound: string[] = []
 const i18n: ConversationI18nContextValue = {
   locale: 'en-US',
   setLocale: async () => {},
-  t: (key) => key,
+  t: (key, params) =>
+    key === 'status.reconnecting'
+      ? conversationEnUSMessages.status.reconnecting
+          .replace('{attempt}', String(params?.attempt))
+          .replace('{count}', String(params?.count))
+      : key,
 }
 const conversation: ConversationView = {
   sessionId: 'layout-fixture',
@@ -79,7 +93,13 @@ Object.defineProperty(navigator, 'clipboard', {
   },
 })
 
-function Pane({ variant }: { variant: 'default' | 'side' }): ReactElement {
+function Pane({
+  variant,
+  view = conversation,
+}: {
+  variant: 'default' | 'side'
+  view?: ConversationView
+}): ReactElement {
   const scrollRef = useRef<HTMLDivElement>(null)
   return (
     <div
@@ -91,7 +111,7 @@ function Pane({ variant }: { variant: 'default' | 'side' }): ReactElement {
       }}
     >
       <ChatConversationPane
-        conversation={conversation}
+        conversation={view}
         composer={null}
         followLocked={false}
         scrollRef={scrollRef}
@@ -100,6 +120,77 @@ function Pane({ variant }: { variant: 'default' | 'side' }): ReactElement {
         onFollowLockedChange={() => {}}
       />
     </div>
+  )
+}
+
+function renderResumedRun(
+  phase: 'starting' | 'reconnecting' | 'executing' | 'completed',
+  maxAttempts: Nullable<number> = null
+): void {
+  const isStreaming = phase !== 'completed'
+  const hasOutput = phase === 'executing' || phase === 'completed'
+  const interruptedMarker: ConversationMessageRunMarker = {
+    messageId: 'interrupted',
+    status: 'failed',
+    detail: 'Connection interrupted',
+    turnCount: null,
+    turnKind: null,
+    timestamp: 3,
+  }
+  const view: ConversationView = {
+    ...conversation,
+    messages: [
+      { ...messages[0]!, id: 'task' },
+      {
+        id: 'interrupted',
+        role: 'assistant',
+        blocks: [
+          { type: 'thinking', text: 'Initial activity' },
+          { type: 'text', text: 'Connection interrupted', tone: 'error' },
+        ],
+        timestamp: 2,
+      },
+      { ...messages[1]!, id: 'continue', conversationKind: 'run-guidance', guidanceStatus: 'sent' },
+    ],
+    messageRunMarkers: [interruptedMarker],
+    isStreaming,
+    streamingAssistantMessageId: isStreaming && hasOutput ? 'resumed' : undefined,
+    runtime: {
+      ...conversation.runtime,
+      status: isStreaming ? 'running' : 'completed',
+      teamPhase: phase === 'starting' ? 'creating-task' : 'executing',
+      connectionRetryAttempt: phase === 'reconnecting' ? 1 : null,
+      connectionRetryMaxAttempts: maxAttempts,
+    },
+  }
+  if (hasOutput)
+    view.messages.push({
+      id: 'resumed',
+      role: 'assistant',
+      blocks: [
+        { type: 'thinking', text: 'Resumed activity' },
+        { type: 'text', text: 'Final answer' },
+      ],
+      timestamp: 4,
+    })
+  if (!isStreaming)
+    view.messageRunMarkers.push({
+      ...interruptedMarker,
+      messageId: 'resumed',
+      status: 'completed',
+      detail: null,
+      timestamp: 5,
+    })
+  flushSync(() =>
+    root.render(
+      <ConversationLocalizationProvider value={i18n}>
+        <ConversationBlockHooksProvider value={emptyConversationBlockHooks}>
+          <ConversationActionPortProvider value={emptyConversationActionPort}>
+            <Pane variant="default" view={view} />
+          </ConversationActionPortProvider>
+        </ConversationBlockHooksProvider>
+      </ConversationLocalizationProvider>
+    )
   )
 }
 
@@ -165,6 +256,27 @@ Object.assign(window, {
   conversationLayoutProof: {
     render(custom = false, width = 700) {
       flushSync(() => root.render(<Harness custom={custom} width={width} />))
+    },
+    renderResumedRun,
+    measureResumedRun() {
+      const pane = element('#pane-default')
+      const statuses = [
+        ...pane.querySelectorAll<HTMLElement>('[class*="inlineNoticeRunning"][title]'),
+      ]
+      return {
+        userBottom: pane.querySelector('[data-message-id="continue"]')?.getBoundingClientRect()
+          .bottom,
+        statuses: statuses.map((entry) => ({ top: rect(entry).top, text: entry.title })),
+        processedCount: [
+          ...pane.querySelectorAll('[data-slot="tool-activity-disclosure"] > button'),
+        ].filter((entry) => entry.textContent?.includes('chat.processedActivity')).length,
+        hasInterruptedMessage: !!pane.querySelector('[data-message-id="interrupted"]'),
+        hasFailedMarker: !!pane.querySelector('[aria-label="status.failed"]'),
+        hasFinalAnswer: pane.textContent?.includes('Final answer'),
+      }
+    },
+    expandProcessedRun() {
+      element('[data-slot="tool-activity-disclosure"] > button').click()
     },
     frame: () =>
       new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),

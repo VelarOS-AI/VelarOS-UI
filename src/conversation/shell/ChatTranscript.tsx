@@ -4,7 +4,7 @@ import { MessageBubble } from '../blocks/MessageBubble'
 import { type GoalCompletionActivitySummary } from '../blocks/messageBubbleRenderModel'
 import type { RunCostEstimate } from '../blocks/messageCostEstimate'
 import type { FileChangeSummaryListEntry } from '../cards/FileChangeSummaryList'
-import type { ConversationMessageRunMarker, ConversationRunMarkerStatus } from '../projection'
+import type { ConversationMessageRunMarker } from '../projection'
 import type { ConversationRewindPlan } from '../projection'
 import { type SectionMetric } from '../react-hooks/scrollBehavior'
 import type { ChatInlineNoticeMeta, ChatInlineNoticeRuntimeSource } from '../status/chatStatus'
@@ -13,6 +13,7 @@ import {
   buildChatTranscriptMessagePresentations,
   type ChatTranscriptMessagePresentation,
 } from './chatTranscriptActivityGrouping'
+import { isRunEndMarkerStatus, isRunPausedMarkerStatus } from './chatTranscriptDerivedIndexes'
 import { useStableHostCallback } from './useStableHostCallback'
 
 import type { ChatMessage, ConversationStepBlock, ProjectRootEntry } from '#contracts'
@@ -29,16 +30,6 @@ function markFirstChatTranscriptCommit(): void {
 interface ChatTranscriptNavigationState {
   hasPreviousSection: boolean
   hasNextSection: boolean
-}
-
-/** 等待确认或输入只是暂停：作答后同一次执行接着跑。 */
-function isRunPausedMarkerStatus(status: LooseOptional<ConversationRunMarkerStatus>): boolean {
-  return status === 'awaiting-confirmation' || status === 'awaiting-input'
-}
-
-/** 完成、失败、中止：执行停在这条消息上。 */
-function isRunEndMarkerStatus(status: LooseOptional<ConversationRunMarkerStatus>): boolean {
-  return !!status && !isRunPausedMarkerStatus(status)
 }
 
 /** 同一轮归组后的子消息始终压平；折叠边界只由承载整轮的 assistant 生成一次。 */
@@ -299,7 +290,7 @@ function ChatTranscriptInner({
           }
           // 收进活动里的片段不单独画页脚、改动卡与产物，由承载整轮的那条画
           runInProgress={forceActivityFlat || !!options.presentation?.runInProgress}
-          runMarker={forceActivityFlat ? null : groupedRunMarker}
+          runMarker={forceActivityFlat ? toNullable(getRunMarker?.(message)) : groupedRunMarker}
           implicitlyCompletedRun={
             !forceActivityFlat && !!options.presentation?.implicitlyCompletedRun
           }
