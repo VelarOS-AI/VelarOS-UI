@@ -15,7 +15,7 @@ export interface ConversationScrollScope {
   restoreKey: unknown
   resetKey: unknown
   followLocked: boolean
-  view: ConversationScrollView | undefined
+  view?: ConversationScrollView
 }
 
 const ScrollScopeReader = Symbol('conversation-scroll-scope-reader')
@@ -30,6 +30,6 @@ export function bindConversationScrollScope<T extends RefObject<unknown>>(
   return Object.assign(ref, { [ScrollScopeReader]: readScope })
 }
 
-export function readConversationScrollScope(ref: RefObject<unknown>): ConversationScrollScope | undefined {
+export function readConversationScrollScope(ref: RefObject<unknown>): Optional<ConversationScrollScope> {
   return (ref as ScopedRef)[ScrollScopeReader]?.()
 }

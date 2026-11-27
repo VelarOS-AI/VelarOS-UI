@@ -1560,7 +1560,7 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
   ChatScrollNavigator: [
     {
       "name": "ChatScrollNavigator.hidden",
-      "description": "宿主把导航栏收起来了。\n\n只有**自带头部**的宿主（浏览器空间的侧边聊天）才给得出这一位——收起开关归它的头部。\n没有独立头部的宿主（主聊天页）不传，导航栏就恒显示：那种版面里它不压正文，\n也没有一个「属于这段对话」的地方能放开关。",
+      "description": "宿主把导航栏收起来了。\n\n只有**自带头部**的宿主（浏览器空间的侧边聊天）才给得出这一位——收起开关归它的头部。\n没有独立头部的宿主（主聊天页）不传；导航栏悬浮在内容区内，不参与正文宽度计算。",
       "type": "boolean"
     },
     {

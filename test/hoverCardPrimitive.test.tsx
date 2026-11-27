@@ -394,22 +394,24 @@ void describe('HoverCard markup and CompactToolRow wiring', () => {
     const index = read('src/styles/components/index.css')
     const hoverCard = read('src/styles/components/primitives/hover-card.css')
     const product = read('src/styles/components/product.css')
+    const rows = read('src/styles/components/product/compact-tool-row.css')
 
     // 叠在 Popover 表面之上，必须排在 popover.css 之后才能覆盖同优先级的规则。
     assert.ok(index.indexOf("'./primitives/hover-card.css'") > index.indexOf("'./primitives/popover.css'"))
     assert.match(hoverCard, /\.velar-popover-content\.velar-hover-card\s*\{[\s\S]*?user-select: text;/)
     assert.match(hoverCard, /max-height:\s*min\([\s\S]*?--velar-hover-card-available-height/)
     assert.match(hoverCard, /overflow: auto;/)
-    assert.match(product, /\.velar-compact-tool-row:focus-visible\s*\{/)
+    assert.match(product, /@import '\.\/product\/compact-tool-row\.css'/u)
+    assert.match(rows, /\.velar-compact-tool-row:focus-visible\s*\{/)
   })
 
   void test('draws neither the tool row nor its bubble with a border, and sizes the bubble to the row', () => {
     const read = (relative: string): string =>
       readFileSync(path.resolve(process.cwd(), relative), 'utf8')
     const hoverCard = read('src/styles/components/primitives/hover-card.css')
-    const product = read('src/styles/components/product.css')
+    const rows = read('src/styles/components/product/compact-tool-row.css')
     const compactRow = read('src/product/layout/CompactToolRow.tsx')
-    const rowRules = [...product.matchAll(/\.velar-compact-tool-row[^{]*\{[^}]*\}/gu)].map(([rule]) => rule)
+    const rowRules = [...rows.matchAll(/\.velar-compact-tool-row[^{]*\{[^}]*\}/gu)].map(([rule]) => rule)
 
     assert.match(hoverCard, /\.velar-popover-content\.velar-hover-card\s*\{[^}]*\bborder: 0;/)
     assert.ok(rowRules.length > 0)
@@ -420,10 +422,10 @@ void describe('HoverCard markup and CompactToolRow wiring', () => {
     }
     // 没接详情的行，截断全文也走同一个与行等宽、不描边的 HoverCard，正文任意处折行。
     assert.match(
-      product,
+      rows,
       /\.velar-compact-tool-row-detail-full\s*\{[^}]*overflow-wrap: anywhere;/
     )
-    assert.doesNotMatch(product, /velar-compact-tool-row-detail-tooltip/)
+    assert.doesNotMatch(rows, /velar-compact-tool-row-detail-tooltip/)
     assert.doesNotMatch(compactRow, /BubbleTooltip/)
     assert.match(
       hoverCard,

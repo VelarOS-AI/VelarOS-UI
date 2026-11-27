@@ -13,6 +13,7 @@ import { useImagePreviewDialogMessages } from "../react-hooks/useImagePreviewDia
 import styles from "./MediaGenerationCard.module.css";
 
 import type { ContentBlock } from "#contracts";
+import { isNull } from "#internal/runtime";
 
 type MediaBlock = Extract<ContentBlock, { type: "media-generation" }>;
 type ReadyMediaBlock = Extract<MediaBlock, { status: "ready" }>;
@@ -166,7 +167,7 @@ function GeneratedMedia({
       <ImagePreviewDialog
         items={[{ id: block.id, src: block.src, alt: title, title }]}
         openIndex={isPreviewOpen ? 0 : null}
-        onOpenIndexChange={(index) => setPreviewOpen(index !== null)}
+        onOpenIndexChange={(index) => setPreviewOpen(!isNull(index))}
         messages={previewMessages}
       />
     </>

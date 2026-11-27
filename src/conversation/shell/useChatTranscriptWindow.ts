@@ -79,7 +79,7 @@ export interface ChatTranscriptWindowAnchorState {
 
 const InitialWindowState: TranscriptWindowState = { followEnd: true, anchorIndex: 0, nonce: 0 }
 
-function restoreWindowState(scope: ConversationScrollScope | undefined): TranscriptWindowState {
+function restoreWindowState(scope?: ConversationScrollScope): TranscriptWindowState {
   const view = scope?.view
   if (scope?.followLocked || !view?.anchor || view.following) return InitialWindowState
 

@@ -22,7 +22,7 @@ export function usePointerResize<TTarget, TContext>({
   onResize,
   onResizeStart,
 }: UsePointerResizeOptions<TTarget, TContext>): PointerResizeStarter<TTarget> {
-  const stopActiveResizeRef = useRef<(() => void) | null>(null)
+  const stopActiveResizeRef = useRef<Nullable<() => void>>(null)
   useEffect(() => () => stopActiveResizeRef.current?.(), [])
 
   return useCallback(

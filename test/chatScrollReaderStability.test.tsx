@@ -434,9 +434,9 @@ void describe("reader-stable auto-collapse wiring", () => {
       "src/conversation/blocks/AssistantMessageSegments.tsx",
     );
     assert.match(segments, /useConversationAutoCollapseHold\(!isStreaming\)/u);
-    assert.equal(
-      segments.match(/defaultExpanded=\{holdExpandedForReader\}/gu)?.length,
-      2,
+    assert.match(
+      segments,
+      /<ToolActivityDisclosure[\s\S]*?autoCollapseAfterPaint=\{shouldAutoCollapseProcessedActivity\}\s+defaultExpanded=\{holdExpandedForReader\}/u,
     );
     assert.match(
       segments,

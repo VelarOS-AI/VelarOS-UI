@@ -86,9 +86,11 @@ void describe('WorkspaceGitCommitControl ownership', () => {
   void test('keeps portal interaction and plain frame surfaces in shared foundations', () => {
     const popover = readSource('src/styles/components/primitives/popover.css')
     const product = readSource('src/styles/components/product.css')
+    const topbar = readSource('src/styles/components/product/topbar-controls.css')
 
     assert.match(popover, /\.velar-popover-content\s*\{[^}]*-webkit-app-region:\s*no-drag/)
-    const productRules = readStyleRules(product)
+    assert.match(product, /@import '\.\/product\/topbar-controls\.css'/u)
+    const productRules = readStyleRules(topbar)
     const panels = productRules.filter(({ selector }) => selector.includes('.velar-topbar-control-panel'))
     assert.ok(panels.length > 0)
     for (const panel of panels) {
