@@ -36,7 +36,7 @@ const blockHooks: ConversationBlockHooks = {
   }),
 };
 
-function render(blocks: MediaBlock[], inlineNotice?: ChatInlineNoticeMeta): string {
+function render(blocks: ContentBlock[], inlineNotice?: ChatInlineNoticeMeta): string {
   const message: ChatMessage = {
     id: "answer",
     role: "assistant",
@@ -53,7 +53,7 @@ function render(blocks: MediaBlock[], inlineNotice?: ChatInlineNoticeMeta): stri
         createElement(MessageBubble, {
           message,
           sessionId: "media",
-          isStreaming: blocks.some((block) => block.status === "generating"),
+          isStreaming: blocks.some((block) => block.type === "media-generation" && block.status === "generating"),
           inlineNotice,
         }),
       ),
@@ -96,7 +96,23 @@ void test("同轮并行成品和占位独立渲染，运行状态显示在占位
     { type: "media-generation", id: "first", kind: "image", status: "ready", src: "https://example.test/image.png" },
     { type: "media-generation", id: "second", kind: "image", status: "generating" },
   ], { text: "Preparing", tone: "running" });
+  assert.match(markup, /data-media-gallery="multiple"/u);
   assert.equal(markup.match(/data-generated-media="image"/gu)?.length, 2);
   assert.match(markup, /<img\b[^>]*>.*data-media-kind="image".*>chat\.generatingImage<\/span>/u);
   assert.doesNotMatch(markup, /Preparing/u);
+});
+
+void test("同一组能同时显示图片、视频和音频，并保留媒体组之间的正文", () => {
+  const first: MediaBlock[] = [
+    { type: "media-generation", id: "photo", kind: "image", status: "generating" },
+    { type: "media-generation", id: "clip", kind: "video", status: "ready", src: "https://example.test/clip.mp4" },
+    { type: "media-generation", id: "voice", kind: "audio", status: "ready", src: "https://example.test/voice.mp3" },
+  ];
+  const markup = render([
+    ...first,
+    { type: "text", text: "Next result" },
+    { type: "media-generation", id: "later", kind: "audio", status: "failed" },
+  ]);
+  assert.match(markup, /data-media-gallery="multiple".*data-generated-media="image".*<video\b.*<audio\b.*Next result.*data-media-gallery="single"/u);
+  assert.match(markup, /data-media-gallery="single".*chat\.mediaGenerationFailed/u);
 });

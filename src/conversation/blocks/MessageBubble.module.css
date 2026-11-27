@@ -217,19 +217,6 @@
   max-width: 100%;
 }
 
-.assistantSegments:has(> [data-generated-media]:not([data-generated-media='audio']) ~ [data-generated-media]:not([data-generated-media='audio'])) {
-  --generated-media-width: 100%;
-
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
-  align-items: start;
-  inline-size: min(100%, 40rem);
-}
-
-.assistantSegments:has(> [data-generated-media]:not([data-generated-media='audio']) ~ [data-generated-media]:not([data-generated-media='audio'])) > :is(:not([data-generated-media]), [data-generated-media='audio']) {
-  grid-column: 1 / -1;
-}
-
 .toolActivitySummaryRow {
   @apply flex min-w-0 max-w-full flex-wrap items-start gap-x-3 gap-y-1;
   width: 100%;

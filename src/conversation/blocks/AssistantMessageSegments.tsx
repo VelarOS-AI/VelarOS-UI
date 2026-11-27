@@ -14,6 +14,7 @@ import { useConversationI18n, useConversationTranslatorRuntime } from '../i18n'
 import { useConversationAutoCollapseHold } from '../react-hooks/conversationScrollFollow'
 import type { ToolRenderSegment } from '../tool-render/toolCallRenderGrouping'
 
+import { MediaGenerationGallery } from './MediaGenerationCard'
 import {
   type ConversationMessageRunMarker,
   getAssistantResponseDurationMs,
@@ -160,7 +161,8 @@ function collectToolCallBlocksFromMessageRenderSegment(
     return
   }
 
-  if (segment.segment.block.type === 'tool-call') blocks.push(segment.segment.block)
+  if (segment.kind === 'segment' && segment.segment.block.type === 'tool-call')
+    blocks.push(segment.segment.block)
 }
 
 /** 这一段里的每一步：工具调用与脚本卡，按出现顺序。 */
@@ -173,6 +175,7 @@ function collectStepBlocksFromMessageRenderSegment(
     return
   }
 
+  if (segment.kind !== 'segment') return
   const { block } = segment.segment
   if (block.type === 'tool-call' || block.type === 'script-execution') blocks.push(block)
 }
@@ -185,7 +188,7 @@ function measureStreamedTextLength(segments: readonly MessageRenderSegment[]): n
   }
   for (const segment of segments) {
     if (segment.kind === 'activity-group') segment.segments.forEach(add)
-    else add(segment.segment)
+    else if (segment.kind === 'segment') add(segment.segment)
   }
   return length
 }
@@ -406,7 +409,9 @@ function AssistantMessageSegmentsInner({
   }
 
   const renderMessageRenderSegment = (segment: MessageRenderSegment): Nullable<ReactElement> => {
-    if (segment.kind !== 'activity-group') return renderToolRenderSegment(segment.segment)
+    if (segment.kind === 'segment') return renderToolRenderSegment(segment.segment)
+    if (segment.kind === 'media-gallery')
+      return <MediaGenerationGallery key={segment.key} blocks={segment.blocks} />
 
     const renderActivityGroupChildren = (): ReactNode[] => {
       const children: ReactNode[] = []

@@ -31,6 +31,18 @@ const MediaTitles = {
 
 const FragmentKeys = Array.from({ length: 64 }, (_, index) => String(index));
 
+export function MediaGenerationGallery({
+  blocks,
+}: {
+  blocks: readonly MediaBlock[];
+}): ReactElement {
+  return (
+    <div className={styles.gallery} data-media-gallery={blocks.length > 1 ? "multiple" : "single"}>
+      {blocks.map((block) => <MediaGenerationCard key={block.id} block={block} />)}
+    </div>
+  );
+}
+
 export function MediaGenerationCard({
   block,
 }: {

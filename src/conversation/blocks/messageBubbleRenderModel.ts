@@ -17,6 +17,7 @@ import type {
   ChatMessage,
   ContentBlock,
   ConversationStepBlock,
+  MediaGenerationBlock,
   SerializedImageAttachment,
   TextBlock,
   ToolCallBlock as ToolCallBlockType,
@@ -43,6 +44,7 @@ export type MessageRenderSegment =
       segments: ToolRenderSegment[]
       blocks: ConversationStepBlock[]
     }
+  | { kind: 'media-gallery'; key: string; blocks: MediaGenerationBlock[] }
   | { kind: 'segment'; key: string; segment: ToolRenderSegment }
 
 export interface MessageRenderSegmentOptions {
@@ -283,10 +285,11 @@ export function hasVisibleSegmentContent(segment: ToolRenderSegment): boolean {
   }
 }
 
-/** 给用户看的成品留在「已处理」外：小部件，以及摘出来单独展示的工具调用。交互卡属于执行过程。 */
+/** 给用户看的成品留在「已处理」外，交互卡属于执行过程。 */
 export function shouldRenderSegmentOutsideProcessedActivityDisclosure(
   segment: MessageRenderSegment
 ): boolean {
+  if (segment.kind === 'media-gallery') return true
   if (segment.kind !== 'segment') return false
 
   const { block } = segment.segment
@@ -422,6 +425,12 @@ export function buildMessageRenderSegments(
     }
 
     flushPendingSegments()
+    if (segment.block.type === 'media-generation') {
+      const previous = messageSegments.at(-1)
+      if (previous?.kind === 'media-gallery') previous.blocks.push(segment.block)
+      else messageSegments.push({ kind: 'media-gallery', key: `media:${segment.block.id}`, blocks: [segment.block] })
+      return
+    }
     messageSegments.push({
       kind: 'segment',
       key: segment.key,
@@ -462,7 +471,7 @@ function messageSegmentIsSettledInteraction(segment: MessageRenderSegment): bool
 function messageRenderSegmentHasVisibleContent(segment: MessageRenderSegment): boolean {
   if (segment.kind === 'activity-group') return segment.segments.some(hasVisibleSegmentContent)
 
-  return hasVisibleSegmentContent(segment.segment)
+  return segment.kind === 'media-gallery' || hasVisibleSegmentContent(segment.segment)
 }
 
 function messageRenderSegmentIsTrailingActivity(segment: MessageRenderSegment): boolean {
