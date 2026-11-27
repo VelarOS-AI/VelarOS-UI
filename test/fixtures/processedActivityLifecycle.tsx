@@ -21,6 +21,7 @@ import {
   ConversationScrollFollowProvider,
   registerConversationScrollFollow,
 } from '../../src/conversation/react-hooks/conversationScrollFollow'
+import { ConversationViewMemoryProvider } from '../../src/conversation/react-hooks/conversationViewMemory'
 import {
   ConversationRenderSlotsProvider,
   createConversationRenderSlots,
@@ -305,6 +306,48 @@ function renderGuidanceRegression(withGuidance: boolean, showThinking = true): v
     <ChatTranscript messages={messages} sessionId="guidance-regression" />)
 }
 
+function renderNestedActivities(running: boolean): void {
+  const message: ChatMessage = {
+    id: 'nested-assistant',
+    role: 'assistant',
+    timestamp: 2,
+    blocks: [
+      {
+        type: 'script-execution',
+        id: 'nested-script',
+        kind: 'execute',
+        title: '检查配置',
+        status: 'succeeded',
+        source: '',
+        sourceTruncated: false,
+        calls: [],
+        durationMs: 10,
+      },
+      { type: 'text', text: '阶段汇报', segmentId: 'progress' },
+      { type: 'thinking', text: '继续检查的思考正文' },
+      { type: 'text', text: '最终答复', segmentId: 'summary' },
+    ],
+  }
+
+  renderMessage(message, running, false,
+    <ConversationViewMemoryProvider sessionId="nested-activities">
+      <ChatTranscript
+        messages={[message]}
+        sessionId="nested-activities"
+        getIsStreaming={() => running}
+        getRunMarker={() => running ? null : {
+          messageId: message.id,
+          status: 'completed',
+          detail: null,
+          turnCount: 1,
+          turnKind: 'turn',
+          timestamp: 3,
+        }}
+      />
+    </ConversationViewMemoryProvider>
+  )
+}
+
 function renderPeerOrigin(parent: boolean, locale: 'zh-CN' | 'en-US', title: string | null): void {
   const message: ChatMessage = {
     id: 'origin', role: 'user', conversationKind: 'run-guidance', timestamp: 1,
@@ -329,6 +372,7 @@ Object.assign(window, {
   processedActivityProof: {
     render,
     renderGuidanceRegression,
+    renderNestedActivities,
     renderPeerOrigin,
     renderProjectedThread,
     renderSteps,
@@ -356,10 +400,10 @@ Object.assign(window, {
     follow: (value: boolean): void => {
       following = value
     },
-    toggle: (): void => {
-      const button = container.querySelector<HTMLButtonElement>(
+    toggle: (index = 0): void => {
+      const button = container.querySelectorAll<HTMLButtonElement>(
         '[data-slot="tool-activity-disclosure"] > button'
-      )!
+      )[index]!
       flushSync(() => button.click())
     },
   },

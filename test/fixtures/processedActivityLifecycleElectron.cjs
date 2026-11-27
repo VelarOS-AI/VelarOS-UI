@@ -109,6 +109,26 @@ app.whenReady().then(async () => {
     await run('processedActivityProof.renderThinking(6, true, false, true)')
     results.unifiedThinkingAgain = await run('processedActivityProof.readSteps()')
 
+    await run('processedActivityProof.renderNestedActivities(true); processedActivityProof.toggle()')
+    await run('processedActivityProof.renderNestedActivities(false); processedActivityProof.flushFrames()')
+    results.nestedCollapsed = await run('processedActivityProof.readSteps()')
+    await run('processedActivityProof.toggle()')
+    results.nestedOpened = await run(`(() => {
+      const outer = document.querySelector('[data-slot="tool-activity-disclosure"] > button')
+      const body = document.getElementById(outer.getAttribute('aria-controls'))
+      return {
+        buttons: [...body.querySelectorAll('[data-slot="tool-activity-disclosure"] > button')]
+          .map(button => ({ label: button.textContent, expanded: button.getAttribute('aria-expanded') })),
+        inside: body.textContent,
+        transcript: document.getElementById('root').textContent,
+      }
+    })()`)
+    await run('processedActivityProof.toggle(1); processedActivityProof.toggle(2)')
+    results.nestedToggled = await run(`({
+      cards: document.querySelectorAll('[data-slot="script-execution"]').length,
+      text: document.getElementById('root').textContent,
+    })`)
+
     await run('processedActivityProof.setClock(64000); processedActivityProof.renderTimedScript(1000)')
     await run('processedActivityProof.flushFrames()')
     results.timerInitiallyExpanded = await run('processedActivityProof.readTimedScript()')

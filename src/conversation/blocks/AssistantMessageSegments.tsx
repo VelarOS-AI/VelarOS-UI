@@ -113,7 +113,7 @@ function buildMessageSegmentSuffixStates(
 export function shouldRenderActivityGroupDisclosure(
   segment: MessageRenderSegment
 ): boolean {
-  return segment.kind === 'activity-group' && !isEmpty(segment.blocks)
+  return segment.kind === 'activity-group'
 }
 
 /** 完成态「已处理」内部只有真正的折叠项参与连续横排；正文和卡片仍各自占行。 */
@@ -345,8 +345,7 @@ function AssistantMessageSegmentsInner({
     ? processedActivitySummaryBoundaryIndex
     : visibleMessageRenderSegments.length
   const shouldAutoCollapseProcessedActivity = !isStreaming && autoCollapseRequested
-  // 流式结束那一刻读者不在底部：完成态会把这条消息整段重排进「已处理」并重挂子节点，重挂出来的
-  // 折叠项、思考块一律按展开挂载，不做自动收起，读者正在看的内容就不会被抽走。跟随时照旧收起。
+  // 流式结束时让不在底部的读者继续看到外层与独立思考块；活动组沿用各自记住的开合状态。
   const holdExpandedForReader = useConversationAutoCollapseHold(!isStreaming)
   const segmentSuffixStates = useMemo(
     () => buildMessageSegmentSuffixStates(visibleMessageRenderSegments),
@@ -434,9 +433,6 @@ function AssistantMessageSegmentsInner({
       return children
     }
 
-    if (shouldRenderProcessedActivity)
-      return <React.Fragment key={segment.key}>{renderActivityGroupChildren()}</React.Fragment>
-
     const hasThinking = segment.segments.some(({ block }) => block.type === 'thinking')
     let label: Optional<string>
     if (hasThinking && isStreaming) {
@@ -445,13 +441,15 @@ function AssistantMessageSegmentsInner({
           ? 'status.phaseResearching'
           : 'status.phaseExecuting'
       )
-    } else if (hasThinking && !runInProgress) {
+    } else if (hasThinking && !runInProgress && !shouldRenderProcessedActivity) {
       label = getProcessedActivityDisclosureLabel(
         [],
         locale,
         { responseDurationMs },
         translatorRuntime
       )
+    } else if (hasThinking && shouldRenderProcessedActivity && isEmpty(segment.blocks)) {
+      label = t('chat.thinkingProcess')
     }
 
     return (
