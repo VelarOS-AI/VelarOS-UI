@@ -14,11 +14,13 @@ import {
   type ConversationI18nContextValue,
   ConversationLocalizationProvider,
 } from "../src/conversation/i18n";
+import type { ChatInlineNoticeMeta } from "../src/conversation/status/chatStatus";
 
 type MediaBlock = Extract<ContentBlock, { type: "media-generation" }>;
 
 const localization: ConversationI18nContextValue = {
   locale: "en-US",
+  setLocale: async () => {},
   t: (key) => key,
 };
 
@@ -34,12 +36,12 @@ const blockHooks: ConversationBlockHooks = {
   }),
 };
 
-function render(block: MediaBlock): string {
+function render(blocks: MediaBlock[], inlineNotice?: ChatInlineNoticeMeta): string {
   const message: ChatMessage = {
     id: "answer",
     role: "assistant",
     timestamp: 1,
-    blocks: [block],
+    blocks,
   };
   return renderToStaticMarkup(
     createElement(
@@ -51,7 +53,8 @@ function render(block: MediaBlock): string {
         createElement(MessageBubble, {
           message,
           sessionId: "media",
-          isStreaming: block.status === "generating",
+          isStreaming: blocks.some((block) => block.status === "generating"),
+          inlineNotice,
         }),
       ),
     ),
@@ -64,25 +67,36 @@ void test("媒体助手消息显示对应的无文案骨架和内联成品", () 
     ["video", "video"],
     ["audio", "audio"],
   ] as const) {
-    const pending = render({
+    const pending = render([{
       type: "media-generation",
       id: kind,
       kind,
       status: "generating",
-    });
+    }]);
     assert.match(pending, new RegExp(`data-media-kind="${  kind  }"`));
     assert.match(pending, /role="status"/u);
     assert.doesNotMatch(pending, new RegExp(`<${  element  }\\b`));
+    if (kind === "image") assert.doesNotMatch(pending, /<svg\b/u);
 
-    const ready = render({
+    const ready = render([{
       type: "media-generation",
       id: kind,
       kind,
       status: "ready",
       src: "https://example.test/media",
-    });
+    }]);
     assert.doesNotMatch(ready, /data-media-kind=/u);
     assert.match(ready, new RegExp(`<${  element  }\\b`));
     if (kind !== "image") assert.match(ready, /controls=""/u);
   }
+});
+
+void test("同轮并行成品和占位独立渲染，运行状态显示在占位下方", () => {
+  const markup = render([
+    { type: "media-generation", id: "first", kind: "image", status: "ready", src: "https://example.test/image.png" },
+    { type: "media-generation", id: "second", kind: "image", status: "generating" },
+  ], { text: "Preparing", tone: "running" });
+  assert.equal(markup.match(/data-generated-media="image"/gu)?.length, 2);
+  assert.match(markup, /<img\b[^>]*>.*data-media-kind="image".*>chat\.generatingImage<\/span>/u);
+  assert.doesNotMatch(markup, /Preparing/u);
 });

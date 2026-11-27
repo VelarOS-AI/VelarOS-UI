@@ -28,6 +28,7 @@ import {
 import { useChatThinkingVisibility } from './chatThinkingVisibility'
 import { useConversationBlockHooks } from './conversationBlockHooks'
 import { InlineRuntimeNotice } from './InlineRuntimeNotice'
+import { MediaGenerationStatusLabels } from './MediaGenerationCard'
 import { MessageActionList } from './MessageActionList'
 import {
   buildMessageRenderSegments,
@@ -235,10 +236,10 @@ export function AssistantMessageBubble({
     onOpenBrowserLink,
     visibleBlocks,
   ])
-  const showInlineNotice =
-    !!inlineNotice &&
-    !visibleBlocks.some((block) => block.type === 'media-generation') &&
-    (!hasRenderableContent || inlineNotice.tone === 'running')
+  const pendingMedia = visibleBlocks.find(
+    (block) => block.type === 'media-generation' && block.status === 'generating'
+  )
+  const showInlineNotice = !!inlineNotice && (!hasRenderableContent || inlineNotice.tone === 'running')
   const showGeneratedArtifacts = shouldShowAssistantGeneratedArtifacts({
     isStreaming,
     runInProgress,
@@ -317,6 +318,9 @@ export function AssistantMessageBubble({
             <InlineRuntimeNotice
               notice={inlineNotice}
               runtimeSource={inlineNoticeRuntimeSource}
+              activityLabel={pendingMedia?.type === 'media-generation' && inlineNotice.tone === 'running'
+                ? t(MediaGenerationStatusLabels[pendingMedia.kind])
+                : undefined}
               sessionId={sessionId}
             />
           )}

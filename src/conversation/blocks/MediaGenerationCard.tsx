@@ -1,7 +1,6 @@
 import { type ReactElement, useState } from "react";
 import {
   FilmStripIcon,
-  ImageIcon,
   WarningCircleIcon,
   WaveformIcon,
 } from "@phosphor-icons/react";
@@ -18,39 +17,41 @@ import type { ContentBlock } from "#contracts";
 type MediaBlock = Extract<ContentBlock, { type: "media-generation" }>;
 type ReadyMediaBlock = Extract<MediaBlock, { status: "ready" }>;
 
-const MediaPresentation = {
-  image: {
-    icon: ImageIcon,
-    pending: "chat.generatingImage",
-    title: "chat.generatedImage",
-  },
-  video: {
-    icon: FilmStripIcon,
-    pending: "chat.generatingVideo",
-    title: "chat.generatedVideo",
-  },
-  audio: {
-    icon: WaveformIcon,
-    pending: "chat.generatingAudio",
-    title: "chat.generatedAudio",
-  },
+export const MediaGenerationStatusLabels = {
+  image: "chat.generatingImage",
+  video: "chat.generatingVideo",
+  audio: "chat.generatingAudio",
 } as const;
+
+const MediaTitles = {
+  image: "chat.generatedImage",
+  video: "chat.generatedVideo",
+  audio: "chat.generatedAudio",
+} as const;
+
+const FragmentKeys = Array.from({ length: 64 }, (_, index) => String(index));
 
 export function MediaGenerationCard({
   block,
 }: {
   block: MediaBlock;
 }): ReactElement {
+  return (
+    <div className={styles.card} data-generated-media={block.kind}>
+      <MediaGenerationContent block={block} />
+    </div>
+  );
+}
+
+function MediaGenerationContent({ block }: { block: MediaBlock }): ReactElement {
   const { t } = useConversationI18n();
-  const presentation = MediaPresentation[block.kind];
-  const Icon = presentation.icon;
 
   if (block.status === "ready")
     return (
       <GeneratedMedia
         key={block.src}
         block={block}
-        title={t(presentation.title)}
+        title={t(MediaTitles[block.kind])}
       />
     );
 
@@ -67,16 +68,23 @@ export function MediaGenerationCard({
     );
   }
 
+  const Icon = block.kind === "audio" ? WaveformIcon : FilmStripIcon;
   return (
     <div
       className={styles.skeleton}
       data-media-kind={block.kind}
       role="status"
-      aria-label={t(presentation.pending)}
+      aria-label={t(MediaGenerationStatusLabels[block.kind])}
     >
-      <span className={styles.symbol} aria-hidden="true">
-        <Icon size={block.kind === "audio" ? 20 : 28} weight="duotone" />
-      </span>
+      {block.kind === "image" ? (
+        <span className={styles.fragments} aria-hidden="true">
+          {FragmentKeys.map((key) => <span key={key} />)}
+        </span>
+      ) : (
+        <span className={styles.symbol} aria-hidden="true">
+          <Icon size={block.kind === "audio" ? 20 : 28} weight="duotone" />
+        </span>
+      )}
       {block.kind === "audio" && (
         <span className={styles.track} aria-hidden="true" />
       )}

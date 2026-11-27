@@ -22,10 +22,12 @@ const cx = StyleUtils.bindCx(styles)
 function InlineRuntimeNoticeInner({
   notice,
   runtimeSource = null,
+  activityLabel,
   sessionId,
 }: {
   notice: ChatInlineNoticeMeta
   runtimeSource?: LooseOptional<ChatInlineNoticeRuntimeSource>
+  activityLabel?: LooseOptional<string>
   sessionId: string
 }): ReactElement {
   const { locale } = useConversationI18n()
@@ -44,16 +46,16 @@ function InlineRuntimeNoticeInner({
   )
 
   const displayNotice = useMemo(() => {
-    if (!shouldRefreshRunningNotice || !runtimeSource) return notice
+    if (!shouldRefreshRunningNotice || !runtimeSource)
+      return activityLabel ? { ...notice, text: activityLabel } : notice
 
-    const options = isPresent(runtimeSource.liveTraceSummary)
-      ? { liveTraceSummary: runtimeSource.liveTraceSummary, now: clock }
-      : { now: clock }
+    const liveTraceSummary = activityLabel ?? runtimeSource.liveTraceSummary
+    const options = isPresent(liveTraceSummary) ? { liveTraceSummary, now: clock } : { now: clock }
 
     return (
       getChatInlineNoticeMeta(runtimeSource.runtime, locale, options, translatorRuntime) ?? notice
     )
-  }, [clock, locale, notice, runtimeSource, shouldRefreshRunningNotice, translatorRuntime])
+  }, [activityLabel, clock, locale, notice, runtimeSource, shouldRefreshRunningNotice, translatorRuntime])
 
   // 运行态行首画的是**谁在跑**（执行体标记），由宿主经 `runningRuntimeMark` 槽给出：Velar 自己的
   // 会话画帆标，外接引擎会话画那家自己的品牌标。

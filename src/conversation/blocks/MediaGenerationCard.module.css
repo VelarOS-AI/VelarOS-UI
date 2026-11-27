@@ -1,10 +1,19 @@
+.card {
+  min-inline-size: 0;
+  inline-size: min(100%, var(--generated-media-width, 23rem));
+}
+
+.card[data-generated-media="video"] {
+  inline-size: min(100%, var(--generated-media-width, 36rem));
+}
+
 .skeleton {
   position: relative;
   display: grid;
   place-items: center;
   overflow: hidden;
   isolation: isolate;
-  inline-size: min(100%, 23rem);
+  inline-size: 100%;
   aspect-ratio: 1;
   border: 1px solid var(--border);
   border-radius: 0.875rem;
@@ -12,7 +21,7 @@
   background: var(--background-muted);
 }
 
-.skeleton::before {
+.skeleton:not([data-media-kind="image"])::before {
   position: absolute;
   z-index: -1;
   inset: 0;
@@ -27,8 +36,52 @@
   animation: media-shimmer 1.8s ease-in-out infinite;
 }
 
+.skeleton[data-media-kind="image"] {
+  background:
+    radial-gradient(ellipse at 80% 14%, color-mix(in oklab, var(--primary) 12%, transparent), transparent 58%),
+    radial-gradient(ellipse at 14% 72%, var(--background-muted-strong), transparent 60%),
+    var(--background-muted);
+}
+
+.fragments {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-rows: repeat(8, minmax(0, 1fr));
+  gap: 1px;
+}
+
+.fragments > span {
+  --fragment-color: var(--card);
+  --fragment-delay: -0.4s;
+  --fragment-duration: 3s;
+  opacity: 0.46;
+  background: linear-gradient(140deg, var(--fragment-color), transparent);
+  animation: media-fragment var(--fragment-duration) ease-in-out var(--fragment-delay) infinite alternate;
+}
+
+.fragments > span:nth-child(3n + 1) {
+  --fragment-color: color-mix(in oklab, var(--primary) 18%, var(--background-muted));
+  --fragment-delay: -1.4s;
+  --fragment-duration: 2.6s;
+  clip-path: polygon(0 0, 100% 0, 83% 100%, 0 84%);
+}
+
+.fragments > span:nth-child(5n + 2) {
+  --fragment-color: color-mix(in oklab, var(--muted-foreground) 19%, var(--background-muted));
+  --fragment-delay: -2.1s;
+  --fragment-duration: 3.5s;
+  clip-path: polygon(0 18%, 100% 0, 100% 100%, 10% 100%);
+}
+
+.fragments > span:nth-child(7n + 1) {
+  --fragment-delay: -3.2s;
+  --fragment-duration: 3.9s;
+  background: linear-gradient(38deg, var(--fragment-color), transparent 90%);
+}
+
 .skeleton[data-media-kind="video"] {
-  inline-size: min(100%, 36rem);
   aspect-ratio: 16 / 9;
 }
 
@@ -88,17 +141,17 @@
 }
 
 .image {
-  max-inline-size: min(100%, 23rem);
+  max-inline-size: 100%;
 }
 
 .video {
-  inline-size: min(100%, 36rem);
+  inline-size: 100%;
   aspect-ratio: 16 / 9;
 }
 
 .audio {
   display: block;
-  inline-size: min(100%, 23rem);
+  inline-size: 100%;
 }
 
 .status {
@@ -118,8 +171,21 @@
   }
 }
 
+@keyframes media-fragment {
+  0%, 18% {
+    opacity: 0.16;
+  }
+  46% {
+    opacity: 0.83;
+  }
+  78%, 100% {
+    opacity: 0.37;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .skeleton::before {
+  .skeleton:not([data-media-kind="image"])::before,
+  .fragments > span {
     animation: none;
   }
 }
