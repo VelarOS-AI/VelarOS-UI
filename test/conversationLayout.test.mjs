@@ -71,6 +71,10 @@ test(
       assert.equal(code, 0, errors)
       const report = JSON.parse(await readFile(join(directory, 'report.json'), 'utf8'))
       assert.deepEqual(report.errors, [])
+      for (const { content, composer } of [...report.wideColumns, ...report.narrowColumns]) {
+        assert.ok(Math.abs(content.left - composer.left) < 1)
+        assert.ok(Math.abs(content.right - composer.right) < 1)
+      }
       assert.equal(report.defaults.mainGap, '20px')
       assert.equal(report.defaults.sideGap, '12px')
       assert.equal(report.defaults.lineHeight, '24px')
@@ -105,12 +109,12 @@ test(
         ['Reconnecting 1/5', 'Reconnecting 1/7']
       )
       for (const phase of [completed, expanded]) {
-        assert.equal(phase.processedCount, 1)
+        assert.equal(phase.processedCount, 2)
         assert.equal(phase.hasFinalAnswer, true)
+        assert.equal(phase.hasInterruptedMessage, true)
+        assert.equal(phase.hasFailedMarker, true)
         assert.deepEqual(phase.statuses, [])
       }
-      assert.equal(expanded.hasInterruptedMessage, true)
-      assert.equal(expanded.hasFailedMarker, true)
     } finally {
       clearTimeout(timeout)
       if (child && child.exitCode === null && child.signalCode === null) child.kill('SIGKILL')

@@ -273,11 +273,6 @@ void describe('Platform-owned conversation composer behavior', () => {
       /\.userBubbleInner\s*\{[\s\S]*?max-w-full[\s\S]*?overflow-wrap: anywhere;[\s\S]*?word-break: break-word;/u
     )
     assert.match(paneStyles, /\.messageSequence\s*\{\s*@apply flex min-w-0 max-w-full/u)
-    // 侧边形态不留导航槽位（覆盖式），槽位只属于主聊天页的阅读栏留白。
-    assert.match(
-      paneStyles,
-      /\.conversationBody\[data-scroll-navigator-hidden='false'\] \.messageListInner:not\(\.messageListInnerSide\)\s*\{\s*padding-inline-end: 5\.25rem;/u
-    )
     // 工具行的截断全文与详情共用与行等宽的 HoverCard，全文在气泡里任意处折行。
     assert.match(productStyles, /@import '\.\/product\/compact-tool-row\.css';/u)
     assert.match(productStyles, /@import '\.\/product\/tool-disclosure-card\.css';/u)

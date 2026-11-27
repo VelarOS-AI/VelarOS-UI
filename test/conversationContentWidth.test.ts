@@ -16,25 +16,23 @@ const messageStyles = readFileSync(
   ),
   "utf8",
 );
-const productStyles = readFileSync(
+const toolDisclosureStyles = readFileSync(
   new URL(
-    "../src/styles/components/product.css",
+    "../src/styles/components/product/tool-disclosure-card.css",
     import.meta.url,
   ),
   "utf8",
 );
 
 void describe("shared conversation content width", () => {
-  void test("reserves the navigator lane at the content-column boundary", () => {
-    // 只有主聊天页留导航槽位：它有 48rem 阅读栏外的留白可用。侧边形态一旦也留，
-    // 窄面板会被再切掉 84px，正文与工具卡右侧空出一整条——导航条在那里改为覆盖式。
+  void test("uses one column rule for the transcript and composer", () => {
     assert.match(
       paneStyles,
-      /\.conversationBody\[data-scroll-navigator-hidden='false'\] \.messageListInner:not\(\.messageListInnerSide\)\s*\{\s*padding-inline-end: 5\.25rem;/u,
+      /\.messageListInner,\s*\.inputDockInner\s*\{[^}]*max-width: var\(--chat-column-max-width\);/u,
     );
     assert.doesNotMatch(
       paneStyles,
-      /\.conversationBody\[data-scroll-navigator-hidden='false'\] \.messageListInnerSide\s*\{/u,
+      /data-scroll-navigator-hidden/u,
     );
     assert.match(
       paneStyles,
@@ -72,7 +70,7 @@ void describe("shared conversation content width", () => {
       /\.toolActivityDisclosure\s*\{[\s\S]*?width: 100%;\s*max-width: 100%;/u,
     );
     assert.match(
-      productStyles,
+      toolDisclosureStyles,
       /\.velar-tool-disclosure-card\s*\{[\s\S]*?width: 100%;\s*min-width: 0;\s*max-width: 100%;/u,
     );
   });

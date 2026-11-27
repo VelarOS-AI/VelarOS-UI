@@ -51,6 +51,9 @@ app.whenReady().then(async () => {
     await proof('render')
     await proof('frame')
     results.defaults = await proof('measure')
+    await proof('render', false, 980)
+    await proof('frame')
+    results.wideColumns = await proof('measureColumns')
     await proof('render', true)
     await proof('frame')
     results.custom = await proof('measure')
@@ -75,6 +78,7 @@ app.whenReady().then(async () => {
     await proof('render', true, 360)
     await proof('frame')
     results.narrow = await proof('measure')
+    results.narrowColumns = await proof('measureColumns')
     results.resumedRun = {}
     await proof('renderResumedRun', 'starting')
     results.resumedRun.starting = await proof('measureResumedRun')

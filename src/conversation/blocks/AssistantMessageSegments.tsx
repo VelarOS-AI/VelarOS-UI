@@ -441,14 +441,7 @@ function AssistantMessageSegmentsInner({
           ? 'status.phaseResearching'
           : 'status.phaseExecuting'
       )
-    } else if (hasThinking && !runInProgress && !shouldRenderProcessedActivity) {
-      label = getProcessedActivityDisclosureLabel(
-        [],
-        locale,
-        { responseDurationMs },
-        translatorRuntime
-      )
-    } else if (hasThinking && shouldRenderProcessedActivity && isEmpty(segment.blocks)) {
+    } else if (hasThinking && isEmpty(segment.blocks)) {
       label = t('chat.thinkingProcess')
     }
 
@@ -473,7 +466,6 @@ function AssistantMessageSegmentsInner({
   const renderAssistantSegments = (): ReactNode[] => {
     const renderedSegments: ReactNode[] = []
     let inlineActivityRenderers: ActivitySegmentRenderer[] = []
-    let inlineActivityBlocks: ToolCallBlockType[] = []
     let inlineActivityAfterToolCallElements: ReactNode[] = []
     let inlineActivityKey: Nullable<string> = null
 
@@ -489,47 +481,16 @@ function AssistantMessageSegmentsInner({
 
     const flushInlineActivitySegments = (): void => {
       const renderers = [...inlineActivityRenderers]
-      const blocks = [...inlineActivityBlocks]
       const afterToolCallElements = [...inlineActivityAfterToolCallElements]
       const key = inlineActivityKey
 
       if (isEmpty(renderers) && isEmpty(afterToolCallElements)) return
 
       inlineActivityRenderers = []
-      inlineActivityBlocks = []
       inlineActivityAfterToolCallElements = []
       inlineActivityKey = null
 
-      const renderSegments = (): ReactNode[] =>
-        renderers.map((renderSegment) => renderSegment()).filter(isPresent)
-
-      if (shouldRenderProcessedActivity) {
-        renderedSegments.push(
-          <ToolActivityDisclosure
-            key={`processed-activity:${key ?? renderedSegments.length}`}
-            viewStateKey={`${messageId}:processed:${key ?? renderedSegments.length}`}
-            blocks={blocks}
-            autoCollapseAfterPaint={shouldAutoCollapseProcessedActivity}
-            defaultExpanded={holdExpandedForReader}
-            label={getProcessedActivityDisclosureLabel(
-              blocks,
-              locale,
-              {
-                goalCompletionSummary,
-                responseDurationMs,
-              },
-              translatorRuntime
-            )}
-            isRunning={false}
-          >
-            {() => renderSegments()}
-          </ToolActivityDisclosure>
-        )
-        renderedSegments.push(...afterToolCallElements)
-        return
-      }
-
-      const segments = renderSegments()
+      const segments = renderers.map((renderSegment) => renderSegment()).filter(isPresent)
       if (isEmpty(segments)) {
         renderedSegments.push(...afterToolCallElements)
         return
@@ -553,11 +514,22 @@ function AssistantMessageSegmentsInner({
     }
 
     if (shouldRenderProcessedActivity) {
-      const { processedSegments, outsideSegments, trailingSegments } =
+      const { leadingSegments, processedSegments, outsideSegments, trailingSegments } =
         partitionProcessedActivitySummarySegments(
           visibleMessageRenderSegments,
           processedActivityBoundaryIndex
         )
+      const processedLeadingElement = isEmpty(leadingSegments) ? activityLeadingElement : null
+      if (activityLeadingElement && !isEmpty(leadingSegments)) {
+        renderedSegments.push(
+          <React.Fragment key="activity-leading">{activityLeadingElement}</React.Fragment>
+        )
+      }
+      leadingSegments.forEach((segment) => {
+        const element = renderMessageRenderSegment(segment)
+        if (element) renderedSegments.push(element)
+        pushAfterToolCallElements(segment)
+      })
       const outsideSegmentKeys = new Set(outsideSegments.map((segment) => segment.key))
       const processedSegmentKeys = new Set(processedSegments.map((segment) => segment.key))
       const processedActivityEntries: Array<{
@@ -643,8 +615,7 @@ function AssistantMessageSegmentsInner({
         return elements
       }
 
-      const includeLeadingElement = !!activityLeadingElement
-      if (!isEmpty(processedActivityEntries) || includeLeadingElement) {
+      if (!isEmpty(processedActivityEntries) || processedLeadingElement) {
         const firstProcessedKey = processedSegments[0]?.key ?? 'leading'
         renderedSegments.push(
           <ToolActivityDisclosure
@@ -665,8 +636,8 @@ function AssistantMessageSegmentsInner({
             isRunning={false}
           >
             {() => [
-              ...(activityLeadingElement
-                ? [<React.Fragment key="activity-leading">{activityLeadingElement}</React.Fragment>]
+              ...(processedLeadingElement
+                ? [<React.Fragment key="activity-leading">{processedLeadingElement}</React.Fragment>]
                 : []),
               ...renderProcessedActivityEntries(),
             ]}
@@ -702,7 +673,6 @@ function AssistantMessageSegmentsInner({
       if (shouldRenderInlineActivitySegment(segment, index)) {
         inlineActivityKey ??= segment.key
         inlineActivityRenderers.push(() => renderMessageRenderSegment(segment))
-        collectToolCallBlocksFromMessageRenderSegment(segment, inlineActivityBlocks)
         inlineActivityAfterToolCallElements.push(
           ...renderAfterStepElements(segment, `inline-segment:${segment.key}`)
         )

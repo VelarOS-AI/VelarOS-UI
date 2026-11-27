@@ -96,27 +96,30 @@ Object.defineProperty(navigator, 'clipboard', {
 function Pane({
   variant,
   view = conversation,
+  width = variant === 'side' ? 360 : 700,
 }: {
   variant: 'default' | 'side'
   view?: ConversationView
+  width?: number
 }): ReactElement {
   const scrollRef = useRef<HTMLDivElement>(null)
   return (
     <div
       id={`pane-${variant}`}
       style={{
-        width: variant === 'side' ? 360 : 700,
+        width,
         height: 100,
         display: 'flex',
       }}
     >
       <ChatConversationPane
         conversation={view}
-        composer={null}
+        composer={<div data-layout-composer />}
+        streamSlot={<div data-layout-content />}
         followLocked={false}
         scrollRef={scrollRef}
         variant={variant}
-        scrollNavigatorHidden
+        scrollNavigatorHidden={variant === 'side'}
         onFollowLockedChange={() => {}}
       />
     </div>
@@ -205,7 +208,7 @@ function Harness({ custom, width }: { custom: boolean; width: number }): ReactEl
     <ConversationLocalizationProvider value={i18n}>
       <ConversationActionPortProvider value={emptyConversationActionPort}>
         <div style={style}>
-          <Pane variant="default" />
+          <Pane variant="default" width={width} />
           <Pane variant="side" />
           <section
             id="messages"
@@ -258,6 +261,12 @@ Object.assign(window, {
       flushSync(() => root.render(<Harness custom={custom} width={width} />))
     },
     renderResumedRun,
+    measureColumns() {
+      return ['default', 'side'].map((variant) => ({
+        content: rect(element(`#pane-${variant} [data-layout-content]`)),
+        composer: rect(element(`#pane-${variant} [data-layout-composer]`)),
+      }))
+    },
     measureResumedRun() {
       const pane = element('#pane-default')
       const statuses = [

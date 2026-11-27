@@ -312,6 +312,7 @@ function renderNestedActivities(running: boolean): void {
     role: 'assistant',
     timestamp: 2,
     blocks: [
+      { type: 'text', text: '阶段汇报', segmentId: 'progress' },
       {
         type: 'script-execution',
         id: 'nested-script',
@@ -323,7 +324,14 @@ function renderNestedActivities(running: boolean): void {
         calls: [],
         durationMs: 10,
       },
-      { type: 'text', text: '阶段汇报', segmentId: 'progress' },
+      {
+        type: 'interaction',
+        id: 'nested-approval',
+        kind: 'danger',
+        message: '步骤确认',
+        status: 'answered',
+        answer: { approved: true },
+      },
       { type: 'thinking', text: '继续检查的思考正文' },
       { type: 'text', text: '最终答复', segmentId: 'summary' },
     ],

@@ -80,6 +80,7 @@ export interface ProcessedActivitySummaryBoundarySignalOptions {
 }
 
 export interface ProcessedActivitySummaryPartition {
+  leadingSegments: MessageRenderSegment[]
   processedSegments: MessageRenderSegment[]
   outsideSegments: MessageRenderSegment[]
   trailingSegments: MessageRenderSegment[]
@@ -305,21 +306,28 @@ export function shouldRenderSegmentOutsideProcessedActivityDisclosure(
 }
 
 /**
- * 最终答复前的工具活动只能形成一个「已处理」分组。需要外置的成品卡从分组中提取，
- * 统一排在该分组下方；这样插入计划卡或 Widget 时不会把「已处理」切成两段。
+ * 最后一次对外正文之后的执行过程归入「已处理」，更早的内容在原位展示。
+ * 成品卡从分组中提取到下方，避免计划卡或 Widget 切开执行过程。
  */
 export function partitionProcessedActivitySummarySegments(
   segments: MessageRenderSegment[],
   summaryBoundaryIndex: number
 ): ProcessedActivitySummaryPartition {
+  const leadingSegments: MessageRenderSegment[] = []
   const processedSegments: MessageRenderSegment[] = []
   const outsideSegments: MessageRenderSegment[] = []
   const trailingSegments: MessageRenderSegment[] = []
   const boundary = Math.max(0, Math.min(summaryBoundaryIndex, segments.length))
+  const activityStart = segments.slice(0, boundary).findLastIndex(messageSegmentHasStartedText) + 1
 
   for (let index = 0; index < boundary; index += 1) {
     const segment = segments[index]
     if (!segment) continue
+
+    if (index < activityStart) {
+      leadingSegments.push(segment)
+      continue
+    }
 
     if (shouldRenderSegmentOutsideProcessedActivityDisclosure(segment)) {
       outsideSegments.push(segment)
@@ -347,6 +355,7 @@ export function partitionProcessedActivitySummarySegments(
   }
 
   return {
+    leadingSegments,
     processedSegments,
     outsideSegments,
     trailingSegments,

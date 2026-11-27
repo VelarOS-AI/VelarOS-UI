@@ -204,27 +204,32 @@ export function ChatConversationPane({
 
   useLayoutEffect(() => {
     const inputDock = inputDockRef.current
-    if (!inputDock) return
+    const messageList = scrollRef.current
+    if (!inputDock || !messageList) return
 
-    const syncInputDockHeight = (): void => {
+    const syncInputDockLayout = (): void => {
+      // 滚动区在两侧预留等宽的原生滚动条槽，输入框按实际槽宽对齐。
+      const gutter = (messageList.offsetWidth - messageList.clientWidth) / 2
+      inputDock.style.setProperty('--chat-scrollbar-gutter', `${gutter}px`)
       const nextHeight = Math.ceil(inputDock.getBoundingClientRect().height)
       setInputDockHeight((currentHeight) =>
         currentHeight === nextHeight ? currentHeight : nextHeight
       )
     }
 
-    syncInputDockHeight()
+    syncInputDockLayout()
 
     const ResizeObserverConstructor = globalThis.ResizeObserver
     if (!ResizeObserverConstructor) {
-      globalThis.addEventListener('resize', syncInputDockHeight)
-      return () => globalThis.removeEventListener('resize', syncInputDockHeight)
+      globalThis.addEventListener('resize', syncInputDockLayout)
+      return () => globalThis.removeEventListener('resize', syncInputDockLayout)
     }
 
-    const observer = new ResizeObserverConstructor(syncInputDockHeight)
+    const observer = new ResizeObserverConstructor(syncInputDockLayout)
     observer.observe(inputDock)
+    observer.observe(messageList)
     return () => observer.disconnect()
-  }, [])
+  }, [scrollRef, stableConversationRefreshKey])
 
   const liveStatusResetKey = [
     sessionId,
@@ -555,11 +560,7 @@ export function ChatConversationPane({
               } as CSSProperties
             }
           >
-            <div
-              key={stableConversationRefreshKey}
-              className={styles.conversationBody}
-              data-scroll-navigator-hidden={!!scrollNavigatorHidden}
-            >
+            <div key={stableConversationRefreshKey} className={styles.conversationBody}>
               <ScrollArea
                 ref={scrollRef}
                 className={styles.messageList}

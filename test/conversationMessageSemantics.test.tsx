@@ -236,25 +236,29 @@ void describe('会话消息语义', () => {
     )
   })
 
-  void test('正常完成后由最终 assistant 承载整轮活动和外部总结', () => {
+  void test('正常完成后保留引导和此前片段，并收拢最终答复前的连续执行活动', () => {
     const turn = message('turn', 'user', 'turn-input')
     const firstAssistant = message('assistant-1', 'assistant')
     const guidance = message('guidance', 'user', 'run-guidance')
+    const lastActivity: ChatMessage = {
+      ...message('last-activity', 'assistant'),
+      blocks: [{ type: 'thinking', text: '引导后的思考' }],
+    }
     const finalAssistant = message('assistant-final', 'assistant')
     const presentations = buildChatTranscriptMessagePresentations(
-      [turn, firstAssistant, guidance, finalAssistant],
+      [turn, firstAssistant, guidance, lastActivity, finalAssistant],
       { isCompletedAssistant: (entry) => entry.id === finalAssistant.id }
     )
 
     assert.deepEqual(
       presentations.map((presentation) => presentation.message.id),
-      ['turn', 'assistant-final']
+      ['turn', 'assistant-1', 'guidance', 'assistant-final']
     )
     assert.deepEqual(
-      presentations[1]?.activityLeadingMessages.map((entry) => entry.id),
-      ['assistant-1', 'guidance']
+      presentations[3]?.activityLeadingMessages.map((entry) => entry.id),
+      ['last-activity']
     )
-    assert.deepEqual(presentations[1]?.activityTrailingMessages, [])
+    assert.deepEqual(presentations[3]?.activityTrailingMessages, [])
   })
 
   void test('下一轮已经开始时为漏失 marker 的上一轮补齐完成边界', () => {
@@ -273,13 +277,10 @@ void describe('会话消息语义', () => {
 
     assert.deepEqual(
       presentations.map((presentation) => presentation.message.id),
-      ['turn', 'assistant-final', 'turn-2']
+      ['turn', 'assistant-1', 'guidance', 'assistant-final', 'turn-2']
     )
-    assert.equal(presentations[1]?.implicitlyCompletedRun, true)
-    assert.deepEqual(
-      presentations[1]?.activityLeadingMessages.map((entry) => entry.id),
-      ['assistant-1', 'guidance']
-    )
+    assert.equal(presentations[3]?.implicitlyCompletedRun, true)
+    assert.deepEqual(presentations[3]?.activityLeadingMessages, [])
   })
 
   void test('显式失败 marker 阻止 turn 边界把上一轮推断为完成', () => {
@@ -358,7 +359,10 @@ function guidanceTranscriptMessages(): ChatMessage[] {
     message('turn', 'user', 'turn-input'),
     {
       ...message('assistant-before-guidance', 'assistant'),
-      blocks: [{ type: 'thinking', text: '先检查当前页面。' }],
+      blocks: [
+        { type: 'thinking', text: '先检查当前页面。' },
+        { type: 'text', text: '引导前的进度正文。' },
+      ],
     },
     message('guidance', 'user', 'run-guidance'),
     {
@@ -459,7 +463,7 @@ void test('运行中追加引导不会插到既有 assistant 块之间', () => {
   assert.ok(afterGuidanceIndex > guidanceIndex)
 })
 
-void test('旧会话运行完成后只留下一个已处理入口，并把引导内容收进其中', () => {
+void test('运行完成后保留进度正文与引导，只折叠最终答复前的执行活动', () => {
   const markup = renderToStaticMarkup(
     createElement(
       ConversationLocalizationProvider,
@@ -488,7 +492,9 @@ void test('旧会话运行完成后只留下一个已处理入口，并把引导
 
   assert.equal(markup.match(/>已处理</g)?.length, 1)
   assert.match(markup, /aria-expanded="false"/)
-  assert.doesNotMatch(markup, /data-chat-message="guidance"/)
+  assert.ok(markup.indexOf('引导前的进度正文。') < markup.indexOf('data-chat-message="guidance"'))
+  assert.ok(markup.indexOf('data-chat-message="guidance"') < markup.indexOf('>已处理<'))
+  assert.doesNotMatch(markup, /根据补充要求完成剩余检查/)
   assert.match(markup, /最终总结留在已处理外面。/)
 })
 
@@ -513,7 +519,7 @@ void test('真实长任务在下一轮开始后即使漏存完成 marker 也生�
 
   assert.equal(markup.match(/>已处理</g)?.length, 1)
   assert.match(markup, /aria-expanded="false"/)
-  assert.doesNotMatch(markup, /data-chat-message="guidance"/)
+  assert.match(markup, /data-chat-message="guidance"/)
   assert.match(markup, /最终总结留在已处理外面。/)
 })
 
@@ -756,7 +762,8 @@ void test('同一轮中断后续跑完成，只在最终答复上方显示一个
       interrupted: status,
     })
     const disclosure = 'data-slot="tool-activity-disclosure"'
-    assert.equal(markup.split(disclosure).length - 1, 1)
+    assert.equal(markup.match(/>已处理</g)?.length, 1)
+    assert.match(markup, /data-chat-message="continue"/)
     assert.ok(markup.indexOf(disclosure) < markup.indexOf('最终答复'))
   }
 })
@@ -800,7 +807,8 @@ void test('失败和中止仍统一折叠活动并在外面保留真实终态', 
         },
       ]
       const markup = renderSettledTranscript(entries, 'final', status)
-      assert.equal((markup.match(/data-slot="tool-activity-disclosure"/g) ?? []).length, 1)
+      assert.equal(markup.match(/>已处理</g)?.length, 1)
+      assert.match(markup, /data-chat-message="guide"/)
       assert.doesNotMatch(markup, /终止前思考/)
       // 正文末尾角标经 portal 挂载，SSR 只验证无正文时的独立终态角标。
       if (!withText) assert.match(markup, new RegExp(`aria-label="status\\.${status}`))

@@ -34,11 +34,10 @@ const script: ContentBlock = {
   durationMs: 10,
 }
 
-test('keeps the previous turn narration inside processed activity and the final answer separate', () => {
-  // 模型先输出程序，再输出这轮旁白；下一轮接着回答，中间可以没有思考块。
+test('leaves public narration in order while grouping the activity before the final answer', () => {
   const narration = text('我先做一次只读扫描。', 'turn-1', 'segment-1')
   const answer = text('我做了只读扫描。', 'turn-2', 'segment-2')
-  const original = message([thinking, script, narration, answer])
+  const original = message([thinking, script, narration, { ...script, id: 'script-2' }, answer])
   const visible = getVisibleMessageBlocks(original, true)
   expect(visible).toEqual(original.blocks)
   const segments = buildMessageRenderSegments(buildToolRenderSegments(visible))
@@ -46,9 +45,10 @@ test('keeps the previous turn narration inside processed activity and the final 
     segments,
     getProcessedActivitySummaryBoundaryIndex(segments)
   )
-  expect(partition.processedSegments).toEqual(segments.slice(0, 2))
-  expect(partition.trailingSegments).toEqual(segments.slice(2))
-  expect(original.blocks).toHaveLength(4)
+  expect(partition.leadingSegments).toEqual(segments.slice(0, 2))
+  expect(partition.processedSegments).toEqual(segments.slice(2, 3))
+  expect(partition.trailingSegments).toEqual(segments.slice(3))
+  expect(original.blocks).toHaveLength(5)
 })
 
 test('retains turn boundaries with thinking and tool details hidden', () => {

@@ -210,7 +210,7 @@ function ChatTranscriptInner({
     } = {}
   ): ReactElement => {
     const ownInlineNotice = toNullable(getInlineNotice?.(message))
-    const forceActivityFlat = !!options.forceActivityFlat
+    const forceActivityFlat = !!options.forceActivityFlat || !!options.presentation?.isEarlierRunActivity
     const activityLeadingMessages = options.presentation?.activityLeadingMessages ?? []
     const activityTrailingMessages = options.presentation?.activityTrailingMessages ?? []
     // 运行状态属于整轮：引导追加后立即随活动尾部移动，子片段不重复显示。

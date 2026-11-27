@@ -229,7 +229,8 @@ void describe('回答收尾件（复制与时间）什么时候出现', () => {
     assert.doesNotMatch(messageMarkup(running, 'a2'), /chat\.copyAnswer/u)
 
     const completed = renderTranscript(null, { a2: 'completed' })
-    assert.doesNotMatch(completed, /data-chat-message="a1"/u)
+    assert.match(messageMarkup(completed, 'a1'), /a1 的正文/u)
+    assert.doesNotMatch(messageMarkup(completed, 'a1'), /chat\.copyAnswer/u)
     assert.match(messageMarkup(completed, 'a2'), /chat\.copyAnswer/u)
   })
 

@@ -5,6 +5,7 @@
 
 .chatPane {
   @apply relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-card;
+  --chat-column-max-width: 48rem;
   isolation: isolate;
   will-change: opacity;
   animation: session-pane-enter 360ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -12,6 +13,7 @@
 
 .chatPaneSide {
   @apply border-0;
+  --chat-column-max-width: none;
 }
 
 .conversationBody {
@@ -26,8 +28,14 @@
   scrollbar-gutter: stable both-edges;
 }
 
+.messageListInner,
+.inputDockInner {
+  @apply mx-auto w-full min-w-0 px-4;
+  max-width: var(--chat-column-max-width);
+}
+
 .messageListInner {
-  @apply mx-auto flex w-full min-w-0 max-w-[48rem] flex-col px-4 pb-44 pt-6;
+  @apply flex flex-col pt-6;
   /* 宿主的会话节奏可覆盖两种形态；未覆盖时保留主区与侧区各自的密度。 */
   gap: var(--chat-message-gap, var(--ui-space-5));
   padding-bottom: max(11rem, calc(var(--chat-input-dock-height, 0px) + 0.75rem));
@@ -36,7 +44,7 @@
 .messageListInnerSide {
   /* Match the markdown shadow gutter so its negative inline margin ends at the
      pane edge instead of creating a horizontal overflow range. */
-  @apply max-w-none px-4 pb-36 pt-4;
+  @apply pt-4;
   gap: var(--chat-message-gap, var(--ui-space-3));
   padding-bottom: max(9rem, calc(var(--chat-input-dock-height, 0px) + 0.75rem));
 }
@@ -49,19 +57,6 @@
   height: var(--velar-scroll-clamp-guard, 0px);
   overflow-anchor: none;
   pointer-events: none;
-}
-
-/**
- * 滚动导航是浮层，因此不能在出现时触发转录重挂：它的槽位一律**提前**留好，而不是等它出现再
- * 让内容让位。
- *
- * 但只有主聊天页留得起。主页有 48rem 的阅读栏，导航条落在栏外的留白里，5.25rem 不花任何代价；
- * 侧边形态没有那条留白，同一条规则会把本就窄的面板再切掉 84px——工具卡与正文右侧空出一整条，
- * 这正是「内容没铺满」的来源。侧边形态因此让导航条直接覆盖在内容上（它自带半透明背板与模糊），
- * 嫌挡还可以用标题栏的显隐开关整条收起。两种形态下槽位都与导航条的出现无关，重挂顾虑不变。
- */
-.conversationBody[data-scroll-navigator-hidden='false'] .messageListInner:not(.messageListInnerSide) {
-  padding-inline-end: 5.25rem;
 }
 
 .messageSequence {
@@ -128,11 +123,12 @@
  * 比让内容干净地划过去更难看，故整条去掉。
  */
 .inputDock {
-  @apply pointer-events-none absolute bottom-0 left-0 right-0 z-10;
+  @apply pointer-events-none absolute bottom-0 z-10;
+  inset-inline: var(--chat-scrollbar-gutter, 0px);
 }
 
 .inputDockInner {
-  @apply pointer-events-none mx-auto w-full max-w-[48rem] px-4 pb-5 pt-10;
+  @apply pointer-events-none pb-5 pt-10;
   will-change: opacity;
   animation: session-input-enter 380ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
 }
@@ -142,7 +138,7 @@
 }
 
 .inputDockInnerSide {
-  @apply max-w-none px-3 pb-3 pt-8;
+  @apply pb-3 pt-8;
 }
 
 @media (prefers-reduced-motion: reduce) {
