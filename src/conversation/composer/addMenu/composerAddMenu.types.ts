@@ -3,6 +3,7 @@ import type { ChatInputGoalModeCopy } from '../ChatInput'
 import type {
   ChatInputFeatureOption,
   ChatInputManualTestPromptOption,
+  ChatInputThinkingVisibilityControl,
   ComposerSubmenuId,
 } from '../chatInputTypes'
 import type { ChatComposerCapabilityControl } from '../ComposerCapabilityControls'
@@ -27,6 +28,7 @@ export interface ComposerAddMenuAttachmentsProps {
 }
 
 export interface ComposerAddMenuFeaturesProps {
+  thinkingVisibility?: ChatInputThinkingVisibilityControl
   showFeaturesSubmenu: boolean
   showQuickPromptsSubmenu: boolean
   canTogglePlanFeature: boolean

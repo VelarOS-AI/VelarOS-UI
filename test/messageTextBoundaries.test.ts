@@ -34,7 +34,7 @@ const script: ContentBlock = {
   durationMs: 10,
 }
 
-test('leaves public narration in order while grouping the activity before the final answer', () => {
+test('groups narrated progress in order before the final answer', () => {
   const narration = text('我先做一次只读扫描。', 'turn-1', 'segment-1')
   const answer = text('我做了只读扫描。', 'turn-2', 'segment-2')
   const original = message([thinking, script, narration, { ...script, id: 'script-2' }, answer])
@@ -45,10 +45,26 @@ test('leaves public narration in order while grouping the activity before the fi
     segments,
     getProcessedActivitySummaryBoundaryIndex(segments)
   )
-  expect(partition.leadingSegments).toEqual(segments.slice(0, 2))
-  expect(partition.processedSegments).toEqual(segments.slice(2, 3))
+  expect(partition.leadingSegments).toEqual([])
+  expect(partition.processedSegments).toEqual(segments.slice(0, 3))
   expect(partition.trailingSegments).toEqual(segments.slice(3))
   expect(original.blocks).toHaveLength(5)
+})
+
+test('shows processed at the start and leaves all final paragraphs visible', () => {
+  const segments = buildMessageRenderSegments(buildToolRenderSegments([
+    script,
+    text('构建已经完成。', 'turn-2', 'progress'),
+    text('这是最终结果。', 'turn-3', 'answer'),
+    text('这些是核验项。', 'turn-3', 'verification'),
+  ]))
+  const partition = partitionProcessedActivitySummarySegments(
+    segments,
+    getProcessedActivitySummaryBoundaryIndex(segments)
+  )
+  expect(partition.leadingSegments).toEqual([])
+  expect(partition.processedSegments).toEqual(segments.slice(0, 2))
+  expect(partition.trailingSegments).toEqual(segments.slice(2))
 })
 
 test('retains turn boundaries with thinking and tool details hidden', () => {

@@ -2309,6 +2309,11 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
   ],
   ComposerAddMenuFeatures: [
     {
+      "name": "ComposerAddMenuFeatures.thinkingVisibility",
+      "description": "Auto-generated from TypeScript props.",
+      "type": "ChatInputThinkingVisibilityControl"
+    },
+    {
       "name": "ComposerAddMenuFeatures.showFeaturesSubmenu",
       "description": "Auto-generated from TypeScript props.",
       "type": "boolean",
@@ -2654,11 +2659,6 @@ export const generatedComponentApiRows: Record<string, ComponentLibraryApiRow[]>
       "name": "ComposerModelRunSelector.thinkingDepth",
       "description": "Auto-generated from TypeScript props.",
       "type": "ChatInputThinkingDepthControl"
-    },
-    {
-      "name": "ComposerModelRunSelector.thinkingVisibility",
-      "description": "Auto-generated from TypeScript props.",
-      "type": "ChatInputThinkingVisibilityControl"
     },
     {
       "name": "ComposerModelRunSelector.pureChat",

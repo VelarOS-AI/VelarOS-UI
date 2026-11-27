@@ -101,7 +101,14 @@ void describe('Platform-owned conversation composer behavior', () => {
     assert.doesNotMatch(selectorSource, /selected=\{pureChat\.value\}/u)
     assert.doesNotMatch(selectorSource, /selected=\{thinkingVisibility\.value\}/u)
     assert.doesNotMatch(capabilitySource, /selected=\{active\}/u)
-    assert.equal(selectorSource.match(/<ComposerMenuSwitchIndicator checked=/gu)?.length, 2)
+    assert.equal(selectorSource.match(/<ComposerMenuSwitchIndicator checked=/gu)?.length, 1)
+    const addMenuSource = readFileSync(
+      new URL('../src/conversation/composer/addMenu/ComposerAddMenuPrimaryPanel.tsx', import.meta.url),
+      'utf8'
+    )
+    assert.match(addMenuSource, /case 'thinking-visibility'/u)
+    assert.match(addMenuSource, /<ComposerMenuSwitchIndicator checked=\{thinkingVisibility\.value\}/u)
+    assert.doesNotMatch(selectorSource, /composerThinkingVisibility/u)
     assert.match(
       menuStyles,
       /\.velar-cascading-menu-item:hover, \.velar-cascading-menu-item:focus-visible,[^{]+\{\s*background: var\(--cascading-menu-item-hover-bg\);/u

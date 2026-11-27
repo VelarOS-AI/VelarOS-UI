@@ -725,6 +725,7 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
   )
 
   const canShowComposerMenu =
+    !!control.thinkingVisibility ||
     !!onFilesChange ||
     !!onGoalModeChange ||
     !!onPlanModeChange ||
@@ -990,6 +991,7 @@ export function ChatInput({ control, density = 'default' }: ChatInputProps): Rea
     canAttachFiles: !!onFilesChange,
   }
   const composerAddMenuFeatureInput = {
+    thinkingVisibility: control.thinkingVisibility,
     canTogglePlanFeature: !!onPlanModeChange,
     planModeActive: planMode,
     updatePlanMode: handlePlanModeChange,

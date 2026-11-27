@@ -56,7 +56,7 @@ export const conversationZhCNMessages = {
     composerSlashFeatureHeader: 'Features — 回车加载，Esc 关闭',
     composerThinkingDepth: '思考深度',
     composerThinkingDepthHint:
-      '只控制模型推理力度，模型不支持的档会退到它支持的最高一档；是否展示思考过程由下方开关单独决定。',
+      '只控制模型推理力度，模型不支持的档会退到它支持的最高一档；可在输入框的「+」菜单里切换思考过程。',
     composerThinkingDepth_high: '高',
     composerThinkingDepth_low: '低',
     composerThinkingDepth_max: '最高',
@@ -464,7 +464,7 @@ export const conversationEnUSMessages = {
     composerSlashFeatureHeader: 'Features — Enter to load, Esc to dismiss',
     composerThinkingDepth: 'Thinking',
     composerThinkingDepthHint:
-      'Controls reasoning effort only; a level the model does not support falls back to its highest. The switch below independently controls whether reasoning is shown.',
+      'Controls reasoning effort only; a level the model does not support falls back to its highest. Use the composer’s + menu to show or hide the reasoning process.',
     composerThinkingDepth_high: 'High',
     composerThinkingDepth_low: 'Low',
     composerThinkingDepth_max: 'Max',

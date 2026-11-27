@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from 'react'
 import {
+  BrainIcon,
   ChatsCircleIcon,
   FileCodeIcon,
   ListChecksIcon,
@@ -50,6 +51,7 @@ export function ComposerAddMenuPrimaryPanel({
   attachments: { showAddFilesItem, onSelectFilesClick },
   capabilityControls,
   features: {
+    thinkingVisibility,
     showFeaturesSubmenu,
     showQuickPromptsSubmenu,
     canTogglePlanFeature,
@@ -94,6 +96,26 @@ export function ComposerAddMenuPrimaryPanel({
             >
               <PaperclipIcon size={14} />
               <Text className={menu.classes.itemLabel}>{t('chat.composerAddFiles')}</Text>
+            </Button>
+          )
+        )
+      case 'thinking-visibility':
+        return (
+          thinkingVisibility && (
+            <Button
+              variant="ghost"
+              size="block"
+              {...menu.getLeafItemProps<HTMLButtonElement>({
+                className: menu.classes.item,
+              })}
+              aria-pressed={thinkingVisibility.value}
+              data-active={thinkingVisibility.value}
+              onClick={() => thinkingVisibility.onChange(!thinkingVisibility.value)}
+              disabled={disabled || thinkingVisibility.disabled}
+            >
+              <BrainIcon size={14} />
+              <Text className={menu.classes.itemLabel}>{t('chat.composerThinkingVisibility')}</Text>
+              <ComposerMenuSwitchIndicator checked={thinkingVisibility.value} />
             </Button>
           )
         )

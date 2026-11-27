@@ -490,7 +490,7 @@ void test('运行完成后保留进度正文与引导，只折叠最终答复前
     ) as ReactElement
   )
 
-  assert.equal(markup.match(/>已处理</g)?.length, 1)
+  assert.equal(markup.match(/>已处理(?: [^<]+)?</g)?.length, 1)
   assert.match(markup, /aria-expanded="false"/)
   assert.ok(markup.indexOf('引导前的进度正文。') < markup.indexOf('data-chat-message="guidance"'))
   assert.ok(markup.indexOf('data-chat-message="guidance"') < markup.indexOf('>已处理<'))
@@ -517,7 +517,7 @@ void test('真实长任务在下一轮开始后即使漏存完成 marker 也生�
     ) as ReactElement
   )
 
-  assert.equal(markup.match(/>已处理</g)?.length, 1)
+  assert.equal(markup.match(/>已处理(?: [^<]+)?</g)?.length, 1)
   assert.match(markup, /aria-expanded="false"/)
   assert.match(markup, /data-chat-message="guidance"/)
   assert.match(markup, /最终总结留在已处理外面。/)
@@ -762,7 +762,7 @@ void test('同一轮中断后续跑完成，只在最终答复上方显示一个
       interrupted: status,
     })
     const disclosure = 'data-slot="tool-activity-disclosure"'
-    assert.equal(markup.match(/>已处理</g)?.length, 1)
+    assert.equal(markup.match(/>已处理(?: [^<]+)?</g)?.length, 1)
     assert.match(markup, /data-chat-message="continue"/)
     assert.ok(markup.indexOf(disclosure) < markup.indexOf('最终答复'))
   }
@@ -807,7 +807,7 @@ void test('失败和中止仍统一折叠活动并在外面保留真实终态', 
         },
       ]
       const markup = renderSettledTranscript(entries, 'final', status)
-      assert.equal(markup.match(/>已处理</g)?.length, 1)
+      assert.equal(markup.match(/>已处理(?: [^<]+)?</g)?.length, 1)
       assert.match(markup, /data-chat-message="guide"/)
       assert.doesNotMatch(markup, /终止前思考/)
       // 正文末尾角标经 portal 挂载，SSR 只验证无正文时的独立终态角标。

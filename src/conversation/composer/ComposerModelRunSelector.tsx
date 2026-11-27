@@ -40,7 +40,6 @@ import type {
   ChatInputPureChatControl,
   ChatInputRunProfileControl,
   ChatInputThinkingDepthControl,
-  ChatInputThinkingVisibilityControl,
 } from "./chatInputTypes";
 import {
   type ChatComposerCapabilityControl,
@@ -80,7 +79,6 @@ export interface ComposerModelRunSelectorProps {
   reasoning?: ChatComposerReasoningControl;
   runProfile?: ChatInputRunProfileControl;
   thinkingDepth?: ChatInputThinkingDepthControl;
-  thinkingVisibility?: ChatInputThinkingVisibilityControl;
   pureChat?: ChatInputPureChatControl;
   capabilityControls?: ChatComposerCapabilityControl[];
   density?: "default" | "compact";
@@ -176,7 +174,6 @@ function ComposerModelRunSelectorImpl({
   reasoning,
   runProfile,
   thinkingDepth,
-  thinkingVisibility,
   pureChat,
   capabilityControls = [],
   density = "default",
@@ -268,7 +265,6 @@ function ComposerModelRunSelectorImpl({
     (!runProfile || runProfile.disabled) &&
     (!reasoning || reasoning.disabled) &&
     (!thinkingDepth || thinkingDepth.disabled) &&
-    (!thinkingVisibility || thinkingVisibility.disabled) &&
     (!pureChat || pureChat.disabled) &&
     (isEmpty(modelMenuCapabilityControls) ||
       modelMenuCapabilityControls.every((control) => control.disabled));
@@ -483,20 +479,6 @@ function ComposerModelRunSelectorImpl({
               />
             )}
 
-            {!!thinkingVisibility && (
-              <BusinessCascadingMenuItem
-                menu={menu}
-                interaction="leaf"
-                label={t("chat.composerThinkingVisibility")}
-                disabled={thinkingVisibility.disabled}
-                onClick={() =>
-                  thinkingVisibility.onChange(!thinkingVisibility.value)
-                }
-                trailing={
-                  <ComposerMenuSwitchIndicator checked={thinkingVisibility.value} />
-                }
-              />
-            )}
           </div>
 
           {/* 子菜单同时只开一层：闭集档展开时 provider 面板必然不在（两者共用 activeSubmenuId）。 */}

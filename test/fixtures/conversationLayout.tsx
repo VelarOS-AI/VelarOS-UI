@@ -278,7 +278,7 @@ Object.assign(window, {
         statuses: statuses.map((entry) => ({ top: rect(entry).top, text: entry.title })),
         processedCount: [
           ...pane.querySelectorAll('[data-slot="tool-activity-disclosure"] > button'),
-        ].filter((entry) => entry.textContent?.includes('chat.processedActivity')).length,
+        ].filter((entry) => /^(?:Processed\b|chat\.processedActivity)/u.test(entry.textContent ?? '')).length,
         hasInterruptedMessage: !!pane.querySelector('[data-message-id="interrupted"]'),
         hasFailedMarker: !!pane.querySelector('[aria-label="status.failed"]'),
         hasFinalAnswer: pane.textContent?.includes('Final answer'),

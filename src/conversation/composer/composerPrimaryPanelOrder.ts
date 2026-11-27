@@ -9,6 +9,7 @@
 export const COMPOSER_PRIMARY_PANEL_SLOT_ORDER = [
   'quick-prompts',
   'attachments',
+  'thinking-visibility',
   'capabilities',
   'plan',
   'goal',

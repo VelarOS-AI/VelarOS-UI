@@ -136,7 +136,6 @@ export function ChatComposer({ control, density = 'default' }: ChatComposerProps
     reasoning ||
     input.runProfile ||
     input.thinkingDepth ||
-    input.thinkingVisibility ||
     input.pureChat
   ) && (
     <ComposerModelRunSelector
@@ -146,7 +145,6 @@ export function ChatComposer({ control, density = 'default' }: ChatComposerProps
       reasoning={reasoning}
       runProfile={input.runProfile}
       thinkingDepth={input.thinkingDepth}
-      thinkingVisibility={input.thinkingVisibility}
       pureChat={input.pureChat}
       capabilityControls={capabilityControls}
       density={density}

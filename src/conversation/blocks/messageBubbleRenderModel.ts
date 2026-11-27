@@ -306,8 +306,8 @@ export function shouldRenderSegmentOutsideProcessedActivityDisclosure(
 }
 
 /**
- * 最后一次对外正文之后的执行过程归入「已处理」，更早的内容在原位展示。
- * 成品卡从分组中提取到下方，避免计划卡或 Widget 切开执行过程。
+ * 将执行活动和中途的进度说明按顺序放进顶部「已处理」，最终答复仍在外面。
+ * 成品卡保留独立入口。
  */
 export function partitionProcessedActivitySummarySegments(
   segments: MessageRenderSegment[],
@@ -318,8 +318,18 @@ export function partitionProcessedActivitySummarySegments(
   const outsideSegments: MessageRenderSegment[] = []
   const trailingSegments: MessageRenderSegment[] = []
   const boundary = Math.max(0, Math.min(summaryBoundaryIndex, segments.length))
-  const activityStart = segments.slice(0, boundary).findLastIndex(messageSegmentHasStartedText) + 1
-
+  const hasActivityBeforeAnswer = segments.slice(0, boundary).some(
+    (segment) =>
+      !messageSegmentHasStartedText(segment) &&
+      !shouldRenderSegmentOutsideProcessedActivityDisclosure(segment) &&
+      (messageSegmentIsThinking(segment) || messageRenderSegmentHasVisibleContent(segment))
+  )
+  const hasDeferredActivity =
+    summaryBoundaryIndex >= 0 &&
+    segments.slice(boundary).some(
+      (segment) => messageSegmentIsThinking(segment) || messageSegmentIsSettledInteraction(segment)
+    )
+  const activityStart = hasActivityBeforeAnswer || hasDeferredActivity ? 0 : boundary
   for (let index = 0; index < boundary; index += 1) {
     const segment = segments[index]
     if (!segment) continue
@@ -522,6 +532,21 @@ export function getProcessedActivitySummaryBoundaryIndex(
 
   if (summaryTextIndex < 0) return -1
 
+  const summary = segments[summaryTextIndex]
+  const summaryBlock = summary?.kind === 'segment' ? summary.segment.block : undefined
+  if (summaryBlock?.type !== 'text') return summaryTextIndex
+
+  while (summaryTextIndex > 0) {
+    const previous = segments[summaryTextIndex - 1]
+    if (
+      previous?.kind !== 'segment' ||
+      previous.segment.block.type !== 'text' ||
+      previous.segment.block.turnId !== summaryBlock.turnId ||
+      !messageSegmentHasStartedText(previous)
+    )
+      break
+    summaryTextIndex--
+  }
   return summaryTextIndex
 }
 
