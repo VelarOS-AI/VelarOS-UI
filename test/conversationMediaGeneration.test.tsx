@@ -93,12 +93,13 @@ void test("媒体助手消息显示对应的无文案骨架和内联成品", () 
 
 void test("同轮并行成品和占位独立渲染，运行状态显示在占位下方", () => {
   const markup = render([
+    { type: "media-generation", id: "pending", kind: "image", status: "generating" },
     { type: "media-generation", id: "first", kind: "image", status: "ready", src: "https://example.test/image.png" },
     { type: "media-generation", id: "second", kind: "image", status: "generating" },
   ], { text: "Preparing", tone: "running" });
-  assert.match(markup, /data-media-gallery="multiple"/u);
-  assert.equal(markup.match(/data-generated-media="image"/gu)?.length, 2);
-  assert.match(markup, /<img\b[^>]*>.*data-media-kind="image".*>chat\.generatingImage<\/span>/u);
+  assert.match(markup, /data-media-gallery="image".*<img\b.*data-media-hand=.*data-media-kind="image".*>chat\.generatingImage<\/span>/u);
+  assert.equal(markup.match(/data-media-kind="image"/gu)?.length, 2);
+  assert.match(markup, /rotate:-4.5deg.*rotate:4.5deg/u);
   assert.doesNotMatch(markup, /Preparing/u);
 });
 
@@ -113,6 +114,6 @@ void test("同一组能同时显示图片、视频和音频，并保留媒体组
     { type: "text", text: "Next result" },
     { type: "media-generation", id: "later", kind: "audio", status: "failed" },
   ]);
-  assert.match(markup, /data-media-gallery="multiple".*data-generated-media="image".*<video\b.*<audio\b.*Next result.*data-media-gallery="single"/u);
-  assert.match(markup, /data-media-gallery="single".*chat\.mediaGenerationFailed/u);
+  assert.match(markup, /data-media-gallery="image".*data-media-kind="image".*data-media-gallery="video".*<video\b.*data-media-gallery="audio".*<audio\b.*Next result.*data-media-gallery="audio"/u);
+  assert.match(markup, /Next result.*chat\.mediaGenerationFailed/u);
 });

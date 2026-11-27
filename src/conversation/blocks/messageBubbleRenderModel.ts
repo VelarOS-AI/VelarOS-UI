@@ -431,7 +431,7 @@ export function buildMessageRenderSegments(
     pendingBlocks = []
   }
 
-  segments.forEach((segment) => {
+  segments.forEach((segment, index) => {
     // 空思考占位没有可渲染正文，不能独立生成一个「已处理」入口。
     if (segment.block.type === 'thinking' && isBlank(segment.block.text)) return
 
@@ -446,8 +446,9 @@ export function buildMessageRenderSegments(
     flushPendingSegments()
     if (segment.block.type === 'media-generation') {
       const previous = messageSegments.at(-1)
-      if (previous?.kind === 'media-gallery') previous.blocks.push(segment.block)
-      else messageSegments.push({ kind: 'media-gallery', key: `media:${segment.block.id}`, blocks: [segment.block] })
+      if (previous?.kind === 'media-gallery' && previous.blocks[0]?.kind === segment.block.kind)
+        previous.blocks.push(segment.block)
+      else messageSegments.push({ kind: 'media-gallery', key: `media:${index}`, blocks: [segment.block] })
       return
     }
     messageSegments.push({

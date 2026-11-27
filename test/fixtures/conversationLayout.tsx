@@ -7,6 +7,7 @@ import {
   ConversationBlockHooksProvider,
   emptyConversationBlockHooks,
 } from '../../src/conversation/blocks/conversationBlockHooks'
+import { MessageBubble } from '../../src/conversation/blocks/MessageBubble'
 import { UserMessageBubble } from '../../src/conversation/blocks/UserMessageBubble'
 import type { ChatMessage } from '../../src/conversation/contracts'
 import {
@@ -255,12 +256,66 @@ function button(kind: 'copy' | 'rewind'): HTMLElement {
   return result
 }
 
+function renderMedia(completed: number, width = 520): void {
+  const sizes = [[180, 120], [80, 120], [120, 120], [960, 120]]
+  const blocks: ChatMessage['blocks'] = sizes.map(([imageWidth, height], index) => {
+    const base = { type: 'media-generation', kind: 'image', id: `image-${index}` } as const
+    if (index >= completed) return { ...base, status: 'generating' }
+    const image = `<svg xmlns="http://www.w3.org/2000/svg" width="${imageWidth}" height="${height}"><rect width="100%" height="100%" fill="navy"/></svg>`
+    return { ...base, status: 'ready', src: `data:image/svg+xml,${encodeURIComponent(image)}` }
+  })
+  blocks.push(
+    { type: 'media-generation', kind: 'video', id: 'video-1', status: 'generating' },
+    { type: 'media-generation', kind: 'video', id: 'video-2', status: 'generating' },
+    { type: 'media-generation', kind: 'audio', id: 'audio-1', status: 'generating' },
+    { type: 'media-generation', kind: 'audio', id: 'audio-2', status: 'generating' },
+  )
+  const message: ChatMessage = { id: 'media', timestamp: 1, role: 'assistant', blocks }
+  flushSync(() => root.render(
+    <ConversationLocalizationProvider value={i18n}>
+      <ConversationBlockHooksProvider value={emptyConversationBlockHooks}>
+        <div id="media-fixture" style={{ width }}>
+          <MessageBubble message={message} sessionId="media" isStreaming />
+        </div>
+      </ConversationBlockHooksProvider>
+    </ConversationLocalizationProvider>
+  ))
+}
+
+async function measureMedia() {
+  const gallery = element('[data-media-gallery="image"]')
+  const buttons = [...gallery.querySelectorAll('button')]
+  await Promise.all(buttons.map((button) => button.querySelector('img')!.decode()))
+  await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+  const incoming = buttons.flatMap((button) =>
+    button.getAnimations().filter((animation) => animation instanceof CSSAnimation && animation.playState === 'running')
+  )
+  for (const animation of incoming) animation.finish()
+  return {
+    gallery: rect(gallery),
+    hand: [...gallery.querySelectorAll<HTMLElement>('[data-media-hand] > *')].map((card) => ({
+      box: rect(card),
+      angle: getComputedStyle(card).rotate,
+    })),
+    incoming: incoming.length,
+    images: buttons.map((button) => ({
+      box: rect(button),
+      width: button.offsetWidth,
+      height: button.offsetHeight,
+      angle: getComputedStyle(button).rotate,
+    })),
+    stack: [...document.querySelectorAll('[data-media-kind="video"], [data-media-kind="audio"]')].map(rect),
+  }
+}
+
 Object.assign(window, {
   conversationLayoutProof: {
     render(custom = false, width = 700) {
       flushSync(() => root.render(<Harness custom={custom} width={width} />))
     },
     renderResumedRun,
+    renderMedia,
+    measureMedia,
     measureColumns() {
       return ['default', 'side'].map((variant) => ({
         content: rect(element(`#pane-${variant} [data-layout-content]`)),

@@ -1,26 +1,35 @@
-.gallery[data-media-gallery="multiple"] {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
-  align-items: start;
-  gap: 0.625rem;
-  inline-size: min(100%, 40rem);
+.imageGallery {
+  --image-height: clamp(5rem, 29cqi, 12rem);
+
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.125rem 0.875rem;
+  box-sizing: border-box;
+  inline-size: 100%;
+  padding: 0.625rem;
+  container-type: inline-size;
 }
 
-.card {
+.hand {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
   min-inline-size: 0;
+  max-inline-size: 100%;
+  padding-inline: 0.375rem;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
   inline-size: min(100%, 23rem);
 }
 
-.card[data-generated-media="video"] {
+.stack[data-media-gallery='video'] {
   inline-size: min(100%, 36rem);
-}
-
-.gallery[data-media-gallery="multiple"] > .card {
-  inline-size: 100%;
-}
-
-.gallery[data-media-gallery="multiple"] :is(.skeleton, .imageButton, .video, .audio, .status) {
-  box-sizing: border-box;
 }
 
 .skeleton {
@@ -29,19 +38,19 @@
   place-items: center;
   overflow: hidden;
   isolation: isolate;
+  box-sizing: border-box;
   inline-size: 100%;
-  aspect-ratio: 1;
   border: 1px solid var(--border);
   border-radius: 0.875rem;
   color: var(--muted-foreground);
   background: var(--background-muted);
 }
 
-.skeleton:not([data-media-kind="image"])::before {
+.skeleton::before {
   position: absolute;
   z-index: -1;
   inset: 0;
-  content: "";
+  content: '';
   background: linear-gradient(
     110deg,
     transparent 26%,
@@ -52,61 +61,37 @@
   animation: media-shimmer 1.8s ease-in-out infinite;
 }
 
-.skeleton[data-media-kind="image"] {
+.skeleton[data-media-kind='image'] {
+  inline-size: clamp(2.25rem, 11cqi, 4.5rem);
+  min-inline-size: 0;
+  aspect-ratio: 3 / 4;
+  border-radius: 0.5rem;
   background:
-    radial-gradient(ellipse at 80% 14%, color-mix(in oklab, var(--primary) 12%, transparent), transparent 58%),
-    radial-gradient(ellipse at 14% 72%, var(--background-muted-strong), transparent 60%),
-    var(--background-muted);
+    repeating-linear-gradient(
+      135deg,
+      transparent 0 0.25rem,
+      color-mix(in oklab, var(--primary) 10%, transparent) 0.25rem 0.3125rem
+    ),
+    var(--card);
+  box-shadow: 0 0.125rem 0.375rem
+    color-mix(in oklab, var(--foreground) 13%, transparent);
+  transform-origin: center 85%;
+  transition: rotate 280ms ease-out;
 }
 
-.fragments {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  grid-template-rows: repeat(8, minmax(0, 1fr));
-  gap: 1px;
+.skeleton[data-media-kind='image'] + .skeleton {
+  margin-inline-start: clamp(-2.25rem, -5.5cqi, -1.125rem);
 }
 
-.fragments > span {
-  --fragment-color: var(--card);
-  --fragment-delay: -0.4s;
-  --fragment-duration: 3s;
-  opacity: 0.46;
-  background: linear-gradient(140deg, var(--fragment-color), transparent);
-  animation: media-fragment var(--fragment-duration) ease-in-out var(--fragment-delay) infinite alternate;
-}
-
-.fragments > span:nth-child(3n + 1) {
-  --fragment-color: color-mix(in oklab, var(--primary) 18%, var(--background-muted));
-  --fragment-delay: -1.4s;
-  --fragment-duration: 2.6s;
-  clip-path: polygon(0 0, 100% 0, 83% 100%, 0 84%);
-}
-
-.fragments > span:nth-child(5n + 2) {
-  --fragment-color: color-mix(in oklab, var(--muted-foreground) 19%, var(--background-muted));
-  --fragment-delay: -2.1s;
-  --fragment-duration: 3.5s;
-  clip-path: polygon(0 18%, 100% 0, 100% 100%, 10% 100%);
-}
-
-.fragments > span:nth-child(7n + 1) {
-  --fragment-delay: -3.2s;
-  --fragment-duration: 3.9s;
-  background: linear-gradient(38deg, var(--fragment-color), transparent 90%);
-}
-
-.skeleton[data-media-kind="video"] {
+.skeleton[data-media-kind='video'] {
   aspect-ratio: 16 / 9;
 }
 
-.skeleton[data-media-kind="audio"] {
+.skeleton[data-media-kind='audio'] {
   display: flex;
   gap: 0.75rem;
   padding: 0 0.75rem;
   block-size: 3.5rem;
-  aspect-ratio: auto;
   border-radius: 999px;
 }
 
@@ -121,7 +106,7 @@
   background: var(--card);
 }
 
-.skeleton[data-media-kind="audio"] .symbol {
+.skeleton[data-media-kind='audio'] .symbol {
   inline-size: 2rem;
   block-size: 2rem;
 }
@@ -134,85 +119,83 @@
   background: var(--background-muted-strong);
 }
 
-.imageButton,
-.video {
+.imageButton {
   display: block;
   overflow: hidden;
-  max-inline-size: 100%;
+  flex: none;
+  inline-size: min(100%, calc(var(--image-height) * var(--image-aspect)));
+  aspect-ratio: var(--image-aspect);
   padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 0.875rem;
-  background: var(--background-muted);
-}
-
-.imageButton {
+  border: 0;
+  border-radius: 0.625rem;
+  background: transparent;
+  box-shadow: 0 0.125rem 0.5rem
+    color-mix(in oklab, var(--foreground) 15%, transparent);
   cursor: zoom-in;
+  rotate: var(--image-angle, -3deg);
+  transition: rotate 200ms ease-out;
 }
 
-.gallery[data-media-gallery="multiple"] .imageButton {
-  position: relative;
-  inline-size: 100%;
-  aspect-ratio: 1;
+.imageButton:nth-child(4n + 2) {
+  --image-angle: 2.5deg;
 }
 
-.gallery[data-media-gallery="multiple"] .image {
+.imageButton:nth-child(4n + 3) {
+  --image-angle: -1.5deg;
+}
+
+.imageButton:nth-child(4n + 4) {
+  --image-angle: 3deg;
+}
+
+.imageButton:is(:hover, :focus-visible) {
+  rotate: 0deg;
+}
+
+.imageButton:not([data-image-loaded]) {
   position: absolute;
-  inset: 0;
-  inline-size: 100%;
-  block-size: 100%;
-  max-block-size: none;
+  inset: 0 auto auto 0;
+  visibility: hidden;
+  inline-size: 1px;
+  block-size: 1px;
 }
 
-.image,
-.video {
-  display: block;
-  max-block-size: 28rem;
-  object-fit: contain;
+.imageButton[data-image-loaded] {
+  animation: media-deal-in 360ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
 }
 
 .image {
-  max-inline-size: 100%;
-}
-
-.video {
+  display: block;
   inline-size: 100%;
-  aspect-ratio: 16 / 9;
+  block-size: 100%;
+  object-fit: contain;
 }
 
+.video,
 .audio {
   display: block;
   inline-size: 100%;
 }
 
+.video {
+  max-block-size: 28rem;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  background: var(--background-muted);
+  object-fit: contain;
+}
+
 .status {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.4rem;
   color: var(--muted-foreground);
   font-size: 0.875rem;
 }
 
-.gallery[data-media-gallery="multiple"] .status {
-  display: flex;
-  justify-content: center;
-  padding: 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 0.875rem;
-  text-align: center;
-  background: var(--background-muted);
-}
-
-.gallery[data-media-gallery="multiple"] [data-generated-media="image"] > .status {
-  aspect-ratio: 1;
-}
-
-.gallery[data-media-gallery="multiple"] [data-generated-media="video"] > .status {
-  aspect-ratio: 16 / 9;
-}
-
-.gallery[data-media-gallery="multiple"] [data-generated-media="audio"] > :is(.audio, .status) {
-  block-size: 3.5rem;
-  border-radius: 999px;
+.imageGallery > .status {
+  flex-basis: 100%;
 }
 
 @keyframes media-shimmer {
@@ -224,21 +207,27 @@
   }
 }
 
-@keyframes media-fragment {
-  0%, 18% {
-    opacity: 0.16;
+@keyframes media-deal-in {
+  from {
+    opacity: 0;
+    translate: 0.625rem 0.375rem;
+    scale: 0.96;
   }
-  46% {
-    opacity: 0.83;
-  }
-  78%, 100% {
-    opacity: 0.37;
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .skeleton:not([data-media-kind="image"])::before,
-  .fragments > span {
+  .skeleton::before,
+  .imageButton[data-image-loaded] {
     animation: none;
+  }
+
+  .skeleton[data-media-kind='image'],
+  .imageButton {
+    transition: none;
   }
 }

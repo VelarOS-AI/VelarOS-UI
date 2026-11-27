@@ -4,26 +4,26 @@
 .velar-marquee-text {
   display: block;
   min-width: 0;
-  overflow: hidden;
+  overflow: clip;
   white-space: nowrap;
 }
 
 .velar-marquee-text-track {
-  display: block;
+  /* 悬停时只改变轨道宽度和位移，让文字始终使用同一个行框。 */
+  display: flex;
+  align-items: baseline;
   min-width: 0;
-  max-width: 100%;
   transform: translateX(0);
 }
 
 .velar-marquee-text-item {
   color: inherit;
-  display: inline-block;
+  display: block;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
   box-sizing: border-box;
   text-overflow: ellipsis;
-  vertical-align: bottom;
   white-space: nowrap;
 }
 
@@ -33,16 +33,13 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .velar-marquee-text[data-marquee-active='true'] .velar-marquee-text-track {
-    display: inline-flex;
-    align-items: baseline;
+    width: max-content;
     gap: var(--velar-marquee-text-gap);
-    max-width: none;
     animation: velar-marquee-text-loop var(--velar-marquee-text-duration) linear infinite;
     will-change: transform;
   }
 
   .velar-marquee-text[data-marquee-active='true'] .velar-marquee-text-item {
-    display: block;
     flex: 0 0 auto;
     max-width: none;
     overflow: visible;

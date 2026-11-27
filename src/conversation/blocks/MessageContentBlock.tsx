@@ -22,7 +22,7 @@ import {
 import { ReplaceableRenderSlot } from "../render-slots/ReplaceableRenderSlot";
 
 import { shouldUseLiveTextRenderer } from "./liveTextRendererMode";
-import { MediaGenerationCard } from "./MediaGenerationCard";
+import { MediaGenerationGallery } from "./MediaGenerationCard";
 import {
   areRunMarkersEqual,
   type ConversationMessageRunMarker,
@@ -165,7 +165,7 @@ const STRUCTURED_BLOCK_RENDERERS = {
     <WidgetCard block={block as Extract<ContentBlock, { type: "widget" }>} />
   ),
   "media-generation": (block) => (
-    <MediaGenerationCard block={block as Extract<ContentBlock, { type: "media-generation" }>} />
+    <MediaGenerationGallery blocks={[block as Extract<ContentBlock, { type: "media-generation" }>]} />
   ),
   "assistant-generated-file": () => null,
   "assistant-source": () => null,

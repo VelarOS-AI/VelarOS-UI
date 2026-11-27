@@ -1,167 +1,207 @@
-import { type ReactElement, useState } from "react";
+import { type CSSProperties, type ReactElement, useState } from 'react'
 import {
   FilmStripIcon,
   WarningCircleIcon,
   WaveformIcon,
-} from "@phosphor-icons/react";
+} from '@phosphor-icons/react'
 
-import { ImagePreviewDialog } from "@velaros-ai/ui/primitives/overlays/ImagePreviewDialog";
+import { ImagePreviewDialog } from '@velaros-ai/ui/primitives/overlays/ImagePreviewDialog'
 
-import { useConversationI18n } from "../i18n";
-import { useImagePreviewDialogMessages } from "../react-hooks/useImagePreviewDialogMessages";
+import { useConversationI18n } from '../i18n'
+import { useImagePreviewDialogMessages } from '../react-hooks/useImagePreviewDialogMessages'
 
-import styles from "./MediaGenerationCard.module.css";
+import styles from './MediaGenerationCard.module.css'
 
-import type { ContentBlock } from "#contracts";
-import { isNull } from "#internal/runtime";
+import type { ContentBlock } from '#contracts'
+import { isEmpty, isNull } from '#internal/runtime'
 
-type MediaBlock = Extract<ContentBlock, { type: "media-generation" }>;
-type ReadyMediaBlock = Extract<MediaBlock, { status: "ready" }>;
+type MediaBlock = Extract<ContentBlock, { type: 'media-generation' }>
+type ReadyMediaBlock = Extract<MediaBlock, { status: 'ready' }>
 
 export const MediaGenerationStatusLabels = {
-  image: "chat.generatingImage",
-  video: "chat.generatingVideo",
-  audio: "chat.generatingAudio",
-} as const;
+  image: 'chat.generatingImage',
+  video: 'chat.generatingVideo',
+  audio: 'chat.generatingAudio',
+} as const
 
 const MediaTitles = {
-  image: "chat.generatedImage",
-  video: "chat.generatedVideo",
-  audio: "chat.generatedAudio",
-} as const;
+  image: 'chat.generatedImage',
+  video: 'chat.generatedVideo',
+  audio: 'chat.generatedAudio',
+} as const
 
-const FragmentKeys = Array.from({ length: 64 }, (_, index) => String(index));
+const ImageHandSpread = 32
+const ImageHandAngleStep = 9
+const SingleCardAngle = -6
 
 export function MediaGenerationGallery({
   blocks,
 }: {
-  blocks: readonly MediaBlock[];
+  blocks: readonly MediaBlock[]
 }): ReactElement {
-  return (
-    <div className={styles.gallery} data-media-gallery={blocks.length > 1 ? "multiple" : "single"}>
-      {blocks.map((block) => <MediaGenerationCard key={block.id} block={block} />)}
-    </div>
-  );
-}
-
-export function MediaGenerationCard({
-  block,
-}: {
-  block: MediaBlock;
-}): ReactElement {
-  return (
-    <div className={styles.card} data-generated-media={block.kind}>
-      <MediaGenerationContent block={block} />
-    </div>
-  );
-}
-
-function MediaGenerationContent({ block }: { block: MediaBlock }): ReactElement {
-  const { t } = useConversationI18n();
-
-  if (block.status === "ready")
+  const kind = blocks[0]?.kind
+  if (kind !== 'image')
     return (
-      <GeneratedMedia
-        key={block.src}
-        block={block}
-        title={t(MediaTitles[block.kind])}
-      />
-    );
-
-  if (block.status !== "generating") {
-    const label =
-      block.status === "failed"
-        ? "chat.mediaGenerationFailed"
-        : "chat.mediaGenerationCancelled";
-    return (
-      <div className={styles.status} role="status">
-        <WarningCircleIcon size={16} aria-hidden="true" />
-        {t(label)}
+      <div className={styles.stack} data-media-gallery={kind}>
+        {blocks.map((block) => (
+          <MediaGenerationContent key={block.id} block={block} />
+        ))}
       </div>
-    );
-  }
+    )
 
-  const Icon = block.kind === "audio" ? WaveformIcon : FilmStripIcon;
+  const pending = blocks.filter((block) => block.status === 'generating')
+  const spread = Math.min(
+    ImageHandSpread,
+    (pending.length - 1) * ImageHandAngleStep,
+  )
+  return (
+    <div className={styles.imageGallery} data-media-gallery={kind}>
+      {blocks
+        .filter((block) => block.status === 'ready')
+        .map((block) => (
+          <GeneratedImage key={`${block.id}:${block.src}`} block={block} />
+        ))}
+      {!isEmpty(pending) && (
+        <div className={styles.hand} data-media-hand="">
+          {pending.map((block, index) => (
+            <MediaGenerationContent
+              key={block.id}
+              block={block}
+              angle={
+                pending.length === 1
+                  ? SingleCardAngle
+                  : spread * (index / (pending.length - 1) - 0.5)
+              }
+            />
+          ))}
+        </div>
+      )}
+      {blocks
+        .filter(
+          (block) => block.status === 'failed' || block.status === 'cancelled',
+        )
+        .map((block) => (
+          <MediaGenerationContent key={block.id} block={block} />
+        ))}
+    </div>
+  )
+}
+
+function MediaGenerationContent({
+  block,
+  angle,
+}: {
+  block: MediaBlock
+  angle?: number
+}): ReactElement {
+  const { t } = useConversationI18n()
+  if (block.status === 'ready')
+    return <GeneratedMedia key={block.src} block={block} />
+
+  if (block.status !== 'generating')
+    return (
+      <MediaStatus
+        label={t(
+          block.status === 'failed'
+            ? 'chat.mediaGenerationFailed'
+            : 'chat.mediaGenerationCancelled',
+        )}
+      />
+    )
+
+  const Icon = block.kind === 'audio' ? WaveformIcon : FilmStripIcon
   return (
     <div
       className={styles.skeleton}
       data-media-kind={block.kind}
       role="status"
       aria-label={t(MediaGenerationStatusLabels[block.kind])}
+      style={block.kind === 'image' ? { rotate: `${angle}deg` } : undefined}
     >
-      {block.kind === "image" ? (
-        <span className={styles.fragments} aria-hidden="true">
-          {FragmentKeys.map((key) => <span key={key} />)}
-        </span>
-      ) : (
+      {block.kind !== 'image' && (
         <span className={styles.symbol} aria-hidden="true">
-          <Icon size={block.kind === "audio" ? 20 : 28} weight="duotone" />
+          <Icon size={block.kind === 'audio' ? 20 : 28} weight="duotone" />
         </span>
       )}
-      {block.kind === "audio" && (
+      {block.kind === 'audio' && (
         <span className={styles.track} aria-hidden="true" />
       )}
     </div>
-  );
+  )
 }
 
-function GeneratedMedia({
-  block,
-  title,
-}: {
-  block: ReadyMediaBlock;
-  title: string;
-}): ReactElement {
-  const { t } = useConversationI18n();
-  const previewMessages = useImagePreviewDialogMessages();
-  const [isFailed, setFailed] = useState(false);
-  const [isPreviewOpen, setPreviewOpen] = useState(false);
-  const onError = (): void => setFailed(true);
+function MediaStatus({ label }: { label: string }): ReactElement {
+  return (
+    <div className={styles.status} role="status">
+      <WarningCircleIcon size={16} aria-hidden="true" />
+      {label}
+    </div>
+  )
+}
+
+function GeneratedMedia({ block }: { block: ReadyMediaBlock }): ReactElement {
+  const { t } = useConversationI18n()
+  const [isFailed, setFailed] = useState(false)
   if (isFailed)
-    return (
-      <div className={styles.status} role="status">
-        <WarningCircleIcon size={16} aria-hidden="true" />
-        {t("chat.generatedMediaUnavailable")}
-      </div>
-    );
+    return <MediaStatus label={t('chat.generatedMediaUnavailable')} />
 
-  if (block.kind === "audio")
-    return (
-      <audio
-        className={styles.audio}
-        aria-label={title}
-        src={block.src}
-        controls
-        preload="metadata"
-        onError={onError}
-      />
-    );
-  if (block.kind === "video")
-    return (
-      <video
-        className={styles.video}
-        aria-label={title}
-        src={block.src}
-        controls
-        playsInline
-        preload="metadata"
-        onError={onError}
-      />
-    );
+  const title = t(MediaTitles[block.kind])
+  const onError = (): void => setFailed(true)
+  return block.kind === 'audio' ? (
+    <audio
+      className={styles.audio}
+      aria-label={title}
+      src={block.src}
+      controls
+      preload="metadata"
+      onError={onError}
+    />
+  ) : (
+    <video
+      className={styles.video}
+      aria-label={title}
+      src={block.src}
+      controls
+      playsInline
+      preload="metadata"
+      onError={onError}
+    />
+  )
+}
 
+function GeneratedImage({ block }: { block: ReadyMediaBlock }): ReactElement {
+  const { t } = useConversationI18n()
+  const previewMessages = useImagePreviewDialogMessages()
+  const [aspectRatio, setAspectRatio] = useState<Nullable<number>>(null)
+  const [isFailed, setFailed] = useState(false)
+  const [isPreviewOpen, setPreviewOpen] = useState(false)
+  if (isFailed)
+    return <MediaStatus label={t('chat.generatedMediaUnavailable')} />
+
+  const title = t(MediaTitles.image)
+  const size: CSSProperties & { '--image-aspect': number } = {
+    '--image-aspect': aspectRatio ?? 1,
+  }
   return (
     <>
       <button
         type="button"
         className={styles.imageButton}
-        aria-label={t("chat.openImagePreview")}
+        data-image-loaded={!isNull(aspectRatio) || undefined}
+        style={size}
+        aria-label={t('chat.openImagePreview')}
         onClick={() => setPreviewOpen(true)}
       >
         <img
           className={styles.image}
           src={block.src}
           alt={title}
-          onError={onError}
+          onLoad={({ currentTarget }) =>
+            setAspectRatio(
+              currentTarget.naturalWidth / currentTarget.naturalHeight,
+            )
+          }
+          onError={() => setFailed(true)}
         />
       </button>
       <ImagePreviewDialog
@@ -171,5 +211,5 @@ function GeneratedMedia({
         messages={previewMessages}
       />
     </>
-  );
+  )
 }

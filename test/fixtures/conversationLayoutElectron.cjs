@@ -94,6 +94,11 @@ app.whenReady().then(async () => {
     await proof('expandProcessedRun')
     await proof('frame')
     results.resumedRun.expanded = await proof('measureResumedRun')
+    results.media = []
+    for (const [completed, width] of [[0, 520], [1, 520], [2, 520], [4, 520], [4, 260]]) {
+      await proof('renderMedia', completed, width)
+      results.media.push(await proof('measureMedia'))
+    }
     fs.writeFileSync(path.join(directory, 'report.json'), JSON.stringify(results, null, 2))
   } catch (error) {
     console.error(error)

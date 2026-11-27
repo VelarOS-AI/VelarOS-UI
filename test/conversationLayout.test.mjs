@@ -46,7 +46,7 @@ test(
       })
       await writeFile(
         join(directory, 'dist/index.html'),
-      '<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="scene.css"><style>html{font-size:16px}body{margin:20px}*,*::before,*::after{animation-duration:0s!important;transition-duration:0s!important}</style></head><body><div id="root"></div><script src="scene.js"></script></body></html>'
+      '<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="scene.css"><style>html{font-size:16px}body{margin:20px}*,*::before,*::after{animation-duration:0s!important;transition-duration:0s!important}#media-fixture [data-image-loaded]{animation-duration:360ms!important}</style></head><body><div id="root"></div><script src="scene.js"></script></body></html>'
       )
       const environment = { ...process.env }
       delete environment.ELECTRON_RUN_AS_NODE
@@ -114,6 +114,25 @@ test(
         assert.equal(phase.hasInterruptedMessage, true)
         assert.equal(phase.hasFailedMarker, true)
         assert.deepEqual(phase.statuses, [])
+      }
+      const [handOnly, firstImage, secondImage, wideImages, narrowImages] = report.media
+      assert.deepEqual(report.media.map(({ images, hand }) => [images.length, hand.length]), [
+        [0, 4], [1, 3], [2, 2], [4, 0], [4, 0],
+      ])
+      assert.equal(new Set(handOnly.hand.map(({ angle }) => angle)).size, 4)
+      assert.ok(handOnly.hand[0].box.right > handOnly.hand[1].box.left, 'card backs overlap')
+      assert.ok(firstImage.images[0].box.right <= firstImage.hand[0].box.left)
+      assert.ok(secondImage.images[0].box.right <= secondImage.images[1].box.left)
+      assert.equal(firstImage.incoming, 1)
+      assert.equal(secondImage.incoming, 1, 'only the newly completed image animates')
+      assert.equal(wideImages.images[0].height, wideImages.images[1].height)
+      assert.notEqual(wideImages.images[0].angle, wideImages.images[1].angle)
+      assert.ok(Math.abs(wideImages.images[0].width / wideImages.images[0].height - 1.5) < 0.02)
+      assert.ok(narrowImages.images[2].box.top >= narrowImages.images[0].box.bottom)
+      assert.ok(narrowImages.images[0].height < wideImages.images[0].height)
+      for (const { images, gallery, stack } of [wideImages, narrowImages]) {
+        assert.ok(images.every(({ box }) => box.left >= gallery.left && box.right <= gallery.right))
+        assert.ok(stack.every((entry, index) => index === 0 || entry.top > stack[index - 1].bottom))
       }
     } finally {
       clearTimeout(timeout)
