@@ -1,5 +1,5 @@
 /**
- * 溢出自动横向滚动的单行文本（跑马灯）。文本不溢出时静态省略号，溢出且 `active` 时循环滚动。
+ * 单行文字默认以省略号收尾，溢出且 `active` 时横向循环滚动。
  *
  * variants（封闭枚举，全仓共用一套）：无外观 variant——固定形态，字色 / 字号从父级继承（无 className 逃生口）。
  * 样式：`.velar-marquee-text` · 见 styles/components/。
@@ -18,18 +18,7 @@ import {
 
 const MarqueeGapPx = 24
 const MarqueeMinDurationMs = 4200
-const MarqueeMaxDurationMs = 12000
 const MarqueePixelsPerSecond = 48
-
-interface MarqueeState {
-  overflowing: boolean
-  durationMs: number
-}
-
-const EmptyMarqueeState: MarqueeState = {
-  overflowing: false,
-  durationMs: MarqueeMinDurationMs,
-}
 
 export interface MarqueeTextProps {
   title: string
@@ -40,32 +29,6 @@ export interface MarqueeTextProps {
   children?: ReactNode
 }
 
-function makeMarqueeState(
-  viewportWidth: number,
-  textWidth: number,
-  disabled: boolean
-): MarqueeState {
-  const overflowing = !disabled && textWidth > viewportWidth + 1
-  if (!overflowing) return EmptyMarqueeState
-
-  const durationMs = Math.min(
-    MarqueeMaxDurationMs,
-    Math.max(
-      MarqueeMinDurationMs,
-      Math.round(((textWidth + MarqueeGapPx) / MarqueePixelsPerSecond) * 1000)
-    )
-  )
-
-  return {
-    overflowing: true,
-    durationMs,
-  }
-}
-
-function areMarqueeStatesEqual(left: MarqueeState, right: MarqueeState): boolean {
-  return left.overflowing === right.overflowing && left.durationMs === right.durationMs
-}
-
 export function MarqueeText({
   title,
   active = false,
@@ -74,66 +37,72 @@ export function MarqueeText({
 }: MarqueeTextProps): ReactElement {
   const viewportRef = useRef<HTMLSpanElement>(null)
   const textRef = useRef<HTMLSpanElement>(null)
-  const [marquee, setMarquee] = useState<MarqueeState>(EmptyMarqueeState)
+  const [distance, setDistance] = useState(0)
 
-  const syncMarqueeState = useCallback((): void => {
+  const measureDistance = useCallback((): void => {
+    if (disabled) {
+      setDistance(0)
+      return
+    }
     const viewportNode = viewportRef.current
     const textNode = textRef.current
     if (!viewportNode || !textNode) return
 
-    const next = makeMarqueeState(viewportNode.clientWidth, textNode.scrollWidth, disabled)
-    setMarquee((current) => (areMarqueeStatesEqual(current, next) ? current : next))
+    const textWidth = textNode.scrollWidth
+    const scale = window.devicePixelRatio
+    // 两份文字的起点相隔整数个设备像素，循环首尾使用同一栅格位置。
+    setDistance(
+      textWidth > viewportNode.clientWidth + 1
+        ? Math.ceil((textWidth + MarqueeGapPx) * scale) / scale
+        : 0
+    )
   }, [disabled])
 
   useLayoutEffect(() => {
-    syncMarqueeState()
-  }, [children, syncMarqueeState, title])
+    measureDistance()
+  }, [children, measureDistance, title])
 
   useEffect(() => {
     const ResizeObserverCtor = globalThis.ResizeObserver
-    if (!ResizeObserverCtor) return undefined
+    if (disabled || !ResizeObserverCtor) return undefined
 
     const viewportNode = viewportRef.current
     const textNode = textRef.current
     if (!viewportNode || !textNode) return undefined
 
-    const observer = new ResizeObserverCtor(syncMarqueeState)
+    const observer = new ResizeObserverCtor(measureDistance)
     observer.observe(viewportNode)
     observer.observe(textNode)
-    syncMarqueeState()
-
     return () => {
       observer.disconnect()
     }
-  }, [syncMarqueeState])
+  }, [disabled, measureDistance])
 
-  const marqueeStyle = marquee.overflowing
-    ? ({
-        '--velar-marquee-text-gap': `${MarqueeGapPx}px`,
-        '--velar-marquee-text-duration': `${marquee.durationMs}ms`,
-      } as CSSProperties)
-    : undefined
-  const marqueeActive = marquee.overflowing && active && !disabled
+  const marqueeActive = distance > 0 && active && !disabled
+  const motionStyle = {
+    '--velar-marquee-text-distance': `${distance}px`,
+    '--velar-marquee-text-duration': `${Math.max(MarqueeMinDurationMs, (distance * 1000) / MarqueePixelsPerSecond)}ms`,
+  } as CSSProperties
+  const text = children ?? title
 
   return (
     <span
       ref={viewportRef}
       data-slot="text"
       className="velar-marquee-text"
-      data-overflowing={marquee.overflowing ? 'true' : undefined}
+      data-overflowing={distance > 0 ? 'true' : undefined}
       data-marquee-active={marqueeActive ? 'true' : undefined}
       title={title}
     >
-      <span className="velar-marquee-text-track" style={marqueeStyle}>
-        <span ref={textRef} className="velar-marquee-text-item">
-          {children ?? title}
-        </span>
-        {marqueeActive && (
-          <span className="velar-marquee-text-item" aria-hidden="true">
-            {children ?? title}
-          </span>
-        )}
+      <span ref={textRef} className="velar-marquee-text-item">
+        {text}
       </span>
+      {marqueeActive && (
+        <span className="velar-marquee-text-track" style={motionStyle} aria-hidden="true">
+          <span>{text}</span>
+          <span>{text}</span>
+        </span>
+      )}
     </span>
   )
 }

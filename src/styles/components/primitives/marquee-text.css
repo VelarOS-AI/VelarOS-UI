@@ -2,18 +2,11 @@
 /* Velar UI global layer — pure CSS + design tokens (no Tailwind @apply). */
 
 .velar-marquee-text {
+  position: relative;
   display: block;
   min-width: 0;
   overflow: clip;
   white-space: nowrap;
-}
-
-.velar-marquee-text-track {
-  /* 悬停时只改变轨道宽度和位移，让文字始终使用同一个行框。 */
-  display: flex;
-  align-items: baseline;
-  min-width: 0;
-  transform: translateX(0);
 }
 
 .velar-marquee-text-item {
@@ -27,34 +20,37 @@
   white-space: nowrap;
 }
 
-.velar-marquee-text-item[aria-hidden='true'] {
+.velar-marquee-text-track {
   display: none;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .velar-marquee-text[data-marquee-active='true'] .velar-marquee-text-track {
-    width: max-content;
-    gap: var(--velar-marquee-text-gap);
-    animation: velar-marquee-text-loop var(--velar-marquee-text-duration) linear infinite;
-    will-change: transform;
+  .velar-marquee-text[data-marquee-active='true'] .velar-marquee-text-item {
+    /* 原文字继续占据行框、提供可访问名称，并维持稳定的鼠标命中区域。 */
+    opacity: 0;
   }
 
-  .velar-marquee-text[data-marquee-active='true'] .velar-marquee-text-item {
-    display: block;
-    flex: 0 0 auto;
-    max-width: none;
-    overflow: visible;
-    text-overflow: clip;
+  .velar-marquee-text[data-marquee-active='true'] .velar-marquee-text-track {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    pointer-events: none;
+    animation: velar-marquee-text-loop var(--velar-marquee-text-duration) linear infinite;
+  }
+
+  .velar-marquee-text-track > span {
+    flex: none;
+    width: var(--velar-marquee-text-distance);
   }
 }
 
 @keyframes velar-marquee-text-loop {
-  0% {
-    transform: translateX(0);
+  from {
+    transform: translate3d(0, 0, 0);
   }
 
-  100% {
-    /* 两份文字共用一个间距；跨过第一份后第二份正好回到起点。 */
-    transform: translateX(calc(-50% - var(--velar-marquee-text-gap) / 2));
+  to {
+    transform: translate3d(calc(-1 * var(--velar-marquee-text-distance)), 0, 0);
   }
 }

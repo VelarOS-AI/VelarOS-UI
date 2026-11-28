@@ -13,7 +13,7 @@ export default defineComponentLibraryEntry({
     source: '@velaros-ai/ui',
     origin: 'src/primitives/display/MarqueeText',
     usage:
-      '溢出自动横向滚动的单行文本（跑马灯）：不溢出时静态省略号，溢出且 active 时循环滚动；字色 / 字号从父级继承。',
+      '单行标题默认省略溢出部分。文字过长且 active 时，独立轨道横向循环滚动，标题行与悬停区域固定。系统减少动态效果时保持静态。字色 / 字号从父级继承。',
     avoid:
       '不要向内注入 className / style（封闭形态无逃生口）；单点外观走消费方本地包裹元素 + 继承，或对稳定类名 :global 覆盖。',
     examples: [],
