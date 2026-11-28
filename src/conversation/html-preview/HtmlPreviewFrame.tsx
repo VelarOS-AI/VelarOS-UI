@@ -178,7 +178,6 @@ export function HtmlPreviewFrame({
    */
   const scheduleFrameFitShrink = useMemoizedFn(
     (naturalHeight: number, naturalWidth: Nullable<number>): void => {
-      clearFrameFitShrink()
       frameFitShrinkTimerRef.current = timers.after(
         FitShrinkSettleMs,
         () => {
@@ -257,12 +256,22 @@ export function HtmlPreviewFrame({
     iframeRef.current = iframe
 
     return () => {
+      clearFrameFitShrink()
       iframe.removeEventListener('load', handleLoad)
       iframe.remove()
       iframeRef.current = null
       revokeCurrentBlob()
     }
-  }, [fillHost, htmlLatest, isInViewport, postRenderMessage, reloadKey, shellKind, title])
+  }, [
+    clearFrameFitShrink,
+    fillHost,
+    htmlLatest,
+    isInViewport,
+    postRenderMessage,
+    reloadKey,
+    shellKind,
+    title,
+  ])
 
   useEffect(() => {
     postRenderMessage()
@@ -296,12 +305,13 @@ export function HtmlPreviewFrame({
         ((isPresent(naturalHeight) && naturalHeight > currentFit.contentHeight + 1) ||
           (isPresent(reportedNaturalWidth) && reportedNaturalWidth > currentFit.contentWidth + 1))
 
+      // 新测量作废旧的延迟收缩，即便内容恰好恢复到了当前高度。
+      clearFrameFitShrink()
       if (frameFitFinalizedRef.current && !finalizedReportHasGrowth) {
         if (isPresent(naturalHeight) && naturalHeight < currentFit.contentHeight - FitShrinkTolerancePx)
           scheduleFrameFitShrink(naturalHeight, reportedNaturalWidth)
         return
       }
-      clearFrameFitShrink()
       if (finalizedReportHasGrowth) {
         frameFitFinalizedRef.current = false
         clearFrameFitFinalization()
